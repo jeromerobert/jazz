@@ -1,0 +1,14 @@
+This file describes known bugs in Jazz, or bugs in Java that affect Jazz.
+
+  * 07/14/1999: BBB - Java does not manage very small fonts properly.  
+    If you create a Java font that is less than one pixel high, and use 
+    it to create a Jazz text object, then that text object will not work
+    properly, or perhaps not at all.  The text may not be rendered properly, 
+    or not at all.
+
+    The workaround is to create a larger font, but scale down the Jazz node
+    that contains the text object that uses that font.  I.e., if you want
+    a font that is 0.1 pixels high, you should create a font that is 10
+    pixels high, but then set the scale of the corresponding node to 0.01.
+
+    This bug existed as of Sun JDK 1.2.2

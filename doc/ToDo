@@ -1,0 +1,73 @@
+Jazz ToDo List
+--------------
+
+  BUGS
+  ----
+
+  * 07/08/1999: BBB - The ZSelectionEventHandler maybe have some small bugs 
+    when three or more hierarchies are used.
+
+    First, if a ZNode in the third or deeper is seleted, the scaling
+    transformations inherited from its upper father(s) will be applied to 
+    this ZNode. So, in the mouseDragged method, the statement
+
+       preTranslate(selNode, dx, dy);
+
+    should not be so simple. If in this way, this ZNode will move at a
+    faster or slower speed, rather than the desired speed. In our current work,
+    I extracted the scaling transform information from all ancestors in 
+    hierarchy by querying the current parent and then applied them to dx, dy.
+
+    Second, when seleting multiple nodes and then moving them, only those
+    nodes without selected parents or ancestors should be moved. Otherwise 
+    the scaling transformation from ancestors will be applied to offspring 
+    nodes.
+
+    Maybe you have more simple way to fix them. I am always confused when
+    using transform.
+
+    Jingwei Wu [wjw@csc.UVic.CA]
+
+  * 07/08/1999: BBB - ZText is not always refreshed in the proper
+    final font.  Sometimes it is refreshed in the "zooming" font.
+
+  * 06/15/1999: BBB/JJM - The bounding box of ZText is not being
+    computed exactly.   Since the text is rendered differently at
+    different sizes in low quality mode, its actual bounds shifts
+    around while the bounds that we compute is fixed - and thus
+    they are off somewhat.
+
+  * 06/14/1999: BBB - Changing the transform of nodes with sticky
+    object decorators doesn't do what the user might want.  It does
+    do the right thing mathematically, but that might not be what
+    the caller is expecting.  This affects selection of sticky
+    objects in the HiNote application.
+
+  * 05/07/1999: BBB - Fix printing of images on HP DeskJet 890C
+    Images don't seem to print, even though they work on other printers.
+
+  FEATURES NEEDED
+  ---------------
+
+  * 07/15/1999: BBB - Add tutorial describing how to build and install jazz.
+
+  * 07/11/1999: BBB - Add camera view transform events
+
+  * 06/10/1999: BBB - Make volatile objects use a more general kind ZContext
+    class so that we can have general context-sensitive objects, that define
+    rendering, bounds, and other stuff.  The crucial part is that bounds should
+    be able to be determined by the context so, for example, we can have 
+    single-pixel thick lines within *all* cameras, instead of just one.
+      - Suggested by Susanne Jul
+
+  * 05/28/1999: BBB - Pick should return an application-specific
+    integer that allows an application to be more specific about
+    what was picked.
+
+  * 05/07/1999: BBB - Support Jazz running within components with Borders 
+
+  * 05/07/1999: BBB - Multiple Camera Application
+    An internal camera should have some window dressing that can be used to pick
+    the camera as an object.
+
+  * 05/07/1999: BBB - Design Lenses

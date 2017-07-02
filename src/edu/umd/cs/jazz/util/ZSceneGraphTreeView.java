@@ -225,7 +225,7 @@ public class ZSceneGraphTreeView extends JFrame implements ActionListener, TreeS
      * jazz application.
      */
     public void selectNodes() {
-	ZSelectionGroup.unselectAll(camera);
+	ZSelectionManager.unselectAll(camera);
 	Object selected[] = getSelectedObjects();
 	if (selected != null) {
 	    for (int i = 0; i < selected.length; i++) {
@@ -234,7 +234,7 @@ public class ZSceneGraphTreeView extends JFrame implements ActionListener, TreeS
 		    obj = ((ZVisualComponent)obj).getParents()[0];
 		}
 		if (obj instanceof ZNode) {
-		    ZSelectionGroup.select((ZNode)obj);
+		    ZSelectionManager.select((ZNode)obj);
 		}
 	    }
 	}
@@ -247,7 +247,7 @@ public class ZSceneGraphTreeView extends JFrame implements ActionListener, TreeS
     public void updateSelection() {	
 	model.fireTreeStructureChanged();
 
-        ArrayList selected = ZSelectionGroup.getSelectedNodes(canvas.getRoot());
+        ArrayList selected = ZSelectionManager.getSelectedNodes(canvas.getRoot());
 	tree.clearSelection();
 	if (selected.size() > 0) {
 	    for (int i = 0; i < selected.size(); i++) {

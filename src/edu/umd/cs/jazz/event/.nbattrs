@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<attributes version="1.0">
+   <fileobject name="ZNavEventHandlerKeyBoard.java">
+      <attr name="class_dependency_java.io.Serializable" stringvalue="ZNavEventHandlerKeyBoard"/>
+      <attr name="class_dependency_java.awt.event.KeyListener" stringvalue="ZNavEventHandlerKeyBoard"/>
+   </fileobject>
+   <fileobject name="ZFilteredEventHandler.java">
+      <attr name="class_dependency_java.awt.event.KeyListener" stringvalue="ZFilteredEventHandler.ZFilteredEventDispatcher"/>
+   </fileobject>
+</attributes>

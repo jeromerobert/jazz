@@ -38,6 +38,9 @@ public class ZPathLayoutManager implements ZLayoutManager, ZSerializable {
     // The layout path
     private ArrayList path = null;
 
+    // Should this layout manager layout its children in inverse order
+    boolean invertChildren = false;
+    
     // Says whether path is closed
     private boolean closed = false;
 
@@ -126,25 +129,56 @@ public class ZPathLayoutManager implements ZLayoutManager, ZSerializable {
      * @param node The node to apply this layout algorithm to.
      */
     public void doLayout(ZGroup node) {
-	ZNode[] children = node.getChildren();
-	if (exact) {
-	    if (space >= 0) {
-		ZLayout.distribute(children, path, space, tolerance, true, closed);
+	ZNode primary = node.editor().getNode();
+	if (primary instanceof ZGroup) {
+	    ZNode[] children = ((ZGroup)primary).getChildren();
+	    if (invertChildren) {
+		ZNode tmp;
+		for(int i=0; i<(children.length/2); i++) {
+		    tmp = children[i];
+		    children[i] = children[children.length-i-1];
+		    children[children.length-i-1] = tmp;
+		}
+	    }
+	    
+	    if (exact) {
+		if (space >= 0) {
+		    ZLayout.distribute(children, path, space, tolerance, true, closed);
+		}
+		else {
+		    ZLayout.distribute(children, path, tolerance, closed);
+		}
 	    }
 	    else {
-		ZLayout.distribute(children, path, tolerance, closed);
-	    }
-	}
-	else {
-	    if (space >= 0) {
-		ZLayout.distribute(children, path, space, tolerance, false, closed);
-	    }
-	    else {
-		ZLayout.distribute(children, path, false, closed);
+		if (space >= 0) {
+		    ZLayout.distribute(children, path, space, tolerance, false, closed);
+		}
+		else {
+		    ZLayout.distribute(children, path, false, closed);
+		}
 	    }
 	}
     }
 
+
+    /**
+     * Sets whether this layout manager should invert its children before
+     * laying them out.  That is, should it lay out the children from front
+     * to back rather than back to front
+     */
+    public void setInvertChildren(boolean invertChildren) {
+	this.invertChildren = invertChildren;
+    }
+
+    /**
+     * Gets whether this layout manager inverts its children before
+     * laying them out.  That is, does it lay out the children from front
+     * to back rather than back to front     
+     */
+    public boolean getInvertChildren() {
+	return invertChildren;
+    }
+    
     /**
      * Determine whether the path is closed.
      * @return Is the path closed?

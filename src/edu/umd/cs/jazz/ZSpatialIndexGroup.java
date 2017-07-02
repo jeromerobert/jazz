@@ -25,7 +25,7 @@ import edu.umd.cs.jazz.event.*;
  *
  * To use spatial indexing, first create a large number of nodes grouped under a single
  * ZGroup node. A scenegraph editor can then be used to add the ZSpatialIndexGroup
- * node: <code>groupNode.editor().getSpatialIndexGroup()</code> <P>An r-tree index 
+ * node: <code>groupNode.editor().getSpatialIndexGroup()</code> <P>An r-tree index
  * is created, and the spatial location information of the nodes in the group is indexed.
  * The Jazz render methods will detect the
  * ZSpatialIndexGroup node and use the appropriate rendering calls. When any
@@ -45,12 +45,12 @@ import edu.umd.cs.jazz.event.*;
  * will be reported.
  *
  * <P>
- * For a description of the algorithm used here, 
+ * For a description of the algorithm used here,
  * see "The Design and Analysis of Spatial Data Structures" by Hanan Samet, pp 219-224.
  * Addison-Wesley, 1989.  Or source paper in "R-trees: A dynamic index structure for
  * spatial searching" by A. Guttman, in Proceedings of SIGMOD Conference, 1984, 47-57.
  *
- * {@link ZSceneGraphEditor} provides a convenience mechanism to locate, create 
+ * {@link ZSceneGraphEditor} provides a convenience mechanism to locate, create
  * and manage nodes of this type.
  * <P>
  * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
@@ -59,7 +59,7 @@ import edu.umd.cs.jazz.event.*;
  * same version of Jazz. A future release of Jazz will provide support for long
  * term persistence.
  *
- * @see ZSpatialIndex 
+ * @see ZSpatialIndex
  * @see ZNode#editor()
  * @author James Mokwa
  */
@@ -109,7 +109,7 @@ import edu.umd.cs.jazz.event.*;
 /////////////////////////////////////////////////////////////
 //
 // An indexed node must be re-indexed (removed then re-added to the rtree)
-// whenever it's bounds change.  When a node's bounds is changed, 
+// whenever it's bounds change.  When a node's bounds is changed,
 // updateBounds() is called on the node's ZTransformGroup edit group node.
 // When this happens, a ZNode event BOUNDS_CHANGED is fired on the
 // primary node.
@@ -138,16 +138,16 @@ public class ZSpatialIndexGroup extends ZGroup implements ZGroupListener, ZSeria
      * Constructs a new ZSpatialIndexGroup node.
      */
     public ZSpatialIndexGroup () {
-	rIndex = new ZSpatialIndex();
-	initialize();
+        rIndex = new ZSpatialIndex();
+        initialize();
     }
 
     /**
      * Constructs a new ZSpatialIndexGroup node using a given camera.
      */
     public ZSpatialIndexGroup (ZCamera camera) {
-	rIndex = new ZSpatialIndex(camera);
-	initialize();
+        rIndex = new ZSpatialIndex(camera);
+        initialize();
     }
 
     /**
@@ -156,27 +156,27 @@ public class ZSpatialIndexGroup extends ZGroup implements ZGroupListener, ZSeria
      * changes, so the index can use local bounds.
      */
     private void initialize() {
-	rIndex.setGroupNodeTransform(getLocalToGlobalTransform());
-	nodeListenerHT = new Hashtable();
-	ZGroupListener indexGroupListener = new ZGroupListener() {
-	    public void nodeAdded(ZGroupEvent e) {
-		indexChildren((ZGroup)e.getChild());
-	    }
-	    public void nodeRemoved(ZGroupEvent e) {
-		unIndexChildren((ZGroup)e.getChild());
-	    }
-	};
-	addGroupListener(indexGroupListener);
+        rIndex.setGroupNodeTransform(getLocalToGlobalTransform());
+        nodeListenerHT = new Hashtable();
+        ZGroupListener indexGroupListener = new ZGroupListener() {
+            public void nodeAdded(ZGroupEvent e) {
+                indexChildren((ZGroup)e.getChild());
+            }
+            public void nodeRemoved(ZGroupEvent e) {
+                unIndexChildren((ZGroup)e.getChild());
+            }
+        };
+        addGroupListener(indexGroupListener);
 
-	ZNodeListener nodeListener = new ZNodeListener() {
-	    public void boundsChanged(ZNodeEvent e) {
-	    }
-	    public void globalBoundsChanged(ZNodeEvent e) {
-		ZNode pnode = e.getNode();
-		rIndex.setGroupNodeTransform(getLocalToGlobalTransform());
-	    }
-	};
-	addNodeListener(nodeListener);
+        ZNodeListener nodeListener = new ZNodeListener() {
+            public void boundsChanged(ZNodeEvent e) {
+            }
+            public void globalBoundsChanged(ZNodeEvent e) {
+                ZNode pnode = e.getNode();
+                rIndex.setGroupNodeTransform(getLocalToGlobalTransform());
+            }
+        };
+        addNodeListener(nodeListener);
     }
 
     /**
@@ -186,9 +186,9 @@ public class ZSpatialIndexGroup extends ZGroup implements ZGroupListener, ZSeria
      * @param camera the camera.
      */
     public ZSpatialIndexGroup(ZNode child, ZCamera camera) {
-	rIndex = new ZSpatialIndex(camera);
-	rIndex.setGroupNodeTransform(getLocalToGlobalTransform());
-	insertAbove(child);
+        rIndex = new ZSpatialIndex(camera);
+        rIndex.setGroupNodeTransform(getLocalToGlobalTransform());
+        insertAbove(child);
     }
 
     /**
@@ -196,48 +196,47 @@ public class ZSpatialIndexGroup extends ZGroup implements ZGroupListener, ZSeria
      * @param treeName string displayed when tree is printed.
      */
     public void displayTree(String treeName) {
-	rIndex.displayTree(treeName);
+        rIndex.displayTree(treeName);
     }
 
     /**
-     * internal method: add a node to the rtree index. 
+     * internal method: add a node to the rtree index.
      * Add a nodeListener to it's transformGroup node, if it has one.
      * @param node The node to be indexed.
      * @return true if the node was added to the index, false otherwise.
      */
     private boolean indexNode(ZNode node) {
-	if (getNumChildren() == 0) {
-	    return false;
-	}
+        if (getNumChildren() == 0) {
+            return false;
+        }
 
-	if (! rIndex.getStatus()) {
-	    return false;
-	}
+        if (! rIndex.getStatus()) {
+            return false;
+        }
 
-				// don't index editGroup nodes
-	if ((node instanceof ZGroup) && (((ZGroup)node).hasOneChild())) {
-	    return false;
-	}
+                                // don't index editGroup nodes
+        if ((node instanceof ZGroup) && (((ZGroup)node).hasOneChild())) {
+            return false;
+        }
 
-	if (node instanceof ZSelectionGroup) {
-	    return false;
-	}
-				// if node is a child of this group
-	if (node.editor().getTop().getParent() == getChild(0)) {
-				// removeNode does nothing if node is not already indexed
-	    rIndex.removeNode(node);
-	    rIndex.addNode(node);
-				// if the indexed node has a transformGroup,
+        if (node instanceof ZSelectionGroup) {
+            return false;
+        }
+                                // if node is a child of this group
+        if (node.editor().getTop().getParent() == getChild(0)) {
+                                // removeNode does nothing if node is not already indexed
+            rIndex.removeNode(node);
+            rIndex.addNode(node);
+                                // if the indexed node has a transformGroup,
                                 // add a bounds-change listener to that transformGroup.
-	    if (node.editor().hasTransformGroup()) {
-		ZTransformGroup tg = node.editor().getTransformGroup();
-		addListener(tg);
-	    }
-	    return true;
-	}
-	return false;
+            if (node.editor().hasTransformGroup()) {
+                ZTransformGroup tg = node.editor().getTransformGroup();
+                addListener(tg);
+            }
+            return true;
+        }
+        return false;
     }
-
 
     /**
      * Add a BOUNDS_CHANGED node listener to a transformGroup node, if it does not
@@ -245,27 +244,26 @@ public class ZSpatialIndexGroup extends ZGroup implements ZGroupListener, ZSeria
      * @param tg the transformGroup node.
      */
     public void addListener(ZTransformGroup tg) {
-	if (! nodeListenerHT.containsKey(tg)) {
-	    ZNodeListener nodeListener = new ZNodeListener() {
-		public void boundsChanged(ZNodeEvent e) {
-		    ZNode pnode = e.getNode();
-		    if (pnode instanceof ZTransformGroup) {
-			ZTransformGroup ptg = (ZTransformGroup)pnode;
-			if (ptg.getNumChildren() > 0) {
-			    ZNode primary = pnode.editor().getNode();
-			    indexNode(primary);
-			}
-		    }
-		}
-		public void globalBoundsChanged(ZNodeEvent e) {
-		}
-	    };
+        if (! nodeListenerHT.containsKey(tg)) {
+            ZNodeListener nodeListener = new ZNodeListener() {
+                public void boundsChanged(ZNodeEvent e) {
+                    ZNode pnode = e.getNode();
+                    if (pnode instanceof ZTransformGroup) {
+                        ZTransformGroup ptg = (ZTransformGroup)pnode;
+                        if (ptg.getNumChildren() > 0) {
+                            ZNode primary = pnode.editor().getNode();
+                            indexNode(primary);
+                        }
+                    }
+                }
+                public void globalBoundsChanged(ZNodeEvent e) {
+                }
+            };
 
-	    tg.addNodeListener(nodeListener);
-	    nodeListenerHT.put(tg, nodeListener);
-	}
+            tg.addNodeListener(nodeListener);
+            nodeListenerHT.put(tg, nodeListener);
+        }
     }
-
 
     /**
      * internal method: remove a node from the rtree index.
@@ -273,28 +271,28 @@ public class ZSpatialIndexGroup extends ZGroup implements ZGroupListener, ZSeria
      * @return true if the node was actually removed from the index, false otherwise.
      */
     private boolean unIndexNode(ZNode node) {
-	if (getNumChildren() == 0) {
-	    return false;
-	}
+        if (getNumChildren() == 0) {
+            return false;
+        }
 
-	if (! rIndex.getStatus()) {
-	    return false;
-	}
-	
-				// if node is succesfully removed from rtree,
-				// remove our nodeListener from it's transformGroup
-	if (rIndex.removeNode(node)) {
-	    if (node.editor().hasTransformGroup()) {
-		ZTransformGroup tg = node.editor().getTransformGroup();
-		ZNodeListener nodeListener = (ZNodeListener)(nodeListenerHT.get(tg));
-		if (nodeListener != null) {
-		    node.removeNodeListener(nodeListener);
-		}
-		nodeListenerHT.remove(node);
-	    }
-	    return true;
-	}
-	return false;
+        if (! rIndex.getStatus()) {
+            return false;
+        }
+
+                                // if node is succesfully removed from rtree,
+                                // remove our nodeListener from it's transformGroup
+        if (rIndex.removeNode(node)) {
+            if (node.editor().hasTransformGroup()) {
+                ZTransformGroup tg = node.editor().getTransformGroup();
+                ZNodeListener nodeListener = (ZNodeListener)(nodeListenerHT.get(tg));
+                if (nodeListener != null) {
+                    node.removeNodeListener(nodeListener);
+                }
+                nodeListenerHT.remove(node);
+            }
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -302,8 +300,8 @@ public class ZSpatialIndexGroup extends ZGroup implements ZGroupListener, ZSeria
      * @param e the event.
      */
     public void nodeAdded(ZGroupEvent e) {
-	ZNode node = e.getChild().editor().getNode();
-	indexNode(node);
+        ZNode node = e.getChild().editor().getNode();
+        indexNode(node);
     }
 
     /**
@@ -311,8 +309,8 @@ public class ZSpatialIndexGroup extends ZGroup implements ZGroupListener, ZSeria
      * @param e the event.
      */
     public void nodeRemoved(ZGroupEvent e) {
-	ZNode node = e.getChild().editor().getNode();
-	unIndexNode(node);
+        ZNode node = e.getChild().editor().getNode();
+        unIndexNode(node);
     }
 
     /**
@@ -321,14 +319,14 @@ public class ZSpatialIndexGroup extends ZGroup implements ZGroupListener, ZSeria
      * @param group the group node whose children are indexed.
      */
     public void unregisterAllListeners(ZGroup group) {
-	for (int i=0; i < group.numChildren; i++) {
-	    ZNode node = group.getChild(i).editor().getNode();
-	    ZNodeListener nodeListener = (ZNodeListener)(nodeListenerHT.get(node));
-	    if (nodeListener != null) {
-		node.removeNodeListener(nodeListener);
-	    }
-	    nodeListenerHT.remove(node);
-	}
+        for (int i = 0; i < group.getNumChildren(); i++) {
+            ZNode node = group.getChild(i).editor().getNode();
+            ZNodeListener nodeListener = (ZNodeListener) (nodeListenerHT.get(node));
+            if (nodeListener != null) {
+                node.removeNodeListener(nodeListener);
+            }
+            nodeListenerHT.remove(node);
+        }
     }
 
     /**
@@ -336,8 +334,8 @@ public class ZSpatialIndexGroup extends ZGroup implements ZGroupListener, ZSeria
      * deleting this index group.
      */
     public void unregisterAllListeners() {
-	ZGroup group = (ZGroup)editor().getNode();
-	unregisterAllListeners(group);
+        ZGroup group = (ZGroup)editor().getNode();
+        unregisterAllListeners(group);
     }
 
     /**
@@ -356,53 +354,41 @@ public class ZSpatialIndexGroup extends ZGroup implements ZGroupListener, ZSeria
      * @see ZDrawingSurface#pick(int, int)
      */
     public boolean pick(Rectangle2D rect, ZSceneGraphPath path) {
-	boolean picked = false;
+        boolean picked = false;
 
-	if (isPickable()) {
-	    path.push(this);
+        if (isPickable()) {
+            path.push(this);
 
-	    if (rIndex.getStatus()) {
-	    
-		// find the children who should be picked
-		// this skips over the edit group nodes
-	      queryResults.clear();
+            if (rIndex.getStatus()) {
 
-		rIndex.queryWindow(queryResults, rect);
-		Object result[] = queryResults.toArray();
-		for (int i=(result.length - 1); i >=0; i--) {
-			// call pick on group node above the top edit group node
-			// this will pick thru the 'hasOneChild' edit
-			// groups, and land on our result node
-			if (((ZNode)result[i]).editor().getTop().getParent().pick(rect, path)) {
-			    if (!getChildrenPickable()) {
-				// Can't pick children - set the picked object to the group
-				path.pop(this);
-				path.setObject(this);
-			    }
-			    return true;
-			}
-		}
+                // find the children who should be picked
+                // this skips over the edit group nodes
+              queryResults.clear();
 
-		// Remove me from the path if the pick failed
-		path.pop(this);
+                rIndex.queryWindow(queryResults, rect);
+                Object result[] = queryResults.toArray();
+                for (int i=(result.length - 1); i >=0; i--) {
+                        // call pick on group node above the top edit group node
+                        // this will pick thru the 'hasOneChild' edit
+                        // groups, and land on our result node
+                        if (((ZNode)result[i]).editor().getTop().getParent().pick(rect, path)) {
+                            if (!getChildrenPickable()) {
+                                // Can't pick children - set the picked object to the group
+                                path.pop(this);
+                                path.setObject(this);
+                            }
+                            return true;
+                        }
+                }
 
-	    } else { // not using rTree indexing
-		for (int i=(numChildren - 1); i>=0; i--) {
-		    if (children[i].pick(rect, path)) {
-			if (!getChildrenPickable()) {
-			    // Can't pick children - set the picked object to the group
-			    path.pop(this);
-			    path.setObject(this);
-			}
-			return true;
-		    }
-		}
-		// Remove me from the path if the pick failed
-		path.pop(this);
+                // Remove me from the path if the pick failed
+                path.pop(this);
 
-	    }
-	}
-	return false;
+            } else { // not using rTree indexing
+                return super.pick(rect, path);
+            }
+        }
+        return false;
     }
 
     /**
@@ -417,31 +403,26 @@ public class ZSpatialIndexGroup extends ZGroup implements ZGroupListener, ZSeria
      * @param renderContext The graphics context to use for rendering.
      */
     public void render(ZRenderContext renderContext) {
-	if (numChildren == 0) {
-	    return;
-	}
-				// Paint children
-	if (rIndex.getStatus()) {
+        if (children.size() == 0) {
+            return;
+        }
+                                // Paint children
+        if (rIndex.getStatus()) {
 
-	    ZCamera camera = renderContext.getRenderingCamera();
-	    Rectangle2D viewBounds = camera.getViewBounds();
-	    rIndex.queryWindow(queryResults, camera.getViewBounds());
-	    Object result[] = queryResults.toArray();
-	    if (ZDebug.debugSpatialIndexing) {
-		System.out.println("ZSpatialIndexGroup: Number of objects rendered: "+result.length);
-	    }
-	    for (int i=0; i<result.length; i++) {
-	      ((ZNode)result[i]).editor().getTop().render(renderContext);
-	    }
+            ZCamera camera = renderContext.getRenderingCamera();
+            Rectangle2D viewBounds = camera.getViewBounds();
+            rIndex.queryWindow(queryResults, camera.getViewBounds());
+            Object result[] = queryResults.toArray();
+            if (ZDebug.debugSpatialIndexing) {
+                System.out.println("ZSpatialIndexGroup: Number of objects rendered: "+result.length);
+            }
+            for (int i=0; i<result.length; i++) {
+              ((ZNode)result[i]).editor().getTop().render(renderContext);
+            }
 
-	} else { // not using RTree indexing
-	    ZBounds visibleBounds = renderContext.getVisibleBounds();
-	    for (int i=0; i<numChildren; i++) {
-		if (visibleBounds.intersects(children[i].getBoundsReference())) {
-		    children[i].render(renderContext);
-		}
-	    }
-	}
+        } else { // not using RTree indexing
+            super.render(renderContext);
+        }
     }
 
     /**
@@ -450,9 +431,9 @@ public class ZSpatialIndexGroup extends ZGroup implements ZGroupListener, ZSeria
      * @param child the ZGroup node whose children are indexed.
      */
     public void removeChild(ZNode child) {
-	super.removeChild(child);
-	unregisterAllListeners((ZGroup)child);
-	rIndex = new ZSpatialIndex();
+        super.removeChild(child);
+        unregisterAllListeners((ZGroup)child);
+        rIndex = new ZSpatialIndex();
     }
 
     /**
@@ -460,12 +441,12 @@ public class ZSpatialIndexGroup extends ZGroup implements ZGroupListener, ZSeria
      * @param group a group node.
      */
     private void indexChildren(ZGroup group) {
-	ZNode node;
-	ZNode[] children = group.getChildren();
-	for (int i=0; i<children.length; i++) {
-	    node = children[i].editor().getNode();
-	    indexNode(node);
-	}
+        ZNode node;
+        ZNode[] children = group.getChildren();
+        for (int i=0; i<children.length; i++) {
+            node = children[i].editor().getNode();
+            indexNode(node);
+        }
     }
 
     /**
@@ -473,82 +454,83 @@ public class ZSpatialIndexGroup extends ZGroup implements ZGroupListener, ZSeria
      * @param group The group node whose children should be unindexed.
      */
     private void unIndexChildren(ZGroup group) {
-	ZNode node;
-	ZNode[] children = group.getChildren();
+        ZNode node;
+        ZNode[] children = group.getChildren();
 
-	for (int i=0; i<children.length; i++) {
-	    node = children[i].editor().getNode();
-	    unIndexNode(node);
-	}
+        for (int i=0; i<children.length; i++) {
+            node = children[i].editor().getNode();
+            unIndexNode(node);
+        }
     }
 
     /**
      * Returns true if the node intersects the bounds.
      */
     protected boolean childrenFindable(ZNode node, ZBounds bounds) {
-	ZBounds nodeBounds = node.getGlobalBounds();
-	if (nodeBounds.intersects(bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight())) {
-	    return true;
-	} else {
-	    return false;
-	}
+        ZBounds nodeBounds = node.getGlobalBounds();
+        if (nodeBounds.intersects(bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight())) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
      * internal method for findNodes.
      */
     private int find(ZFindFilter filter, ZBounds bounds, ArrayList nodes) {
-	int nodesSearched = 1;
+        int nodesSearched = 1;
 
-				// Only search if node is findable.
-	if (isFindable()) {
+                                // Only search if node is findable.
+        if (isFindable()) {
 
-	    if (rIndex.getStatus()) {
-				// Check if this node is accepted by the filter
-		queryResults.clear();
-		rIndex.queryWindow(queryResults, bounds);
-		Object result[] = queryResults.toArray();
-		for (int i=0; i<result.length; i++) {
-		    if ((ZNode)this == (ZNode)result[i]) {
-			nodes.add(this);
-			break;
-		    }
-		}
+            if (rIndex.getStatus()) {
+                                // Check if this node is accepted by the filter
+                queryResults.clear();
+                rIndex.queryWindow(queryResults, bounds);
+                Object result[] = queryResults.toArray();
+                for (int i=0; i<result.length; i++) {
+                    if ((ZNode)this == (ZNode)result[i]) {
+                        nodes.add(this);
+                        break;
+                    }
+                }
 
-				// Check node's children
-		if (getChildrenFindable() && childrenFindable(this, bounds)) {
-		    for (int i=0; i<numChildren; i++) {
-			nodesSearched += children[i].findNodes(filter, nodes);
-		    }
-		}
+                                // Check node's children
+                if (getChildrenFindable() && childrenFindable(this, bounds)) {
+                    ZNode[] childrenRef = getChildrenReference();
+                    for (int i=0; i<children.size(); i++) {
+                        nodesSearched += childrenRef[i].findNodes(filter, nodes);
+                    }
+                }
 
-	    } else { // not using RTree indexing
-				// Check if this node is accepted by the filter
-		if (filter.accept(this)) {
-		    nodes.add(this);
-		}
+            } else { // not using RTree indexing
+                                // Check if this node is accepted by the filter
+                if (filter.accept(this)) {
+                    nodes.add(this);
+                }
 
-				// Check node's children
-		if (getChildrenFindable() && filter.childrenFindable(this)) {
-		    for (int i=0; i<numChildren; i++) {
-			nodesSearched += children[i].findNodes(filter, nodes);
-		    }
-		}
-	    }
-	}
-	return nodesSearched;
+                                // Check node's children
+                if (getChildrenFindable() && filter.childrenFindable(this)) {
+                    ZNode[] childrenRef = getChildrenReference();
+                    for (int i=0; i<children.size(); i++) {
+                        nodesSearched += childrenRef[i].findNodes(filter, nodes);
+                    }
+                }
+            }
+        }
+        return nodesSearched;
     }
 
     /**
      * Search from this spatialIndexGroup node down, return a list of nodes that match filter bounds.
      */
     public int findNodes(ZFindFilter filter, ArrayList nodes) {
-	if (filter instanceof ZBoundsFindFilter) {
-	    ZBounds bounds = ((ZBoundsFindFilter)filter).getBounds();
-	    return(find(filter, bounds, nodes));
-	} else {
-	    return(super.findNodes(filter, nodes));
-	}
+        if (filter instanceof ZBoundsFindFilter) {
+            ZBounds bounds = ((ZBoundsFindFilter)filter).getBounds();
+            return(find(filter, bounds, nodes));
+        } else {
+            return(super.findNodes(filter, nodes));
+        }
     }
-
 }

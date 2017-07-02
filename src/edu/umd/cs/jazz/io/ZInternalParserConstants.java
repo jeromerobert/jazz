@@ -21,8 +21,8 @@ public interface ZInternalParserConstants {
   int SHORT = 22;
   int TRUE = 23;
   int INTEGER_LITERAL = 24;
-  int FLOATING_POINT_LITERAL = 25;
-  int DOUBLE_FLOATING_POINT_LITERAL = 26;
+  int DOUBLE_FLOATING_POINT_LITERAL = 25;
+  int FLOATING_POINT_LITERAL = 26;
   int EXPONENT = 27;
   int CHARACTER_LITERAL = 28;
   int STRING_LITERAL = 29;
@@ -64,8 +64,8 @@ public interface ZInternalParserConstants {
     "\"short\"",
     "\"true\"",
     "<INTEGER_LITERAL>",
-    "<FLOATING_POINT_LITERAL>",
     "<DOUBLE_FLOATING_POINT_LITERAL>",
+    "<FLOATING_POINT_LITERAL>",
     "<EXPONENT>",
     "<CHARACTER_LITERAL>",
     "<STRING_LITERAL>",

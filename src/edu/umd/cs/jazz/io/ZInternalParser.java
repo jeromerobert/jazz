@@ -378,8 +378,8 @@ public class ZInternalParser implements ZInternalParserConstants {
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case INTEGER_LITERAL:
-      case FLOATING_POINT_LITERAL:
       case DOUBLE_FLOATING_POINT_LITERAL:
+      case FLOATING_POINT_LITERAL:
       case STRING_LITERAL:
       case LBRACKET:
       case IDENTIFIER:

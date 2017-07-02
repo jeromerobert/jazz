@@ -2,12 +2,11 @@
 <html>
 <head>
    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-   <meta name="GENERATOR" content="Mozilla/4.5 [en] (WinNT; I) [Netscape]">
+   <meta name="GENERATOR" content="Microsoft FrontPage 4.0">
    <title>2. Using Jazz</title>
 </head>
 <body text="#000000" bgcolor="#FFFFFF" alink="#FF0000">
 
-<body text=black bgcolor=white alink=red>
 <table border="0" cellpadding="0" cellspacing="0" width="100%">
   <tr>
     <td width="48" rowspan="2"><img border="0" src="banner-logo.gif" width="48" height="38"></td>
@@ -130,6 +129,10 @@ with <tt>editor.getNode()</tt>, and you can access the top-most member
 of the edit group with <tt>editor.getTop()</tt>.
 <p>The editor manages these edit nodes types:
 <ul>
+
+<li>
+ZNameGroup</li>
+
 <li>
 ZInvisibleGroup</li>
 
@@ -149,7 +152,14 @@ ZStickyGroup</li>
 ZSelectionGroup</li>
 
 <li>
+ZClipGroup</li>
+
+<li>
 ZFadeGroup</li>
+
+<li>
+ZSpatialIndexGroup</li>
+
 </ul>
 Edit groups are defined through the use of <tt>ZGroup</tt>'s <tt>hasOneChild</tt>
 bit. Any group can have this bit set which then does not allow that group
@@ -285,7 +295,7 @@ public class ZCircle extends ZVisualComponent {
 
 &nbsp;&nbsp;&nbsp; public Point2D getCenter() {
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if (circle.getWidth() != circle.getHeight()) {
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; System.out.println("ERROR: This is not a circle");
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; System.out.println(&quot;ERROR: This is not a circle&quot;);
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; double x = circle.getX() + (circle.getWidth() / 2);
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; double y = circle.getY() + (circle.getHeight() / 2);
@@ -332,7 +342,7 @@ public class ZCircle extends ZVisualComponent {
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Point2D pt = new Point2D.Float(px, py);
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; double distance = pt.distance(getCenter());
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; double radius = circle.getWidth() / 2;
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if ((distance >= (radius - penWidth/2)) &amp;&amp; (distance &lt;= (radius + penWidth/2))) {
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; if ((distance &gt;= (radius - penWidth/2)) &amp;&amp; (distance &lt;= (radius + penWidth/2))) {
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; picked = true;
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
@@ -372,6 +382,12 @@ provides basic zooming of a Jazz camera with the right mouse button. The
 inital mouse press defines the zoom anchor point. Moving the mouse to the
 right zooms in with a speed that is proportional to the amount the mouse
 is moved and moving the mouse to the left zooms out.</li>
+
+<li>
+<b><tt><a href="../api/edu/umd/cs/jazz/event/ZoomToEventHandler.html">ZoomToEventHandler</a></tt></b>
+provides zooming of a Jazz camera into a particular ZNode. Depending on the handlers settings
+it will either zoom the camera so that the chosen node is displayed in the center of the screen 
+at 100 percent, or zoom to camera so that the node fills the screen minus some insets.</li>
 
 <li>
 <b><tt><a href="../api/edu/umd/cs/jazz/event/ZNavEventHandlerKeyBoard.html">ZNavEventHandlerKeyBoard</a></tt></b>
@@ -753,8 +769,9 @@ no other function, and there is no reason to instantiate a ZLeaf object.&nbsp;<a
 <h3>
 2.8.3. ZVisualLeaf</h3>
 <tt><a href="../api/edu/umd/cs/jazz/ZVisualLeaf.html">ZVisualLeaf</a></tt>
-is a leaf node with a visual component. Many applications will attach all
-of their visual components to <tt>ZVisualLeaf</tt>s.&nbsp;<a NAME="S2.8.4"></a>
+is a leaf node that has one or more visual components
+that can be rendered. Many applications will attach all of their visual
+components to ZVisualLeafs.<a NAME="S2.8.4"></a>
 <h3>
 2.8.4. ZGroup</h3>
 <tt><a href="../api/edu/umd/cs/jazz/ZGroup.html">ZGroup</a></tt> is a node
@@ -839,5 +856,28 @@ will be associated with a ZCanvas window. However, a drawing surface can
 also represent a printer, and thus rendering to a window and printer is
 implemented in the same way. The drawing surface is associated with a window
 or printer by specifying which Graphics2D to render onto.
+<h3>
+2.8.16. ZNameGroup</h3>
+<tt><a href="../api/edu/umd/cs/jazz/ZNameGroup.html">ZNameGroup</a></tt>
+is a group node that names a portion of the scenegraph.
+A name group node can be inserted into the tree when an application wants to 
+assign a name to that section of the scenegraph. A static method 
+ZNameGroup.getNameGroup(String name) returns the name group node associated with
+the specified name.
+<h3>
+2.8.17. ZSpatialIndexGroup</h3>
+<tt><a href="../api/edu/umd/cs/jazz/ZSpatialIndexGroup.html">ZSpatialIndexGroup</a></tt>
+is a group node that supports R-tree indexing
+for a group of visual components. This indexing can provide faster rendering
+when a large number of visual components are being displayed. Currently, significant
+speed improvements become apparent when a few thousand or more nodes are being
+rendered. Using a ZSpatialIndexGroup group node with a small number of nodes
+can actually slow down rendering, due to the indexing overhead.<P>
+<h3>
+2.8.19. ZClipGroup</h3>
+<tt><a href="../api/edu/umd/cs/jazz/ZClipGroup.html">ZClipGroup</a></tt>
+is a group node that clips the current rendering context with a ZShape before rendering its children. It can
+also optionally use the ZShape when rendering and picking itself.<P>
+
 </body>
 </html>

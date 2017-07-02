@@ -47,12 +47,7 @@ public class ZRenderContext implements Serializable {
      * List of (recursive) visible bounds in the local coordinates of
      * the current node.
      */
-    private ZBounds[]      visibleBounds;
-
-    /**
-     * Number of actual visible bounds.
-     */
-    private int numVisibleBounds = 0;
+    private ZList.ZBoundsList visibleBounds = ZListImpl.NullList;
 
     /**
      * The surface that triggered this render.
@@ -63,12 +58,6 @@ public class ZRenderContext implements Serializable {
      * The graphics that is active for this render.
      */
     private transient Graphics2D g2;
-
-    /**
-     * accurateSpacing causes strings to be rendered one character at a time:
-     * slower, but characters are positioned more accurately in a line.
-     */
-    private boolean    accurateSpacing = true;
 
     /**
      * greekText specifies that text should be rendered as "greek" rather than actual characters
@@ -82,20 +71,19 @@ public class ZRenderContext implements Serializable {
     //***************************************************************************
 
     /**
-     * Constructs a simple ZRenderContext.  This is intended to be used only by 
+     * Constructs a simple ZRenderContext.  This is intended to be used only by
      * context-sensitive objects to compute bounds.  This constructor should
      * not be used for render contexts to be used for an actual render.
      * @param camera The camera
      */
     public ZRenderContext(ZCamera camera) {
-	surface = null;
-	cameras = new Stack();
-	transforms = new Stack();
-	this.visibleBounds = new ZBounds[DEFAULT_NUM_VISIBLE_BOUNDS];
-	this.visibleBounds[0] = camera.getViewBounds();
-	numVisibleBounds = 1;
+        surface = null;
+        cameras = new Stack();
+        transforms = new Stack();
+        this.visibleBounds = new ZListImpl.ZBoundsListImpl(DEFAULT_NUM_VISIBLE_BOUNDS);
+        this.visibleBounds.add(0, camera.getViewBounds());
 
-	cameras.push(camera);
+        cameras.push(camera);
     }
 
     /**
@@ -106,23 +94,22 @@ public class ZRenderContext implements Serializable {
      * @param qualityRequested The quality to render with
      */
     public ZRenderContext(Graphics2D aG2, ZBounds visibleBounds, ZDrawingSurface aSurface, int qualityRequested) {
-	surface = null;
-	cameras = new Stack();
-	transforms = new Stack();
-	this.visibleBounds = new ZBounds[DEFAULT_NUM_VISIBLE_BOUNDS];
-	this.visibleBounds[0] = visibleBounds;
-	numVisibleBounds = 1;
-	g2 = aG2;
-	surface = aSurface;
-	setRenderingHints(g2, qualityRequested);
-   }
+        surface = null;
+        cameras = new Stack();
+        transforms = new Stack();
+        this.visibleBounds = new ZListImpl.ZBoundsListImpl(DEFAULT_NUM_VISIBLE_BOUNDS);
+        this.visibleBounds.add(0, visibleBounds);
+        g2 = aG2;
+        surface = aSurface;
+        setRenderingHints(g2, qualityRequested);
+    }
 
     /**
      * Get the graphics used for this render.
      * @return the graphics
      */
     public Graphics2D getGraphics2D() {
-	return g2;
+        return g2;
     }
 
     /**
@@ -130,23 +117,14 @@ public class ZRenderContext implements Serializable {
      * @param bounds the new bounds.
      */
     public void pushVisibleBounds(ZBounds bounds) {
-				// Allocate space if needed
-	try {
-	    visibleBounds[numVisibleBounds] = bounds;
-	} catch (ArrayIndexOutOfBoundsException e) {
-	    ZBounds[] newVisibleBounds = new ZBounds[(numVisibleBounds == 0) ? 1 : (2 * numVisibleBounds)];
-	    System.arraycopy(visibleBounds, 0, newVisibleBounds, 0, numVisibleBounds);
-	    visibleBounds = newVisibleBounds;
-	    visibleBounds[numVisibleBounds] = bounds;
-	}
-	numVisibleBounds++;
+        visibleBounds.add(bounds);
     }
 
     /**
      * Remove a visible bounds from the render context.
      */
     public void popVisibleBounds() {
-	numVisibleBounds--;
+        visibleBounds.pop();
     }
 
     /**
@@ -155,11 +133,11 @@ public class ZRenderContext implements Serializable {
      * @return the bounds
      */
     public ZBounds getVisibleBounds() {
-	if (numVisibleBounds == 0) {
-	    return null;
-	} else {
-	    return visibleBounds[numVisibleBounds - 1];
-	}
+        if (visibleBounds.size() == 0) {
+            return null;
+        } else {
+            return (ZBounds) visibleBounds.get(visibleBounds.size() - 1);
+        }
     }
 
     /**
@@ -167,25 +145,30 @@ public class ZRenderContext implements Serializable {
      * @return the surface
      */
     public ZDrawingSurface getDrawingSurface() {
-	return surface;
+        return surface;
     }
 
     /**
      * Specify if strings should be rendered one character at a time with
      * slower, but more accurate spacing.
      * @param <code>b</code> True turns on accurate spacing, false turns it off.
+     *
+     * @deprecated As of Jazz version 1.2,
+     * As of Java 1.3 RenderingHints.KEY_FRACTIONALMETRICS properly spaces text on a floating point scale.
      */
     public void setAccurateSpacing(boolean b) {
-	accurateSpacing = b;
     }
 
     /**
      * Determine if strings should be rendered with accurate (but slower)
      * character spacing.
      * @return true if accurate spacing is on
+     *
+     * @deprecated As of Jazz version 1.2,
+     * As of Java 1.3 RenderingHints.KEY_FRACTIONALMETRICS properly spaces text on a floating point scale.
      */
     public boolean getAccurateSpacing() {
-	return accurateSpacing;
+        return false;
     }
 
     /**
@@ -195,7 +178,7 @@ public class ZRenderContext implements Serializable {
      * @param <code>b</code> True turns on greek text.
      */
     public void setGreekText(boolean b) {
-	greekText = b;
+        greekText = b;
     }
 
     /**
@@ -203,7 +186,7 @@ public class ZRenderContext implements Serializable {
      * @return true if text is "greeked"
      */
     public boolean getGreekText() {
-	return greekText;
+        return greekText;
     }
 
     /**
@@ -212,38 +195,43 @@ public class ZRenderContext implements Serializable {
      * quality are defined.
      */
     protected void setRenderingHints(Graphics2D g2, int quality) {
-	switch (quality) {
-	case ZDrawingSurface.RENDER_QUALITY_LOW:
-	    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-					    RenderingHints.VALUE_ANTIALIAS_OFF);
-	    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-					    RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-	    g2.setRenderingHint(RenderingHints.KEY_RENDERING,
-					    RenderingHints.VALUE_RENDER_SPEED);
-	    setAccurateSpacing(false);
-	    setGreekText(true);
-	    break;
-	case ZDrawingSurface.RENDER_QUALITY_MEDIUM:
-	    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-					    RenderingHints.VALUE_ANTIALIAS_OFF);
-	    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-					    RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-	    g2.setRenderingHint(RenderingHints.KEY_RENDERING,
-					    RenderingHints.VALUE_RENDER_SPEED);
-	    setAccurateSpacing(true);
-	    setGreekText(false);
-	    break;
-	case ZDrawingSurface.RENDER_QUALITY_HIGH:
-	    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-					    RenderingHints.VALUE_ANTIALIAS_ON);
-	    g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-					    RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-	    g2.setRenderingHint(RenderingHints.KEY_RENDERING,
-					    RenderingHints.VALUE_RENDER_QUALITY);
-	    setAccurateSpacing(false);
-	    setGreekText(false);
-	    break;
-	}
+        switch (quality) {
+        case ZDrawingSurface.RENDER_QUALITY_LOW:
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                                            RenderingHints.VALUE_ANTIALIAS_OFF);
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                                            RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+            g2.setRenderingHint(RenderingHints.KEY_RENDERING,
+                                            RenderingHints.VALUE_RENDER_SPEED);
+            g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
+                                            RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+            setGreekText(true);
+            break;
+
+        case ZDrawingSurface.RENDER_QUALITY_MEDIUM:
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                                            RenderingHints.VALUE_ANTIALIAS_OFF);
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                                            RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+            g2.setRenderingHint(RenderingHints.KEY_RENDERING,
+                                            RenderingHints.VALUE_RENDER_SPEED);
+            g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
+                                            RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+            setGreekText(false);
+            break;
+
+        case ZDrawingSurface.RENDER_QUALITY_HIGH:
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                                            RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                                            RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_RENDERING,
+                                            RenderingHints.VALUE_RENDER_QUALITY);
+            g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
+                                            RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+            setGreekText(false);
+            break;
+        }
     }
 
     /**
@@ -251,11 +239,11 @@ public class ZRenderContext implements Serializable {
      * @return the camera
      */
     public ZCamera getRenderingCamera() {
-	if (cameras.isEmpty()) {
-	    return null;
-	} else {
-	    return (ZCamera)cameras.peek();
-	}
+        if (cameras.isEmpty()) {
+            return null;
+        } else {
+            return (ZCamera)cameras.peek();
+        }
     }
 
     /**
@@ -265,11 +253,11 @@ public class ZRenderContext implements Serializable {
      * @return the transform
      */
     public AffineTransform getCameraTransform() {
-	if (transforms.isEmpty()) {
-	    return null;
-	} else {
-	    return (AffineTransform)transforms.peek();
-	}
+        if (transforms.isEmpty()) {
+            return null;
+        } else {
+            return (AffineTransform)transforms.peek();
+        }
     }
 
     /**
@@ -277,16 +265,16 @@ public class ZRenderContext implements Serializable {
      * @param camera The camera
      */
     public void pushCamera(ZCamera camera) {
-	cameras.push(camera);
-	transforms.push(g2.getTransform());
+        cameras.push(camera);
+        transforms.push(g2.getTransform());
     }
 
     /**
      * Remove a rendering camera
      */
     public void popCamera() {
-	cameras.pop();
-	transforms.pop();
+        cameras.pop();
+        transforms.pop();
     }
 
     /**
@@ -297,12 +285,12 @@ public class ZRenderContext implements Serializable {
      * @see #getCompositeMagnification
      */
     public double getCameraMagnification() {
-	ZCamera camera = getRenderingCamera();
-	if (camera == null) {
-	    return 1.0d;
-	} else {
-	    return camera.getMagnification();
-	}
+        ZCamera camera = getRenderingCamera();
+        if (camera == null) {
+            return 1.0d;
+        } else {
+            return camera.getMagnification();
+        }
     }
 
     /**
@@ -312,6 +300,6 @@ public class ZRenderContext implements Serializable {
      * @see #getCameraMagnification
      */
     public double getCompositeMagnification() {
-	return ZTransformGroup.computeScale(g2.getTransform());
+        return ZTransformGroup.computeScale(g2.getTransform());
     }
 }

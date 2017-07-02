@@ -6,11 +6,15 @@ package edu.umd.cs.jazz;
 
 import java.io.*;
 import java.io.IOException;
+import java.awt.event.*;
 import java.awt.geom.AffineTransform;
-import java.util.Iterator;
+import java.util.*;
+
+import javax.swing.event.*;
 
 import edu.umd.cs.jazz.io.*;
 import edu.umd.cs.jazz.util.*;
+import edu.umd.cs.jazz.event.*;
 
 /**
  * <b>ZSceneGraphObject</b> is the base class for all objects in the Jazz scenegraph.
@@ -29,7 +33,7 @@ import edu.umd.cs.jazz.util.*;
  * <P>
  * All Jazz operations occur in local coordinates.  For instance, coordinates of rectangles
  * are specified in local coordinates.  In addition, objects maintain a bounding box which is
- * stored in local coordinates. 
+ * stored in local coordinates.
  * <P> See the Jazz Tutorial for a more complete description of the scene graph.
  *
  * <P>
@@ -44,14 +48,14 @@ import edu.umd.cs.jazz.util.*;
  * @see     ZVisualComponent
  */
 public abstract class ZSceneGraphObject implements ZSerializable, Serializable, Cloneable {
-				// Default values
+                                // Default values
     static public final boolean volatileBounds_DEFAULT = false;    // True if this node has volatile bounds (shouldn't be cached)
 
     /**
      * The single instance of the object reference table used for cloning scenegraph trees.
      */
     private static ZObjectReferenceTable objRefTable = ZObjectReferenceTable.getInstance();
-    
+
     /**
      * Used to detect recursive calls to clone.
      */
@@ -61,8 +65,8 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable, 
      * The bounding rectangle occupied by this object in its own local coordinate system.
      * Conceptually, the bounding rectangle is defined as the minimum rectangle that
      * would surround all of the geometry drawn by the node and its children. The bounding
-     * rectangle's coordinates are in the node's local coordinates. That is, they are 
-     * independant of any viewing transforms, or of transforms performed by parents 
+     * rectangle's coordinates are in the node's local coordinates. That is, they are
+     * independant of any viewing transforms, or of transforms performed by parents
      * of the node.
      */
     protected ZBounds bounds;
@@ -71,6 +75,16 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable, 
      *  True if this node is specifically set to have volatile bounds
      */
     protected boolean volatileBounds = volatileBounds_DEFAULT;
+
+    /**
+     * A list of event listeners for this node.
+     */
+    protected transient EventListenerList listenerList = null;
+
+    /**
+     * Set of client-specified properties for this node.
+     */
+    private ZList.ZPropertyList clientProperties = ZListImpl.NullList;
 
     //****************************************************************************
     //
@@ -88,11 +102,10 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable, 
      * it, then it can free up the bounds allocated here.
      */
     protected ZSceneGraphObject() {
-	bounds = new ZBounds();
+        bounds = new ZBounds();
     }
 
-
-   /**
+    /**
      * Return a copy of the bounds of the subtree rooted at this node in local coordinates.
      * If a valid cached value is available, this method returns it.  If a
      * valid cache is not available (i.e. the object is volatile) then the bounds are
@@ -104,31 +117,35 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable, 
      * @see ZRoot#getCurrentRenderContext
      */
     public ZBounds getBounds() {
-	if (getVolatileBounds()) {
-	    computeBounds();
-	}
-	return (ZBounds)(bounds.clone());
+        return (ZBounds) getBoundsReference().clone();
     }
 
-   /**
-     * Internal method to return the original bounds of the subtree rooted at this node in local coordinates.
+    /**
+     * Return a reference to the bounds of the subtree rooted at this node in local coordinates.
      * If a valid cached value is available, this method returns it.  If a
      * valid cache is not available (i.e. the object is volatile) then the bounds are
-     * recomputed, cached and then returned to the caller.
+     * recomputed, cached and then returned to the caller. The ZBounds returned should not be modified.
+     * <p>
+     * <b>Warning:</b> This method returns a reference to an internal ZBounds object. Any modification
+     * of this ZBounds object will result in undefined behavior.
+     * <P>
+     * If the object is a context-sensitive object, then it may compute the bounds
+     * based on the current render context.
      * @return The bounds of the subtree rooted at this in local coordinates.
+     * @see ZRoot#getCurrentRenderContext
      */
-    protected ZBounds getBoundsReference() {
-	if (getVolatileBounds()) {
-	    computeBounds();
-	}
-	return bounds;
+    public ZBounds getBoundsReference() {
+        if (getVolatileBounds()) {
+            computeBounds();
+        }
+        return bounds;
     }
 
     /**
      * Internal method to specify the bounds of this object.
      */
     protected void setBounds(ZBounds newBounds) {
-	bounds = newBounds;
+        bounds = newBounds;
     }
 
     /**
@@ -159,9 +176,9 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable, 
      * @see #reshape()
      */
     public void repaint() {
-	if (ZDebug.debug && ZDebug.debugRepaint) {
-	    System.out.println("ZSceneGraphObject.repaint: this = " + this);
-	}
+        if (ZDebug.debug && ZDebug.debugRepaint) {
+            System.out.println("ZSceneGraphObject.repaint: this = " + this);
+        }
     }
 
     /**
@@ -184,7 +201,19 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable, 
      * @see #repaint()
      */
     public void reshape() {
-        repaint();
+
+        // Fix suggested by David Wang. If the object is volatile
+        // we need to temporarily make it not volatile on the first
+        // repaint so that we repaint with the old bounds,
+        // and not a newly computed bounds.
+        if (getVolatileBounds()) {
+            setVolatileBounds(false);
+            repaint();
+            setVolatileBounds(true);
+        } else {
+            repaint();
+        }
+
         updateBounds();
         repaint();
     }
@@ -194,7 +223,7 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable, 
      * to recompute their bounds.
      */
     protected void updateBounds() {
-	computeBounds();
+        computeBounds();
     }
 
     /**
@@ -209,7 +238,7 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable, 
      * @see #setVolatileBounds(boolean)
      */
     public boolean getVolatileBounds() {
-	return volatileBounds;
+        return volatileBounds;
     }
 
     /**
@@ -222,8 +251,8 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable, 
      * @see #getVolatileBounds()
      */
     public void setVolatileBounds(boolean v) {
-	volatileBounds = v;
-	updateVolatility();
+        volatileBounds = v;
+        updateVolatility();
     }
 
     /**
@@ -245,28 +274,40 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable, 
      * Subclasses override this method to modify the cloning behavior
      * for nodes in the scene graph. Typically, subclasses first invoke super.duplicateObject()
      * to get the default cloning behavior, and then take additional actions after this.
-     * In particular, ZGroup.duplicateObject() first invokes super.duplicateObject(), 
+     * In particular, ZGroup.duplicateObject() first invokes super.duplicateObject(),
      * and then calls duplicateObject() on all of the children in the group, so that the whole
      * tree beneath the group is cloned.
      *
-     * Applications do not call duplicateObject directly. Instead, 
+     * Applications do not call duplicateObject directly. Instead,
      * ZSceneGraphObject.clone() is used clone a scene graph object.
      */
     protected Object duplicateObject() {
-	ZSceneGraphObject newObject;
-	try {
-	    newObject = (ZSceneGraphObject)super.clone();
-	} catch (CloneNotSupportedException e) {
-	    throw new RuntimeException("Object.clone() failed: " + e);
-	}
+        ZSceneGraphObject newObject;
+        try {
+            newObject = (ZSceneGraphObject)super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException("Object.clone() failed: " + e);
+        }
 
-	if (bounds != null) {
-	    newObject.bounds = (ZBounds)(bounds.clone());
-	}
+        if (bounds != null) {
+            newObject.bounds = (ZBounds)(bounds.clone());
+        }
 
-	objRefTable.addObject(this, newObject);
+        objRefTable.addObject(this, newObject);
 
-	return newObject;
+        newObject.listenerList = null;    // Listeners on objects are de-referenced on node clones
+
+                                // Do a deep copy of client properties (if some)
+        if (!clientProperties.isNull()) {
+            newObject.clientProperties = new ZListImpl.ZPropertyListImpl(clientProperties.size());
+
+            ZProperty[] propertiesRef = clientProperties.getPropertiesReference();
+            for (int i = 0; i < clientProperties.size(); i++) {
+                newObject.clientProperties.add((ZProperty)propertiesRef[i].clone());
+            }
+        }
+
+        return newObject;
     }
 
     /**
@@ -277,62 +318,127 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable, 
      * uncloned objects to their newly cloned versions. Subclasses override this
      * method to update any internal references they have to scene graph nodes.
      * For example, ZNode's updateObjectReferences does:
-     * 
-     * <pre>
-     *	    super.updateObjectReferences(objRefTable);
      *
-     *	    // Set parent to point to the newly cloned parent, or to 
-     *	    // null if the parent object was not cloned.
+     * <pre>
+     *      super.updateObjectReferences(objRefTable);
+     *
+     *      // Set parent to point to the newly cloned parent, or to
+     *      // null if the parent object was not cloned.
      *      parent = (ZNode)objRefTable.getNewObjectReference(parent);
      * </pre>
      *
      * @param objRefTable Table mapping from uncloned objects to their cloned versions.
      */
     protected void updateObjectReferences(ZObjectReferenceTable objRefTable) {
+        if (!inClone) {
+            throw new RuntimeException("ZSceneGraphObject.updateObjectReferences: Called outside of a clone");
+        }
 
-	if (!inClone) {
-	    throw new RuntimeException("ZSceneGraphObject.updateObjectReferences: Called outside of a clone");
-	}
-
+        // Update client properties
+        ZProperty[] propertiesRef = clientProperties.getPropertiesReference();
+        for (int i = 0; i < clientProperties.size(); i++) {
+            propertiesRef[i].updateObjectReferences(objRefTable);
+        }
     }
 
-
     /**
-     * Clones this scene graph object and all its children and returns the newly 
+     * Clones this scene graph object and all its children and returns the newly
      * cloned sub-tree. Applications must then add the sub-tree to the scene graph
      * for it to become visible.
      *
      * @return A cloned copy of this object.
      */
     public Object clone() {
-	Object newObject;
+        Object newObject;
 
-	if (inClone) {
+        if (inClone) {
 
-	    // Recursive call of clone (e.g. by a group to copy its children)
-	    newObject = duplicateObject();
+            // Recursive call of clone (e.g. by a group to copy its children)
+            newObject = duplicateObject();
 
-	} else {
-	    try {
-		inClone = true;
-		objRefTable.reset();
-		newObject = duplicateObject();
-		
-		// Updates cloned objects. This iterates through all the cloned 
-		// objects in the reference table, notifying them to update their
-		// internal references, passing in a reference
-		// to objRefTable so it can be queried for original/new object mappings.
+        } else {
+            try {
+                inClone = true;
+                objRefTable.reset();
+                newObject = duplicateObject();
 
-		for (Iterator iter = objRefTable.iterator() ; iter.hasNext() ;) {
-		    ZSceneGraphObject clonedObject = (ZSceneGraphObject) iter.next();
-		    clonedObject.updateObjectReferences(objRefTable);
-		}
+                // Updates cloned objects. This iterates through all the cloned
+                // objects in the reference table, notifying them to update their
+                // internal references, passing in a reference
+                // to objRefTable so it can be queried for original/new object mappings.
 
-	    } finally {
-		inClone = false;
-	    }
-	}
-	return newObject;
+                for (Iterator iter = objRefTable.iterator() ; iter.hasNext() ;) {
+                    ZSceneGraphObject clonedObject = (ZSceneGraphObject) iter.next();
+                    clonedObject.updateObjectReferences(objRefTable);
+                }
+
+            } finally {
+                inClone = false;
+            }
+        }
+        return newObject;
+    }
+
+    /**
+     * Return the collection of handles associated with this object.
+     */
+    public Collection getHandles() {
+        return new ArrayList(0);
+    }
+
+    /**
+     * Add an arbitrary key/value "client property" to this component.
+     * <p>
+     * The <code>get/putClientProperty<code> methods provide access to
+     * a small per-instance hashtable. Callers can use get/putClientProperty
+     * to annotate components that were created by another module.
+     * <p>
+     * If value is null this method will remove the property.
+     *
+     * @see #getClientProperty
+     */
+    public void putClientProperty(Object key, Object value) {
+        int index = clientProperties.indexOfPropertyWithKey(key);
+
+                                // If value == null and the property exists remove it.
+        if (value == null) {
+            if (index != -1) {
+                clientProperties.remove(index);
+            }
+        } else {                // Else add a new property or update the current one.
+            if (index == -1) {
+                addClientProperty(new ZProperty(key, value));
+            } else {
+                ZProperty found = (ZProperty) clientProperties.get(index);
+                found.set(key, value);
+            }
+        }                       // If no properties exist replace list with nullList.
+        if (clientProperties.size() == 0) {
+            clientProperties = ZListImpl.NullList;
+        }
+    }
+
+    /**
+     * Internal method to add the specified property.
+     * @param prop The new property.
+     */
+    protected void addClientProperty(ZProperty prop) {
+        if (clientProperties.isNull()) {
+            clientProperties = new ZListImpl.ZPropertyListImpl(1);
+        }
+        clientProperties.add(prop);
+    }
+
+    /**
+     * Returns the value of the property with the specified key.  Only
+     * properties added with <code>putClientProperty</code> will return
+     * a non-null value.
+     *
+     * @return the value of this property or null
+     * @see #putClientProperty
+     */
+    public Object getClientProperty(Object key) {
+        return clientProperties.getMatchingProperty(key);
     }
 
     /**
@@ -341,19 +447,220 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable, 
      * @see ZDebug#dump
      */
     public String dump() {
-	String str = toString();
-	ZBounds b = getBounds();
-	if (b.isEmpty()) {
-	    str += ": Bounds = [Empty]";
-	} else {
-	    str += ": Bounds = [x=" + b.getX() + ", y=" + b.getY() +
-		", w=" + b.getWidth() + ", h=" + b.getHeight() + "]";
-	}
-	if (getVolatileBounds()) {
-	    str += "\n Volatile";
-	}
+        String str = toString();
+        ZBounds b = getBounds();
+        if (b.isEmpty()) {
+            str += ": Bounds = [Empty]";
+        } else {
+            str += ": Bounds = [x=" + b.getX() + ", y=" + b.getY() +
+                ", w=" + b.getWidth() + ", h=" + b.getHeight() + "]";
+        }
+        if (getVolatileBounds()) {
+            str += "\n Volatile";
+        }
 
-	return str;
+        Iterator i = clientProperties.iterator();
+        while (i.hasNext()) {
+            ZProperty each = (ZProperty) i.next();
+            str += "\n Property '" + each.getKey() + "': " + each.getValue();
+        }
+
+        return str;
+    }
+
+    /**
+     * Adds the specified mouse listener to receive mouse events from this object
+     *
+     * @param l the mouse listener
+     */
+    public void addMouseListener(ZMouseListener l) {
+        getListenerList().add(ZMouseListener.class, l);
+    }
+
+    /**
+     * Adds the specified mouse motion listener to receive mouse motion events from this object
+     *
+     * @param l the mouse motion listener
+     */
+    public void addMouseMotionListener(ZMouseMotionListener l) {
+        getListenerList().add(ZMouseMotionListener.class, l);
+    }
+
+    /**
+     * Notifies all listeners that have registered interest for
+     * notification on this event type. The listener list is processed
+     * in last to first order.
+     * <p>
+     * If the event is consumed, then the event will not be passed to any more
+     * listeners in the list.
+     * @param anEvent The ZEvent
+     * @see ZEvent
+     */
+    protected void fireEvent(ZEvent anEvent) {
+        if (listenerList == null) {
+            return;
+        }
+
+        anEvent.setSource(this);
+
+        Object[] listeners = getListenerList().getListenerList();
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i] == anEvent.getListenerType()) {
+                anEvent.dispatchTo(listeners[i+1]);
+            }
+            if (anEvent.isConsumed())
+                return;
+        }
+    }
+
+    /**
+     * Return this objects current event listener list. If the list is currently
+     * null then create a new listener list and return that one.
+     */
+    protected EventListenerList getListenerList() {
+        if (listenerList == null) {
+            listenerList = new EventListenerList();
+        }
+        return listenerList;
+    }
+
+    /**
+     * Determines if this Object has a registered listener of the type
+     * specified in its listener list.
+     * @param aType The type of listener to search for.
+     * @return ture if it does have such a listener.
+     */
+    public boolean hasLisenerOfType(Class aType) {
+        if (listenerList == null) return false;
+
+        Object[] listeners = listenerList.getListenerList();
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i]==aType) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Determines if this object has any kind of mouse listener (i.e., mouse or mouse motion listener.)
+     * @return true if this object does have at least one mouse listener
+     */
+    public boolean hasMouseListener() {
+        if (listenerList != null) {
+                                // Guaranteed to return a non-null array
+            Object[] listeners = listenerList.getListenerList();
+            for (int i = listeners.length-2; i>=0; i-=2) {
+                if ((listeners[i]==ZMouseListener.class) || (listeners[i]==ZMouseMotionListener.class)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Removes the specified mouse listener so that it no longer
+     * receives mouse events from this object.
+     *
+     * @param l the mouse listener
+     */
+    protected void removeEventListener(Class listenerType, EventListener listener) {
+        getListenerList().remove(listenerType, listener);
+        if (listenerList.getListenerCount() == 0) {
+            listenerList = null;
+        }
+    }
+
+    /**
+     * Removes the specified mouse listener so that it no longer
+     * receives mouse events from this object.
+     *
+     * @param l the mouse listener
+     */
+    public void removeMouseListener(ZMouseListener l) {
+        removeEventListener(ZMouseListener.class, l);
+    }
+
+    /**
+     * Removes the specified mouse motion listener so that it no longer
+     * receives mouse motion events from this object.
+     *
+     * @param l the mouse motion listener
+     */
+    public void removeMouseMotionListener(ZMouseMotionListener l) {
+        removeEventListener(ZMouseMotionListener.class, l);
+    }
+
+    /**
+     * Notifies all listeners that have registered interest for
+     * notification on this event type. The listener list is processed
+     * in last to first order.
+     * <p>
+     * If the event is consumed, then the event will not be passed
+     * event listeners on the Component that the event came through.
+     * @param e The mouse event
+     * @see EventListenerList
+     * @deprecated as of Jazz 1.1
+     */
+    public void fireMouseEvent(ZMouseEvent e) {
+        if (listenerList == null) {
+            return;
+        }
+                                // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+
+                                // Process the listeners last to first, notifying
+                                // those that are interested in this event
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i]==ZMouseListener.class) {
+                switch (e.getID()) {
+
+                case MouseEvent.MOUSE_PRESSED:
+                    ((ZMouseListener)listeners[i+1]).mousePressed(e);
+                    break;
+                case MouseEvent.MOUSE_RELEASED:
+                    ((ZMouseListener)listeners[i+1]).mouseReleased(e);
+                    break;
+                case MouseEvent.MOUSE_ENTERED:
+                    ((ZMouseListener)listeners[i+1]).mouseEntered(e);
+                    break;
+                case MouseEvent.MOUSE_EXITED:
+                    ((ZMouseListener)listeners[i+1]).mouseExited(e);
+                    break;
+                case MouseEvent.MOUSE_CLICKED:
+                    ((ZMouseListener)listeners[i+1]).mouseClicked(e);
+                    break;
+                }
+            }
+                                // Don't process any more listeners if event was consumed
+            if (e.isConsumed()) {
+                break;
+            }
+
+            if (listeners[i]==ZMouseMotionListener.class) {
+                switch (e.getID()) {
+                case MouseEvent.MOUSE_DRAGGED:
+                    ((ZMouseMotionListener)listeners[i+1]).mouseDragged(e);
+                    break;
+                case MouseEvent.MOUSE_MOVED:
+                    ((ZMouseMotionListener)listeners[i+1]).mouseMoved(e);
+                    break;
+                }
+            }
+                                // Don't process any more listeners if event was consumed
+            if (e.isConsumed()) {
+                break;
+            }
+        }
+    }
+
+    /**
+     * Forwards event to fireEvent(ZMouseEvent e);
+     */
+    public void processMouseEvent(ZMouseEvent e) {
+        fireEvent(e);
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -363,13 +670,25 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable, 
     /////////////////////////////////////////////////////////////////////////
 
     /**
+     * Trims the capacity of the array that stores the clientProperties list points to
+     * the actual number of points. Normally, the clientProperties list arrays can be
+     * slightly larger than the number of points in the clientProperties list.
+     * An application can use this operation to minimize the storage of a
+     * clientProperties list.
+     */
+    public void trimToSize() {
+        clientProperties.trimToSize();
+    }
+
+    /**
      * Write out all of this object's state.
      * @param out The stream that this object writes into
      */
     public void writeObject(ZObjectOutputStream out) throws IOException {
-	if (volatileBounds != volatileBounds_DEFAULT) {
-	    out.writeState("boolean", "volatileBounds", volatileBounds);
-	}
+        if (volatileBounds != volatileBounds_DEFAULT) {
+            out.writeState("boolean", "volatileBounds", volatileBounds);
+        }
+        clientProperties.writeObject("properties", out);
     }
 
     /**
@@ -377,6 +696,12 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable, 
      * @param out The stream that this object writes into
      */
     public void writeObjectRecurse(ZObjectOutputStream out) throws IOException {
+
+                                // Add properties
+        ZProperty[] propertiesRef = clientProperties.getPropertiesReference();
+        for (int i=0; i<clientProperties.size(); i++) {
+            out.addObject(propertiesRef[i]);
+        }
     }
 
     /**
@@ -390,8 +715,19 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable, 
      * @param fieldValue The value of the field
      */
     public void setState(String fieldType, String fieldName, Object fieldValue) {
-	if (fieldName.compareTo("volatileBounds") == 0) {
-	    setVolatileBounds(((Boolean)fieldValue).booleanValue());
-	}
+        if (fieldName.compareTo("volatileBounds") == 0) {
+            setVolatileBounds(((Boolean)fieldValue).booleanValue());
+        } else if (fieldName.compareTo("properties") == 0) {
+            ZProperty prop;
+            for (Iterator i=((Vector)fieldValue).iterator(); i.hasNext();) {
+                prop = (ZProperty)i.next();
+                addClientProperty(prop);
+            }
+        }
+    }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        trimToSize();   // Remove extra unused array elements
+        out.defaultWriteObject();
     }
 }

@@ -30,7 +30,7 @@ public class ZProperty implements ZSerializable, Serializable {
      * The value of this property.
      */
     private Object value = null;
-	
+
     //****************************************************************************
     //
     //               Constructors
@@ -49,8 +49,8 @@ public class ZProperty implements ZSerializable, Serializable {
      * @param value the new property value
      */
     public ZProperty(Object key, Object value) {
-	this.key = key;
-	this.value = value;
+        this.key = key;
+        this.value = value;
     }
 
     /**
@@ -58,10 +58,10 @@ public class ZProperty implements ZSerializable, Serializable {
      * See the copy constructor comments for complete information about what is duplicated.
      */
     public Object clone() {
-	ZProperty prop = new ZProperty();
-	prop.set(key, value);
+        ZProperty prop = new ZProperty();
+        prop.set(key, value);
 
-	return prop;
+        return prop;
     }
 
     /**
@@ -70,8 +70,8 @@ public class ZProperty implements ZSerializable, Serializable {
      * @param value the new property value
      */
     public void set(Object key, Object value) {
-	this.key = key;
-	this.value = value;
+        this.key = key;
+        this.value = value;
     }
 
     /**
@@ -79,7 +79,7 @@ public class ZProperty implements ZSerializable, Serializable {
      * @return the property key
      */
     public Object getKey() {
-	return key;
+        return key;
     }
 
     /**
@@ -87,7 +87,7 @@ public class ZProperty implements ZSerializable, Serializable {
      * @return the property value
      */
     public Object getValue() {
-	return value;
+        return value;
     }
 
     /**
@@ -95,7 +95,7 @@ public class ZProperty implements ZSerializable, Serializable {
      * @param key the new property key
      */
     public void setKey(Object key) {
-	this.key = key;
+        this.key = key;
     }
 
     /**
@@ -103,7 +103,7 @@ public class ZProperty implements ZSerializable, Serializable {
      * @param value the new property value
      */
     public void setValue(Object value) {
-	this.value = value;
+        this.value = value;
     }
 
     /**
@@ -112,30 +112,29 @@ public class ZProperty implements ZSerializable, Serializable {
      * @see edu.umd.cs.jazz.ZSceneGraphObject#updateObjectReferences
      */
     public void updateObjectReferences(ZObjectReferenceTable objRefTable) {
-	
-	if (key instanceof ZSceneGraphObject) {
-	    Object newKey = objRefTable.getNewObjectReference((ZSceneGraphObject)key);
-	    if (newKey == null) {
-	        // Cloned the client property, but did not clone the key. Leave the 
-		// key pointing to the uncloned object.
-	    } else {
-		// Cloned a client property and also the key it was using. Update the
-		// key to point to the newly cloned object.
-		key = newKey;
-	    }
-	}
+        if (key instanceof ZSceneGraphObject) {
+            Object newKey = objRefTable.getNewObjectReference((ZSceneGraphObject)key);
+            if (newKey == null) {
+                // Cloned the client property, but did not clone the key. Leave the
+                // key pointing to the uncloned object.
+            } else {
+                // Cloned a client property and also the key it was using. Update the
+                // key to point to the newly cloned object.
+                key = newKey;
+            }
+        }
 
-	if (value instanceof ZSceneGraphObject) {
-	    Object newVal = objRefTable.getNewObjectReference((ZSceneGraphObject)value);
-	    if (newVal == null) {
-	        // Cloned the client property, but did not clone the value. Leave the 
-		// value pointing to the uncloned object.
-	    } else {
-		// Cloned a client property and also the value it was using. Update the
-		// value to point to the newly cloned object.
-		value = newVal;
-	    }
-	}
+        if (value instanceof ZSceneGraphObject) {
+            Object newVal = objRefTable.getNewObjectReference((ZSceneGraphObject)value);
+            if (newVal == null) {
+                // Cloned the client property, but did not clone the value. Leave the
+                // value pointing to the uncloned object.
+            } else {
+                // Cloned a client property and also the value it was using. Update the
+                // value to point to the newly cloned object.
+                value = newVal;
+            }
+        }
     }
 
     /**
@@ -143,7 +142,7 @@ public class ZProperty implements ZSerializable, Serializable {
      * @return the string that represents this object for debugging
      */
     public String toString() {
-	return super.toString() + ": Key = " + key + ", Value = " + value;
+        return super.toString() + ": Key = " + key + ", Value = " + value;
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -157,20 +156,25 @@ public class ZProperty implements ZSerializable, Serializable {
      * @param out The stream that this object writes into
      */
     public void writeObject(ZObjectOutputStream out) throws IOException {
-	if ((value != null) && (value instanceof ZSerializable)) {
-	    out.writeState(key.getClass().getName(), "key", key);
-	    out.writeState(value.getClass().getName(), "value", value);
-	}
+        if ((key != null) && (ZObjectOutputStream.isSavable(key))) {
+            out.writeState(key.getClass().getName(), "key", key);
+        }
+        if ((value != null) && (ZObjectOutputStream.isSavable(value))) {
+            out.writeState(value.getClass().getName(), "value", value);
+        }
     }
-	
+
     /**
      * Specify which objects this object references in order to write out the scenegraph properly
      * @param out The stream that this object writes into
      */
     public void writeObjectRecurse(ZObjectOutputStream out) throws IOException {
-	if ((value != null) && (value instanceof ZSerializable)) {
-	    out.addObject((ZSerializable)value);
-	}
+        if ((key != null) && (key instanceof ZSerializable)) {
+            out.addObject((ZSerializable)key);
+        }
+        if ((value != null) && (value instanceof ZSerializable)) {
+            out.addObject((ZSerializable)value);
+        }
     }
 
     /**
@@ -184,23 +188,11 @@ public class ZProperty implements ZSerializable, Serializable {
      * @param fieldValue The value of the field
      */
     public void setState(String fieldType, String fieldName, Object fieldValue) {
-	if (fieldName.compareTo("key") == 0) {
-	    key = fieldValue;
-	}
-	if (fieldName.compareTo("value") == 0) {
-	    value = fieldValue;
-	}
-    }
-
-    /**
-     * Properties get written out if the value is ZSerializable.
-     * Else, they are skipped.
-     */
-    public ZSerializable writeReplace() {
-	if ((value != null) && (value instanceof ZSerializable)) {
-	    return this;
-	} else {
-	    return null;
-	}
+        if (fieldName.compareTo("key") == 0) {
+            key = fieldValue;
+        }
+        if (fieldName.compareTo("value") == 0) {
+            value = fieldValue;
+        }
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz;
@@ -30,17 +30,18 @@ import edu.umd.cs.jazz.event.*;
  * @author Ben Bederson
  */
 public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializable {
-				// Default values
+                                // Default values
     static public final boolean savable_DEFAULT = true;      // True if this node gets saved
     static public final boolean pickable_DEFAULT = true;     // True if this node is pickable
     static public final boolean findable_DEFAULT = true;     // True if this node is findable
+    static public final boolean selectable_DEFAULT = true;     // True if this node is selectable
     static final boolean hasNodeListener_DEFAULT = false; // True if this node has a global bounds listener
 
-				// Create the default editor factory
+                                // Create the default editor factory
     static private ZSceneGraphEditorFactory editorFactory = new ZSceneGraphEditorFactory() {
-	public ZSceneGraphEditor createEditor(ZNode node) {
-	    return new ZSceneGraphEditor(node);
-	}
+        public ZSceneGraphEditor createEditor(ZNode node) {
+            return new ZSceneGraphEditor(node);
+        }
     };
 
     /**
@@ -64,25 +65,15 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
     private boolean findable = findable_DEFAULT;
 
     /**
+     *  True if this node is selectable
+     */
+    private boolean selectable = selectable_DEFAULT;
+
+    /**
      * True if this node has a global bounds listener
      * (package private for access in ZGroup)
      */
     boolean hasNodeListener = hasNodeListener_DEFAULT;
-
-    /**
-     * Set of client-specified properties for this node.
-     */
-    private ZProperty[] clientProperties = null;
-
-    /**
-     * Number of client properties for this node.
-     */
-    private int numClientProperties = 0;
-
-    /**
-     * A list of event listeners for this node.
-     */
-    protected transient EventListenerList listenerList = null;
 
     //****************************************************************************
     //
@@ -95,7 +86,7 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * currently visible) order for it to be visible.
      */
     public ZNode () {
-	parent = null;
+        parent = null;
     }
 
     /**
@@ -104,65 +95,13 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @see ZSceneGraphObject#duplicateObject
      */
     protected Object duplicateObject() {
-	ZNode newNode = (ZNode)super.duplicateObject();
+        ZNode newNode = (ZNode)super.duplicateObject();
 
-				// Do a deep copy of client properties (if some)
-	if (numClientProperties > 0) {
-	    newNode.clientProperties = new ZProperty[numClientProperties];
-	    for (int i=0; i<numClientProperties; i++) {
-		newNode.clientProperties[i] = (ZProperty)clientProperties[i].clone();
-	    }
-	}
+        newNode.parent = null;  // No parent - but see ZGroup.duplicateObject.
 
-	newNode.parent = null;  // No parent - but see ZGroup.duplicateObject.
-
-	return newNode;
-
-	// JM - don't think we should copy listeners.
-	//if (refNode.listenerList != null) {
-	//    Object[] listeners = refNode.listenerList.getListenerList();
-	//    for (int i=0; i<listeners.length/2; i+=2) {
-	//	if (listenerList == null) {
-	//	    listenerList = new EventListenerList();
-	//	}
-	//	listenerList.add((Class)listeners[i], (EventListener)listeners[i+1]);
-	//    }
-	//}
+        return newNode;
     }
 
-    /**
-     * Called to update internal object references after a clone operation 
-     * by {@link edu.umd.cs.jazz.ZSceneGraphObject#clone}.
-     *
-     * @see ZSceneGraphObject#updateObjectReferences
-     */
-    protected void updateObjectReferences(ZObjectReferenceTable objRefTable) {
-	super.updateObjectReferences(objRefTable);
-	
-	// Update client properties
-	ZProperty prop;
-	for (int i=0; i<numClientProperties; i++) {
-	    prop = clientProperties[i];
-	    clientProperties[i].updateObjectReferences(objRefTable);
-	}
-    }
-
-    /**
-     * Trims the capacity of the array that stores the clientProperties list points to
-     * the actual number of points. Normally, the clientProperties list arrays can be
-     * slightly larger than the number of points in the clientProperties list.
-     * An application can use this operation to minimize the storage of a
-     * clientProperties list.
-     */
-    public void trimToSize() {
-	ZProperty[] newClientProperties = new ZProperty[numClientProperties];
-	for (int i=0; i<numClientProperties; i++) {
-	    newClientProperties[i] = clientProperties[i];
-	}
-	clientProperties = newClientProperties;
-    }
-
-    
     //****************************************************************************
     //
     // Convenience methods to manage node decorators
@@ -176,9 +115,9 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @see #editor
      */
     static public void setEditorFactory(ZSceneGraphEditorFactory factory) {
-	editorFactory = factory;
+        editorFactory = factory;
     }
-    
+
     /**
      * This returns a new instance of a ZSceneGraphEditor for this node.
      * ZSceneGraphEditor provides a convenience mechanism used to locate
@@ -192,147 +131,6 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
         return editorFactory.createEditor(this);
     }
 
-    //****************************************************************************
-    //
-    // Event methods
-    //
-    //***************************************************************************
-
-    /**
-     * Determines if this node has any kind of mouse listener (i.e., mouse or mouse motion listener.)
-     * @return true if this nodes does have at least one mouse listener
-     */
-    public boolean hasMouseListener() {
-	boolean found = false;
-	if (listenerList != null) {
-				// Guaranteed to return a non-null array
-	    Object[] listeners = listenerList.getListenerList();
-	    for (int i = listeners.length-2; i>=0; i-=2) {
-		if ((listeners[i]==ZMouseListener.class) || (listeners[i]==ZMouseMotionListener.class)) {
-		    found = true;
-		    break;
-		}
-	    }
-	}
-
-	return found;
-    }
-
-    /**
-     * Adds the specified mouse listener to receive mouse events from this node
-     *
-     * @param l the mouse listener
-     */
-    public void addMouseListener(ZMouseListener l) {
-	if (listenerList == null) {
-	    listenerList = new EventListenerList();
-	}
-        listenerList.add(ZMouseListener.class, l);
-    }
-
-    /**
-     * Removes the specified mouse listener so that it no longer
-     * receives mouse events from this mouse.
-     *
-     * @param l the mouse listener
-     */
-    public void removeMouseListener(ZMouseListener l) {
-        listenerList.remove(ZMouseListener.class, l);
-	if (listenerList.getListenerCount() == 0) {
-	    listenerList = null;
-	}
-    }
-
-    /**
-     * Adds the specified mouse motion listener to receive mouse motion events from this node
-     *
-     * @param l the mouse motion listener
-     */
-    public void addMouseMotionListener(ZMouseMotionListener l) {
-	if (listenerList == null) {
-	    listenerList = new EventListenerList();
-	}
-        listenerList.add(ZMouseMotionListener.class, l);
-    }
-
-    /**
-     * Removes the specified mouse motion listener so that it no longer
-     * receives mouse motion events from this mouse.
-     *
-     * @param l the mouse motion listener
-     */
-    public void removeMouseMotionListener(ZMouseMotionListener l) {
-        listenerList.remove(ZMouseMotionListener.class, l);
-	if (listenerList.getListenerCount() == 0) {
-	    listenerList = null;
-	}
-    }
-
-    /**
-     * Notifies all listeners that have registered interest for
-     * notification on this event type.  The event instance
-     * is lazily created using the parameters passed into
-     * the fire method.  The listener list is processed in last to
-     * first order.
-     * <p>
-     * If the event is consumed, then the event will not be passed
-     * event listeners on the Component that the event came through.
-     * @param e The mouse event
-     * @see EventListenerList
-     */
-    public void fireMouseEvent(ZMouseEvent e) {
-	if (listenerList == null) {
-	    return;
-	}
-
-				// Guaranteed to return a non-null array
-        Object[] listeners = listenerList.getListenerList();
-
-				// Process the listeners last to first, notifying
-				// those that are interested in this event
-        for (int i = listeners.length-2; i>=0; i-=2) {
-            if (listeners[i]==ZMouseListener.class) {
-		switch (e.getID()) {		    
-		    
-		case MouseEvent.MOUSE_PRESSED:
-		    ((ZMouseListener)listeners[i+1]).mousePressed(e);
-		    break;
-		case MouseEvent.MOUSE_RELEASED:
-		    ((ZMouseListener)listeners[i+1]).mouseReleased(e);
-		    break;
-		case MouseEvent.MOUSE_ENTERED:
-		    ((ZMouseListener)listeners[i+1]).mouseEntered(e);
-		    break;
-		case MouseEvent.MOUSE_EXITED:
-		    ((ZMouseListener)listeners[i+1]).mouseExited(e);
-		    break;
-		case MouseEvent.MOUSE_CLICKED:
-		    ((ZMouseListener)listeners[i+1]).mouseClicked(e);
-		    break;
-		}
-	    }
-				// Don't process any more listeners if event was consumed
-	    if (e.isConsumed()) {
-		break;
-	    }
-
-            if (listeners[i]==ZMouseMotionListener.class) {
-		switch (e.getID()) {
-		case MouseEvent.MOUSE_DRAGGED:
-		    ((ZMouseMotionListener)listeners[i+1]).mouseDragged(e);
-		    break;
-		case MouseEvent.MOUSE_MOVED:
-		    ((ZMouseMotionListener)listeners[i+1]).mouseMoved(e);
-		    break;
-		}
-            }
-				// Don't process any more listeners if event was consumed
-	    if (e.isConsumed()) {
-		break;
-	    }
-        }
-    }
-
     /**
      * Adds the specified node listener to receive node events from this node.
      * Also updates the hasNodeListener bit.
@@ -340,17 +138,14 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @param l the node listener
      */
     public void addNodeListener(ZNodeListener l) {
-	if (listenerList == null) {
-	    listenerList = new EventListenerList();
-	}
-        listenerList.add(ZNodeListener.class, l);
+        getListenerList().add(ZNodeListener.class, l);
 
-	if (!hasNodeListener) {
-	    hasNodeListener = true;
-	    if (parent != null) {
-		parent.updateHasNodeListener();
-	    }
-	}
+        if (!hasNodeListener) {
+            hasNodeListener = true;
+            if (parent != null) {
+                parent.updateHasNodeListener();
+            }
+        }
     }
 
     /**
@@ -360,68 +155,17 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      *
      * @param l the node listener
      */
-    public void removeNodeListener(ZNodeListener l) {	
-        listenerList.remove(ZNodeListener.class, l);
-	if (listenerList.getListenerCount() == 0) {
-	    listenerList = null;
-	}
+    public void removeNodeListener(ZNodeListener l) {
+        removeEventListener(ZNodeListener.class, l);
 
-	if (listenerList == null || 
-	    listenerList.getListenerCount(ZNodeListener.class) == 0) {
-	    hasNodeListener = false;
-	    if (parent != null) {
-		parent.updateHasNodeListener();
-	    }
-	}
-    }
+        if (listenerList == null ||
+            listenerList.getListenerCount(ZNodeListener.class) == 0) {
 
-    /**
-     * fire a ZNodeEvent event on any listener listenening for it on this node.
-     * Stop when event is consumed.
-     */
-    protected void fireEvent(ZNodeEvent e, int id, ZNode node) {
-	                        // Guaranteed to return a non-null array
-	if (node.listenerList != null) {
-	    Object[] listeners = node.listenerList.getListenerList();
-	    
-				// Process the listeners last to first, notifying
-				// those that are interested in this event
-	    for (int i = listeners.length-2; i>=0; i-=2) {
-		if (listeners[i]==ZNodeListener.class) {
-		    switch (id) {
-		    case ZNodeEvent.BOUNDS_CHANGED:
-			((ZNodeListener)listeners[i+1]).boundsChanged(e);
-			break;
-		    case ZNodeEvent.GLOBAL_BOUNDS_CHANGED:
-			((ZNodeListener)listeners[i+1]).globalBoundsChanged(e);
-		    }
-		}
-		if (e.isConsumed()) {
-		    break;
-		}
-	    }
-	}
-    }
-
-    /**
-     * Notifies all listeners that have registered interest for
-     * notification on this event type, percolate up the scenegraph
-     * looking for listeners. Stop when the event is consumed. The event 
-     * instance is lazily created using the parameters passed into
-     * the fire method.  The listener list is processed in last to
-     * first order.
-     * @param id The event id (BOUNDS_CHANGED or GLOBAL_BOUNDS_CHANGED)
-     * @param node The node being affected.
-     * @see EventListenerList
-     */
-    protected void fireNodeEvent(int id, ZNode node) {
-	ZNodeEvent e = new ZNodeEvent(node, id);
-	do {
-	    if (node.hasNodeListener) {
-		fireEvent(e, id, node);
-	    }
-	    node = node.getParent();
-	} while ((node != null) && (! e.isConsumed()));
+            hasNodeListener = false;
+            if (parent != null) {
+                parent.updateHasNodeListener();
+            }
+        }
     }
 
     //****************************************************************************
@@ -434,20 +178,20 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * Remove this node, and any subtree, from the scenegraph.
      */
     public void remove() {
-	if (parent != null) {
-	    getParent().removeChild(this);
-	}
+        if (parent != null) {
+            getParent().removeChild(this);
+        }
     }
 
     /**
      * Extract this node from the tree, merging back in any children. As ZNode's
      * do not have any children, ZNode.extract() has the same function as ZNode.remove().
-     * However, extract() on subclasses such as ZGroup truly extract a node, merging 
+     * However, extract() on subclasses such as ZGroup truly extract a node, merging
      * any children back into the scenegraph.
      * @see ZGroup#extract()
      */
     public void extract() {
-	remove();
+        remove();
     }
 
     /**
@@ -461,24 +205,18 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @param replacement the new node that replaces the current node in the scenegraph tree.
      */
     public void replaceWith(ZNode replacement) {
-	ZGroup parent = getParent();
-	ZCamera camera;
+        ZGroup parent = getParent();
 
-	if (parent != null) {
-	    repaint();		// Need to repaint old bounds of node.
+        if (parent != null) {
+            repaint();          // Need to repaint old bounds of node.
 
-				// Then, find out the position of this node in its parent child list,
-				// and swap it with its replacement
-	    ZNode[] cousins = parent.children;
-	    for (int i=0; i<cousins.length; i++) {
-		if (cousins[i] == this) {
-		    setParent(null);
-		    cousins[i] = replacement;
-		    replacement.setParent(parent);
-		    break;
-		}
-	    }
-	}
+                                // Then, find out the position of this node in its parent child list,
+                                // and swap it with its replacement
+            if (parent.children.replaceWith(this, replacement)) {
+                setParent(null);
+                replacement.setParent(parent);
+            }
+        }
     }
 
     /**
@@ -487,9 +225,9 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * This is done by moving this node to the end of its parent's child list.
      */
     public void raise() {
-	if (parent != null) {
-	    parent.raise(this);
-	}
+        if (parent != null) {
+            parent.raise(this);
+        }
     }
 
     /**
@@ -504,13 +242,13 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @param afterNode The node to raise this node after.
      */
      public void raiseTo(ZNode afterNode) {
-	 if (parent != null) {
-	     if (afterNode == null) {
-		 parent.raise(this);
-	     } else {
-		 parent.raiseTo(this, afterNode);
-	     }
-	 }
+         if (parent != null) {
+             if (afterNode == null) {
+                 parent.raise(this);
+             } else {
+                 parent.raiseTo(this, afterNode);
+             }
+         }
     }
 
     /**
@@ -519,9 +257,9 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * This is done by moving this node to the beginning of its parent's child list.
      */
     public void lower() {
-	if (parent != null) {
-	    parent.lower(this);
-	}
+        if (parent != null) {
+            parent.lower(this);
+        }
     }
 
     /**
@@ -536,13 +274,13 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @param beforeNode The node to lower this node before.
      */
      public void lowerTo(ZNode beforeNode) {
-	 if (parent != null) {
-	     if (beforeNode == null) {
-		 parent.lowerTo(this);
-	     } else {
-		 parent.lowerTo(this, beforeNode);
-	     }
-	 }
+         if (parent != null) {
+             if (beforeNode == null) {
+                 parent.lowerTo(this);
+             } else {
+                 parent.lowerTo(this, beforeNode);
+             }
+         }
     }
 
     //****************************************************************************
@@ -559,19 +297,19 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @param newParent The new parent of this node.
      */
     public void setParent(ZGroup newParent) {
-	if (parent != null) {
-	    parent.removeChild(this);
-	}
-	if (newParent != null) {
-	    newParent.addChild(this);
-	}
+        if (parent != null) {
+            parent.removeChild(this);
+        }
+        if (newParent != null) {
+            newParent.addChild(this);
+        }
     }
 
     /**
      * Set the parent of this node, and transform the node in such a way that it
      * doesn't move in global coordinates.  If the node does not already have a
      * transform node associated with it, then one will be created.
-     * This method operates on the handle (top) node of a decorator chain.     
+     * This method operates on the handle (top) node of a decorator chain.
      * <P>
      * This method may fire NODE_ADDED or NODE_REMOVED ZGroupEvents.
      * ZGroupEvents now contain a method <code>isModificationEvent()</code> to
@@ -579,65 +317,64 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * or removal.  A modification event is one in which a node changes
      * position in a single scenegraph or between two different scenegraphs.
      * A true addition or removal event is one in which a node is first
-     * added to or removed from a scenegraph.     
+     * added to or removed from a scenegraph.
      * @param newParent The new parent of this node.
      * @see ZGroupEvent
      */
     public void reparent(ZGroup newParent) {
-	AffineTransform origAT;
-	AffineTransform newParentAT;
-	AffineTransform newAT = null;
-	ZNode node = editor().getNode();
-	ZTransformGroup transform;
+        AffineTransform origAT;
+        AffineTransform newParentAT;
+        AffineTransform newAT = null;
+        ZNode node = editor().getNode();
+        ZTransformGroup transform;
 
-	origAT = node.getLocalToGlobalTransform();
-	newParentAT = newParent.getLocalToGlobalTransform();
+        origAT = node.getLocalToGlobalTransform();
+        newParentAT = newParent.getLocalToGlobalTransform();
 
-	try {
-	    newAT = newParentAT.createInverse();
-	} catch (NoninvertibleTransformException exc) {
-	    System.out.println("ZNode.reparent: Can't invert transform");
-	    return;
-	}
-	newAT.concatenate(origAT);
+        try {
+            newAT = newParentAT.createInverse();
+        } catch (NoninvertibleTransformException exc) {
+            throw new ZNoninvertibleTransformException(exc);
+        }
+        newAT.concatenate(origAT);
 
-	ZGroup origParent = parent;	
-	if (parent != null) {
-	    parent.removeChild(this,false);
-	}
-	if (newParent != null) {
-	    newParent.addChildImpl(this,false);
-	}
+        ZGroup origParent = parent;
+        if (parent != null) {
+            parent.removeChild(this,false);
+        }
+        if (newParent != null) {
+            newParent.addChildImpl(this,false);
+        }
 
-	// If the new parent is null - then this was just a normal
-	// removeChild and not a modification
-	if (origParent != null &&
-	    newParent == null) {
-	    origParent.fireGroupEvent(ZGroupEvent.NODE_REMOVED,this,false);
-	}
-	else if (origParent != null) {
-	    origParent.fireGroupEvent(ZGroupEvent.NODE_REMOVED,this,true);
-	}
+        // If the new parent is null - then this was just a normal
+        // removeChild and not a modification
+        if (origParent != null &&
+            newParent == null) {
+            origParent.childRemovedNotification(this,false);
+        }
+        else if (origParent != null) {
+            origParent.childRemovedNotification(this,true);
+        }
 
-	// If the original parent was null - then this was just a normal
-	// addChild and not a modification
-	if (newParent != null &&
-	    origParent == null) {
-	    parent.fireGroupEvent(ZGroupEvent.NODE_ADDED,this,false);
-	}
-	else if (newParent != null) {
-	    parent.fireGroupEvent(ZGroupEvent.NODE_ADDED,this,true);
-	}
-	
-	transform = node.editor().getTransformGroup();
-	transform.setTransform(newAT);
+        // If the original parent was null - then this was just a normal
+        // addChild and not a modification
+        if (newParent != null &&
+            origParent == null) {
+            parent.childAddedNotification(this,false);
+        }
+        else if (newParent != null) {
+            parent.childAddedNotification(this,true);
+        }
+
+        transform = node.editor().getTransformGroup();
+        transform.setTransform(newAT);
     }
 
     /**
      * Get the node's parent.
      */
     public final ZGroup getParent() {
-	return parent;
+        return parent;
     }
 
     /**
@@ -648,10 +385,10 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @see #getVolatileBounds()
      */
     protected void updateVolatility() {
-				// Update parent's volatility
-	if (parent != null) {
-	    parent.updateVolatility();
-	}
+                                // Update parent's volatility
+        if (parent != null) {
+            parent.updateVolatility();
+        }
     }
 
     /**
@@ -659,7 +396,7 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @return true if this node gets saved.
      */
     public final boolean isSavable() {
-	return savable;
+        return savable;
     }
 
     /**
@@ -668,7 +405,7 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @param s true if node should be saved
      */
     public void setSavable(boolean s) {
-	savable = s;
+        savable = s;
     }
 
     /**
@@ -678,7 +415,7 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @param pickable True if this node should be pickable.
      */
     public void setPickable(boolean pickable) {
-	this.pickable = pickable;
+        this.pickable = pickable;
     }
 
     /**
@@ -688,7 +425,7 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @return True if this node is pickable
      */
     public final boolean isPickable() {
-	return pickable;
+        return pickable;
     }
 
     /**
@@ -699,7 +436,7 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @param findable True if this node should be findable.
      */
     public void setFindable(boolean findable) {
-	this.findable = findable;
+        this.findable = findable;
     }
 
     /**
@@ -709,7 +446,27 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @return True if this node is findable
      */
     public final boolean isFindable() {
-	return findable;
+        return findable;
+    }
+
+    /**
+     * Specifies whether this node is selectable.
+     * When a node is not selectable, it will be ignored by
+     * the ZSelectionManager.
+     * @param findable True if this node should be selectable.
+     */
+    public void setSelectable(boolean selectable) {
+        this.selectable = selectable;
+    }
+
+    /**
+     * Determines if this node is selectable.
+     * When a node is not selectable, it will be ignored by
+     * the ZSelectionManager.
+     * @return True if this node is selectable
+     */
+    public final boolean isSelectable() {
+        return selectable;
     }
 
     /**
@@ -718,7 +475,7 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * receive global bounds events.
      */
     public final boolean hasNodeListener() {
-	return hasNodeListener;
+        return hasNodeListener;
     }
 
     //****************************************************************************
@@ -747,13 +504,13 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @return The bounds of the subtree rooted at this node in global coordinates.
      */
     public ZBounds getGlobalBounds() {
-	ZBounds globalBounds = getBounds();
-	if (parent != null) {
-	    AffineTransform at = parent.getLocalToGlobalTransform();
-	    globalBounds.transform(at);
-	}
+        ZBounds globalBounds = getBounds();
+        if (parent != null) {
+            AffineTransform at = parent.getLocalToGlobalTransform();
+            globalBounds.transform(at);
+        }
 
-	return globalBounds;
+        return globalBounds;
     }
 
     /**
@@ -766,17 +523,38 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @see #localToGlobal
      */
     public double globalToLocal(Point2D pt) {
-	double dz = 1.0;
-	AffineTransform at = getLocalToGlobalTransform();
-	try {
-	    AffineTransform inverse = at.createInverse();
-	    inverse.transform(pt, pt);
-	    dz = Math.max(inverse.getScaleX(), inverse.getScaleY());
-	} catch (NoninvertibleTransformException e) {
-	    System.out.println(e);
-	}
+        double dz = 1.0;
+        AffineTransform at = getLocalToGlobalTransform();
+        try {
+            at.inverseTransform(pt, pt);
+            dz = 1 / Math.max(at.getScaleX(), at.getScaleY());
+        } catch (NoninvertibleTransformException e) {
+            throw new ZNoninvertibleTransformException(e);
+        }
 
-	return dz;
+        return dz;
+    }
+
+    /**
+     * Transform the specified dimension (in global coordinates) to local coordinates
+     * in this node's coordinate system.
+     * The input dimension is modified by this method.
+     * <P>
+     * NOTE: Dimension2D's are abstract. When creating a new Dimension2D for use with Jazz
+     * we recoment that you use edu.umd.cs.util.ZDimension instead of java.awt.Dimension.
+     * ZDimension uses doubles internally, while java.awt.Dimension uses integers.
+     * <p>
+     * @return dz The change in scale from global coordinates to the node's local coordinate system.
+     * @see #localToGlobal
+     */
+    public double globalToLocal(Dimension2D aDimension) {
+        AffineTransform at = getLocalToGlobalTransform();
+
+        try {
+            return ZUtil.inverseTransformDimension(aDimension, at);
+        } catch (NoninvertibleTransformException e) {
+            throw new ZNoninvertibleTransformException(e);
+        }
     }
 
     /**
@@ -789,17 +567,12 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @see #localToGlobal
      */
     public double globalToLocal(Rectangle2D rect) {
-	double dz = 1.0;
-	AffineTransform at = getLocalToGlobalTransform();
-	try {
-	    AffineTransform inverse = at.createInverse();
-	    ZTransformGroup.transform(rect, inverse);
-	    dz = Math.max(inverse.getScaleX(), inverse.getScaleY());
-	} catch (NoninvertibleTransformException e) {
-	    System.out.println(e);
-	}
-
-	return dz;
+        AffineTransform at = getLocalToGlobalTransform();
+        try {
+            return ZUtil.inverseTransformRectangle(rect, at);
+        } catch (NoninvertibleTransformException e) {
+            throw new ZNoninvertibleTransformException(e);
+        }
     }
 
     /**
@@ -811,12 +584,28 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @see #globalToLocal
      */
     public double localToGlobal(Point2D pt) {
-	double dz;
-	AffineTransform at = getLocalToGlobalTransform();
-	at.transform(pt, pt);
-	dz = Math.max(at.getScaleX(), at.getScaleY());
+        double dz;
+        AffineTransform at = getLocalToGlobalTransform();
+        at.transform(pt, pt);
+        dz = Math.max(at.getScaleX(), at.getScaleY());
 
-	return dz;
+        return dz;
+    }
+
+    /**
+     * Transform the specified dimension (in this node's local coordinates) to global coordinates.
+     * The input dimension is modified by this method.
+     * <P>
+     * NOTE: Dimension2D's are abstract. When creating a new Dimension2D for use with Jazz
+     * we recoment that you use edu.umd.cs.util.ZDimension instead of java.awt.Dimension.
+     * ZDimension uses doubles internally, while java.awt.Dimension uses integers.
+     * <p>
+     * @return dz The change in scale from global coordinates to the node's local coordinate system.
+     * @see #globalToLocal
+     */
+    public double localToGlobal(Dimension2D aDimension) {
+        AffineTransform at = getLocalToGlobalTransform();
+        return ZUtil.transformDimension(aDimension, at);
     }
 
     /**
@@ -828,12 +617,11 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @see #globalToLocal
      */
     public double localToGlobal(Rectangle2D rect) {
-	double dz;
-	AffineTransform at = getLocalToGlobalTransform();
-	ZTransformGroup.transform(rect, at);
-	dz = Math.max(at.getScaleX(), at.getScaleY());
-
-	return dz;
+        double dz;
+        AffineTransform at = getLocalToGlobalTransform();
+        ZTransformGroup.transform(rect, at);
+        dz = Math.max(at.getScaleX(), at.getScaleY());
+        return dz;
     }
 
     /**
@@ -842,13 +630,15 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @return The concatenation of transforms from the root down to this node.
      */
     public AffineTransform getLocalToGlobalTransform() {
-	AffineTransform result = new AffineTransform();
+        AffineTransform result = null;
 
-	if (parent != null) {
-	    result.preConcatenate(parent.getLocalToGlobalTransform());
-	}
+        if (parent != null) {
+            result = parent.getLocalToGlobalTransform();
+        } else {
+            result = new AffineTransform();
+        }
 
-	return result;
+        return result;
     }
 
     /**
@@ -857,16 +647,16 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @return The inverse of the concatenation of transforms from the root down to this node.
      */
     public AffineTransform getGlobalToLocalTransform() {
-	AffineTransform at = getLocalToGlobalTransform();
-	AffineTransform globalToLocal = null;
+        AffineTransform at = getLocalToGlobalTransform();
+        AffineTransform globalToLocal = null;
 
-	try {
-	    globalToLocal = at.createInverse();
-	} catch (NoninvertibleTransformException exc) {
-	    System.out.println("ZNode.getGlobalToLocalTransform: Can't invert transform");
-	}
+        try {
+            globalToLocal = at.createInverse();
+        } catch (NoninvertibleTransformException exc) {
+            throw new ZNoninvertibleTransformException(exc);
+        }
 
-	return globalToLocal;
+        return globalToLocal;
     }
 
     /**
@@ -889,16 +679,16 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @see #reshape()
      */
     public void repaint() {
-	if (ZDebug.debug && ZDebug.debugRepaint) {
-	    System.out.println("ZNode.repaint: this = " + this);
-	    if (parent != null) {
-		System.out.println("ZNode.repaint: bounds = " + getBounds());
-	    }
-	}
+        if (ZDebug.debug && ZDebug.debugRepaint) {
+            System.out.println("ZNode.repaint: this = " + this);
+            if (parent != null) {
+                System.out.println("ZNode.repaint: bounds = " + getBounds());
+            }
+        }
 
-	if (parent != null) {
-	    parent.repaint(this, new AffineTransform(), null);
-	}
+        if (parent != null) {
+            parent.repaint(this, new AffineTransform(), null);
+        }
     }
 
     /**
@@ -908,14 +698,14 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @param repaintBounds The bounds to repaint
      */
     public void repaint(ZBounds repaintBounds) {
-	if (ZDebug.debug && ZDebug.debugRepaint) {
-	    System.out.println("ZNode.repaint(ZBounds): this = " + this);
-	    System.out.println("ZNode.repaint(ZBounds): bounds = " + repaintBounds);
-	}
+        if (ZDebug.debug && ZDebug.debugRepaint) {
+            System.out.println("ZNode.repaint(ZBounds): this = " + this);
+            System.out.println("ZNode.repaint(ZBounds): bounds = " + repaintBounds);
+        }
 
-	if (parent != null) {
-	    parent.repaint(repaintBounds);
-	}
+        if (parent != null) {
+            parent.repaint(repaintBounds);
+        }
     }
 
     /**
@@ -927,16 +717,16 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @param clipBounds The bounds to clip to when repainting
      */
     public void repaint(ZSceneGraphObject obj, AffineTransform at, ZBounds clipBounds) {
-	if (ZDebug.debug && ZDebug.debugRepaint) {
-	    System.out.println("ZNode.repaint(obj, at, bounds): this = " + this);
-	    System.out.println("ZNode.repaint(obj, at, bounds): obj = " + obj);
-	    System.out.println("ZNode.repaint(obj, at, bounds): at = " + at);
-	    System.out.println("ZNode.repaint(obj, at, bounds): clipBounds = " + clipBounds);
-	}
+        if (ZDebug.debug && ZDebug.debugRepaint) {
+            System.out.println("ZNode.repaint(obj, at, bounds): this = " + this);
+            System.out.println("ZNode.repaint(obj, at, bounds): obj = " + obj);
+            System.out.println("ZNode.repaint(obj, at, bounds): at = " + at);
+            System.out.println("ZNode.repaint(obj, at, bounds): clipBounds = " + clipBounds);
+        }
 
-	if (parent != null) {
-	    parent.repaint(obj, at, clipBounds);
-	}
+        if (parent != null) {
+            parent.repaint(obj, at, clipBounds);
+        }
     }
 
     /**
@@ -944,20 +734,50 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * to recompute their bounds.
      */
     protected void updateBounds() {
-	computeBounds();
-	fireNodeEvent(ZNodeEvent.BOUNDS_CHANGED, this);
-	fireNodeEvent(ZNodeEvent.GLOBAL_BOUNDS_CHANGED, this);
-	if (parent != null) {
-	    boolean hadListener = hasNodeListener;
-	    hasNodeListener = false;
-	    parent.updateBounds();
-	    hasNodeListener = hadListener;
-	}
+        double oldX = 0;
+        double oldY = 0;
+        double oldWidth = 0;
+        double oldHeight = 0;
+        boolean oldIsEmpty = true;
+        boolean hasOldBound = false;
+
+        if (bounds != null) {
+            oldX = bounds.getX();
+            oldY = bounds.getY();
+            oldWidth = bounds.getWidth();
+            oldHeight = bounds.getHeight();
+            oldIsEmpty = bounds.isEmpty();
+            hasOldBound = true;
+        }
+
+        computeBounds();
+
+        // if bounds did not change, return without event percolation
+        if (hasOldBound) {
+            if (oldX == bounds.getX() &&
+                oldY == bounds.getY() &&
+                oldWidth == bounds.getWidth() &&
+                oldHeight == bounds.getHeight() &&
+                oldIsEmpty == bounds.isEmpty()) {
+
+                return;
+            }
+        }
+
+        percolateEventUpSceneGraph(ZNodeEvent.createBoundsChangedEvent(this));
+        percolateEventUpSceneGraph(ZNodeEvent.createGlobalBoundsChangedEvent(this));
+
+        if (parent != null) {
+            boolean hadListener = hasNodeListener;
+            hasNodeListener = false;
+            parent.updateBounds();
+            hasNodeListener = hadListener;
+        }
     }
 
     //****************************************************************************
     //
-    //			Other Methods
+    //                  Other Methods
     //
     //****************************************************************************
 
@@ -970,16 +790,17 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @return The picked node, or null if none
      * @see ZDrawingSurface#pick(int, int)
      */
-
-   public boolean pick(Rectangle2D rect, ZSceneGraphPath path) {
-	if (pickable) {
-	    if (getBoundsReference().intersects(rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight())) {
-		path.setObject(this);
-		return true;
-	    }
-	}
-
-	return false;
+    public boolean pick(Rectangle2D rect, ZSceneGraphPath path) {
+        if (pickable) {
+            if (getBoundsReference().intersects(rect.getX(),
+                                                rect.getY(),
+                                                rect.getWidth(),
+                                                rect.getHeight())) {
+                path.setObject(this);
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -995,17 +816,36 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @see ZFindFilter
      */
     protected int findNodes(ZFindFilter filter, ArrayList nodes) {
-	int nodesSearched = 1;
+        int nodesSearched = 1;
+                                // Only search if node is findable.
+        if (findable) {
+                                // Check if this node is accepted by the filter
+            if (filter.accept(this)) {
+                nodes.add(this);
+            }
+        }
+        return nodesSearched;
+    }
 
-				// Only search if node is findable.
-	if (findable) {
-				// Check if this node is accepted by the filter
-	    if (filter.accept(this)) {
-		nodes.add(this);
-	    }
-	}
-
-	return nodesSearched;
+    /**
+     * Notifies all listeners that have registered interest for
+     * notification on this event type, percolate up the scenegraph
+     * looking for listeners. Stop when the event is consumed. The event
+     * instance is lazily created using the parameters passed into
+     * the fire method.  The listener list is processed in last to
+     * first order.
+     * @param id The event id (BOUNDS_CHANGED or GLOBAL_BOUNDS_CHANGED)
+     * @param node The node being affected.
+     * @see EventListenerList
+     */
+    protected void percolateEventUpSceneGraph(ZEvent anEvent) {
+        ZNode node = this;
+        do {
+            if (node.hasNodeListener) {
+                node.fireEvent(anEvent);
+            }
+            node = node.getParent();
+        } while ((node != null) && (!anEvent.isConsumed()));
     }
 
     /**
@@ -1014,16 +854,16 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @see ZRoot
      */
     public ZRoot getRoot() {
-	ZNode node = this;
+        ZNode node = this;
 
-	do {
-	    if (node instanceof ZRoot) {
-		return (ZRoot)node;
-	    }
-	    node = node.getParent();
-	} while (node != null);
+        do {
+            if (node instanceof ZRoot) {
+                return (ZRoot)node;
+            }
+            node = node.getParent();
+        } while (node != null);
 
-	return null;
+        return null;
     }
 
     /**
@@ -1032,17 +872,17 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @return true of queryNode is an ancestor of node.
      */
     public boolean isDescendentOf(ZNode queryNode) {
-	ZNode node = parent;
-	boolean found = false;
+        ZNode node = parent;
+        boolean found = false;
 
-	while (node != null) {
-	    if (node == queryNode) {
-		found = true;
-		break;
-	    }
-	    node = node.getParent();
-	}
-	return found;
+        while (node != null) {
+            if (node == queryNode) {
+                found = true;
+                break;
+            }
+            node = node.getParent();
+        }
+        return found;
     }
 
     /**
@@ -1051,121 +891,7 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @return true of queryNode is an descendent of node.
      */
     public boolean isAncestorOf(ZNode queryNode) {
-	return queryNode.isDescendentOf(this);
-    }
-
-    /**
-     * Add an arbitrary key/value "client property" to this component.
-     * <p>
-     * The <code>get/putClientProperty<code> methods provide access to
-     * a small per-instance hashtable. Callers can use get/putClientProperty
-     * to annotate components that were created by another module.
-     * <p>
-     * If value is null this method will remove the property.
-     *
-     * @see #getClientProperty
-     */
-    public void putClientProperty(Object key, Object value) {
-	int i;
-	ZProperty prop;
-
-	if (value == null) {
-				// Null value - try to remove property
-	    for (i=0; i<numClientProperties; i++) {
-		prop = clientProperties[i];
-		if (prop.getKey().equals(key)) {
-				// Remove property by sliding down array elements.
-		    for (int j=i; j<(numClientProperties - 1); j++) {
-			clientProperties[j] = clientProperties[j+1];
-		    }
-		    numClientProperties--;
-
-				// If no properties left, then remove data
-		    if (numClientProperties == 0) {
-			clientProperties = null;
-		    }
-		    break;
-		}
-	    }
-	} else {
-				// Add property
-				// First check to see if property already exists in which case we just update it
-	    boolean found = false;
-	    for (i=0; i<numClientProperties; i++) {
-		prop = clientProperties[i];
-		if (prop.getKey().equals(key)) {
-		    prop.set(key, value);
-		    found = true;
-		    break;
-		}
-	    }
-	    if (!found) {
-				// Or, last case - add new property
-		prop = new ZProperty(key, value);
-		addClientProperty(prop);
-	    }
-	}
-    }
-
-    /**
-     * Internal method to add the specified property.
-     * @param prop The new property.
-     */
-    protected void addClientProperty(ZProperty prop) {
-	if (clientProperties == null) {
-	    clientProperties = new ZProperty[1];
-	}
-
-				// Possibly allocate space.
-	try {
-	    clientProperties[numClientProperties] = prop;
-	} catch (ArrayIndexOutOfBoundsException e) {
-	    ZProperty[] newProps = new ZProperty[(numClientProperties == 0) ? 1 : (2 * numClientProperties)];
-	    System.arraycopy(clientProperties, 0, newProps, 0, numClientProperties);
-	    clientProperties=  newProps;
-	    clientProperties[numClientProperties] = prop;
-	}
-	numClientProperties++;
-    }
-
-    /**
-     * Returns the value of the property with the specified key.  Only
-     * properties added with <code>putClientProperty</code> will return
-     * a non-null value.
-     *
-     * @return the value of this property or null
-     * @see #putClientProperty
-     */
-    public Object getClientProperty(Object key) {
-	Object value = null;
-	ZProperty prop;
-
-	for (int i=0; i<numClientProperties; i++) {
-	    prop = clientProperties[i];
-	    if (prop.getKey().equals(key)) {
-		value = prop.getValue();
-		break;
-	    }
-	}
-
-	return value;
-    }
-
-    /**
-     * Generate a string that represents this object for debugging.
-     * @return the string that represents this object for debugging
-     * @see ZDebug#dump
-     */
-    public String dump() {
-	String str = super.dump();
-	ZProperty prop;
-
-	for (int i=0; i<numClientProperties; i++) {
-	    prop = clientProperties[i];
-	    str += "\n Property '" + prop.getKey() + "': " + prop.getValue();
-	}
-
-	return str;
+        return queryNode.isDescendentOf(this);
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -1179,33 +905,17 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @param out The stream that this object writes into
      */
     public void writeObject(ZObjectOutputStream out) throws IOException {
-	super.writeObject(out);
+        super.writeObject(out);
 
-	if (pickable != pickable_DEFAULT) {
-	    out.writeState("boolean", "pickable", pickable);
-	}
-	if (findable != findable_DEFAULT) {
-	    out.writeState("boolean", "findable", findable);
-	}
-	if (clientProperties != null) {
-				// Array can have some empty slots, so copy them over
-	    ZProperty[] copyClientProperties = new ZProperty[numClientProperties];
-	    System.arraycopy(clientProperties, 0, copyClientProperties, 0, numClientProperties);
-	    out.writeState("List", "properties", Arrays.asList(copyClientProperties));
-	}
-    }
-
-    /**
-     * Specify which objects this object references in order to write out the scenegraph properly
-     * @param out The stream that this object writes into
-     */
-    public void writeObjectRecurse(ZObjectOutputStream out) throws IOException {
-	super.writeObjectRecurse(out);
-
-				// Add properties
-	for (int i=0; i<numClientProperties; i++) {
-	    out.addObject(clientProperties[i]);
-	}
+        if (pickable != pickable_DEFAULT) {
+            out.writeState("boolean", "pickable", pickable);
+        }
+        if (findable != findable_DEFAULT) {
+            out.writeState("boolean", "findable", findable);
+        }
+        if (selectable != selectable_DEFAULT) {
+            out.writeState("boolean", "selectable", selectable);
+        }
     }
 
     /**
@@ -1219,34 +929,25 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @param fieldValue The value of the field
      */
     public void setState(String fieldType, String fieldName, Object fieldValue) {
-	super.setState(fieldType, fieldName, fieldValue);
+        super.setState(fieldType, fieldName, fieldValue);
 
- 	if (fieldName.compareTo("pickable") == 0) {
-	    setPickable(((Boolean)fieldValue).booleanValue());
-	} else if (fieldName.compareTo("findable") == 0) {
-	    setFindable(((Boolean)fieldValue).booleanValue());
-	} else if (fieldName.compareTo("properties") == 0) {
-	    ZProperty prop;
-	    for (Iterator i=((Vector)fieldValue).iterator(); i.hasNext();) {
-		prop = (ZProperty)i.next();
-		addClientProperty(prop);
-	    }
-	}
+        if (fieldName.compareTo("pickable") == 0) {
+            setPickable(((Boolean)fieldValue).booleanValue());
+        } else if (fieldName.compareTo("findable") == 0) {
+            setFindable(((Boolean)fieldValue).booleanValue());
+        } else if (fieldName.compareTo("selectable") == 0) {
+            setSelectable(((Boolean)fieldValue).booleanValue());
+        }
     }
 
     /**
      * Node doesn't get written out if save property is false
      */
     public ZSerializable writeReplace() {
-	if (savable) {
-	    return this;
-	} else {
-	    return null;
-	}
-    }
-
-    private void writeObject(ObjectOutputStream out) throws IOException {
-	trimToSize();   // Remove extra unused array elements
-	out.defaultWriteObject();
+        if (savable) {
+            return this;
+        } else {
+            return null;
+        }
     }
 }

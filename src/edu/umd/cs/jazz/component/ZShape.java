@@ -14,7 +14,8 @@ import edu.umd.cs.jazz.io.*;
 import edu.umd.cs.jazz.util.*;
 
 /**
- * <b>ZShape</b> is a graphic object that represents a pre-defined java.awt.Shape
+ * <b>ZShape</b> is an abstract object, meant to be extended by visual components
+ * that wrap standard java.awt.Shapes.
  *
  * <P>
  * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
@@ -24,269 +25,74 @@ import edu.umd.cs.jazz.util.*;
  * term persistence.
  *
  * @author  James Mokwa
+ * @author  Jesse Grosjean
  */
-public class ZShape extends ZVisualComponent implements ZPenColor, ZFillColor, ZStroke, Serializable {
-    static public final Color  penColor_DEFAULT = Color.black;
-    static public final Color  fillColor_DEFAULT = Color.white;
-    static public final double  penWidth_DEFAULT = 1.0;
-    static public final boolean absPenWidth_DEFAULT = false;
+public abstract class ZShape extends ZBasicVisualComponent {
 
-    /**
-     * Pen color for perimeter of shape
-     */
-    private Color     penColor  = penColor_DEFAULT;
-
-    /**
-     * Pen width of pen color.
-     */
-    private double     penWidth  = penWidth_DEFAULT;
-
-    /**
-     * Specifies if pen width is an absolute specification (independent of camera magnification)
-     */
-    private boolean    absPenWidth = absPenWidth_DEFAULT;
-
-    /**
-     * Fill color for interior of shape.
-     */
-    private Color     fillColor = fillColor_DEFAULT;
-
-    /**
-     * The user defined shape.
-     */
-    private transient Shape shape;
-
-    /**
-     * Stroke for rendering pen color
-     */
-    private transient Stroke stroke = new BasicStroke((float)penWidth_DEFAULT, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
-
-    /**
-     * points for flattened version of current shape.
-     */
-    private double xp[], yp[];
-
-    /**
-     * Number of points in flattened shape.
-     */
-    private int np;
-
-    //****************************************************************************
-    //
-    //                Constructors
-    //
-    //***************************************************************************
+    private static AffineTransform sharedTempTransform = new AffineTransform();
 
     /**
      * Constructs a new visual component based on a java.awt.Shape
      * @param aShape a pre-defined shape.
      */
     public ZShape() {
-	shape = new GeneralPath();
-	reshape();
+        super();
     }
-
-    /**
-     * Constructs a new visual component based on a java.awt.Shape
-     * @param aShape a pre-defined shape.
-     */
-    public ZShape(Shape shape) {
-	setShape(shape);
-    }
-
-    /**
-     * Returns a clone of this object.
-     *
-     * @see ZSceneGraphObject#duplicateObject
-     */
-    protected Object duplicateObject() {
-	ZShape newShape = (ZShape)super.duplicateObject();
-	return newShape;	
-    }
-
-    //****************************************************************************
-    //
-    //			Get/Set and pairs
-    //
-    //***************************************************************************
 
     /**
      * Return the current shape.
      */
-    public Shape getShape() {
-	return(shape);
+    public abstract Shape getShape();
+
+    /**
+     * Returns the x coordinate of the upper left corner of
+     * the framing rectangle in <code>double</code> precision.
+     * @return the x coordinate of the upper left corner of
+     * the framing rectangle.
+     */
+    public double getX() {
+        return getFrame().getX();
     }
 
     /**
-     * Set the current shape.
-     * @param aShape a new shape.
+     * Returns the Y coordinate of the upper left corner of
+     * the framing rectangle in <code>double</code> precision.
+     * @return the y coordinate of the upper left corner of
+     * the framing rectangle.
      */
-    public void setShape(Shape aShape) {
-	shape = aShape;
-	computeFlattenedShape();
-	reshape();
-    }
-
-
-    /**
-     * Recompute the points of  a flattened version of the current shape.
-     */
-    protected void computeFlattenedShape() {
-	PathIterator pi = shape.getPathIterator(null);
-	FlatteningPathIterator fpi = new FlatteningPathIterator(pi, 1);
-	double points[] = new double[6];
-
-	for (np = 0; !fpi.isDone(); fpi.next()) {
-	    np++;
-	}
-
-	if (np == 0) {
-	    return;
-	}
-
-	xp = new double[np];
-	yp = new double[np];
-	double moveToX = 0;
-	double moveToY = 0;
-	int i = 0;
-	pi = shape.getPathIterator(null);
-	fpi = new FlatteningPathIterator(pi, 1);
-	while (fpi.isDone() == false) {
-	    int type = fpi.currentSegment(points);
-	    
-	    switch(type) {
-	    case PathIterator.SEG_MOVETO:
-		moveToX = points[0];
-		moveToY = points[1];
-		xp[i] = moveToX;
-		yp[i] = moveToY;
-		break;
-
-	    case PathIterator.SEG_LINETO:
-		xp[i] = points[0];
-		yp[i] = points[1];
-		break;
-
-	    case PathIterator.SEG_CLOSE:
-		xp[i] = moveToX;
-		yp[i] = moveToY;
-		break;
-	    }
-	    i++;
-	    fpi.next();
-	}
+    public double getY() {
+        return getFrame().getY();
     }
 
     /**
-     * Get the width of the pen used to draw the perimeter of this shape.
-     * If the pen width is absolute
-     * (independent of magnification), then this returns 0.
-     * @return the pen width.
+     * Return the width of this ellipse.
+     * @return the width.
      */
-    public double getPenWidth() {
-	return penWidth;
+    public double getWidth() {
+        return getFrame().getWidth();
     }
 
     /**
-     * Set the width of the pen used to draw the perimeter of this shape.
-     * @param width the pen width.
+     * Return the height of this ellipse.
+     * @return the height.
      */
-    public void setPenWidth(double width) {
-	penWidth = width;
-	absPenWidth = false;
-	setVolatileBounds(false);
-	stroke = new BasicStroke((float)penWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
-	reshape();
+    public double getHeight() {
+        return getFrame().getHeight();
     }
 
     /**
-     * Set the absolute width of the pen used to draw the perimeter of this shape.
-     * @param width the pen width.
+     * Return the bounds of the internal java.awt.Shape structure. This
+     * is different then getBounds() because it does not take the lineWidth
+     * into consideration.
+     * @return the height.
      */
-    public void setAbsPenWidth(double width) {
-	penWidth = width;
-	absPenWidth = true;
-	setVolatileBounds(true);
-	reshape();
-    }
-
-    /**
-     * Get the absolute width of the pen used to draw the perimeter of this shape.
-     * If the pen width is not absolute
-     * (dependent on magnification), then this returns 0.
-     * @return the pen width.
-     * @see #getPenWidth
-     */
-    public double getAbsPenWidth() {
-	if (absPenWidth) {
-	    return penWidth;
-	} else {
-	    return 0.0d;
-	}
-    }
-
-    /**
-     * Get the stroke used to draw the visual component.
-     * @return the stroke.
-     */
-    public Stroke getStroke() {
-	return stroke;
-    }
-
-    /**
-     * Set the stroke used to draw the visual component.
-     * @param stroke the stroke.
-     */
-    public void setStroke(Stroke stroke) {
-	this.stroke = stroke;
-	reshape();
-    }
-
-    /**
-     * Get the pen color of this shape.
-     * @return the pen color.
-     */
-    public Color getPenColor() {
-	return penColor;
-    }
-
-    /**
-     * Set the pen color of this shape.
-     * @param color the pen color, or null if none.
-     */
-    public void setPenColor(Color color) {
-	boolean boundsChanged = false;
-
-				// If turned pen color on or off, then need to recompute bounds
-	if (((penColor == null) && (color != null)) ||
-	    ((penColor != null) && (color == null))) {
-	    boundsChanged = true;
-	}
-	penColor = color;
-
-	if (boundsChanged) {
-	    reshape();
-	} else {
-	    repaint();
-	}
-    }
-
-    /**
-     * Get the fill color of this shape.
-     * @return the fill color.
-     */
-    public Color getFillColor() {
-	return fillColor;
-    }
-
-    /**
-     * Set the fill color of this shape.
-     * @param color the fill color, or null if none.
-     */
-    public void setFillColor(Color color) {
-	fillColor = color;
-
-	repaint();
+    public Rectangle2D getFrame() {
+        Shape shape = getShape();
+        if (shape != null) {
+            return shape.getBounds2D();
+        } else {
+            return new Rectangle2D.Double();
+        }
     }
 
     /**
@@ -297,30 +103,88 @@ public class ZShape extends ZVisualComponent implements ZPenColor, ZFillColor, Z
      * @see ZDrawingSurface#pick(int, int)
      */
     public boolean pick(Rectangle2D rect, ZSceneGraphPath path) {
-	boolean picked = false;
+        if (pickBounds(rect)) {
+            double currentPenWidth = getPenWidthForCurrentContext();
+            if (fillPaint != null && getShape().intersects(rect)) {
+                return true;
+            } else {
+                return (penPaint != null && pickStroke(rect, currentPenWidth));
+            }
+        }
+        return false;
+    }
 
-	if (pickBounds(rect)) {
-	    if (fillColor != null) {
-		picked = ZUtil.intersectsPolygon(rect, xp, yp);
-	    }
-	    if (!picked && (penColor != null)) {
-		double p;
-		if (penColor == null) {
-		    p = 0.0;
-		} else {
-		    if (absPenWidth) {
-			ZRenderContext rc = getRoot().getCurrentRenderContext();
-			double mag = (rc == null) ? 1.0f : rc.getCameraMagnification();
-			p = penWidth / mag;
-		    } else {
-			p = penWidth;
-		    }
-		}
-		picked = ZUtil.rectIntersectsPolyline(rect, xp, yp, p);
-	    }
-	}
+    /**
+     * Returns true if the specified rectangle intersects the shapes stroke.
+     * @param rect Pick rectangle of object coordinates.
+     * @param aPenWidth the current pen width.
+     */
+    protected boolean pickStroke(Rectangle2D aRect, double aPenWidth) {
+        if (penPaint == null)
+            return false;
 
-	return picked;
+        double px = (aRect.getX() + (0.5 * aRect.getWidth()));
+        double py = (aRect.getY() + (0.5 * aRect.getHeight()));
+        double squareDist;
+        double minSquareDist = ((0.5 * aPenWidth) + (0.5 * ((0.5 * aRect.getWidth()) + (0.5 * aRect.getHeight()))));
+
+        boolean isFirstSegment = true;
+        double firstX = 0;
+        double firstY = 0;
+        double currentX = 0;
+        double currentY = 0;
+        double lastX = 0;
+        double lastY = 0;
+
+        double[] cs = new double[6];
+
+        AffineTransform aTransform = null;
+
+        if (absPenWidth) {
+            aTransform = getStrokeTransformForAbsPenWidth(aPenWidth);
+        }
+
+        FlatteningPathIterator i = new FlatteningPathIterator(getShape().getPathIterator(aTransform), 1);
+        while (!i.isDone()) {
+            switch (i.currentSegment(cs)) {
+                case PathIterator.SEG_LINETO: {
+                    lastX = currentX;
+                    lastY = currentY;
+                    currentX = cs[0];
+                    currentY = cs[1];
+                    squareDist = Line2D.ptSegDist(lastX, lastY, currentX, currentY, px, py);
+                    if (squareDist <= minSquareDist) {
+                        return true;
+                    }
+                    break;
+                }
+                case PathIterator.SEG_MOVETO: {
+                    currentX = cs[0];
+                    currentY = cs[1];
+                    break;
+                }
+                case PathIterator.SEG_CLOSE: {
+                    lastX = currentX;
+                    lastY = currentY;
+                    currentX = firstX;
+                    currentY = firstY;
+                    squareDist = Line2D.ptSegDist(lastX, lastY, currentX, currentY, px, py);
+                    if (squareDist <= minSquareDist) {
+                        return true;
+                    }
+                    break;
+                }
+            }
+
+            if (isFirstSegment) {
+                firstX = cs[0];
+                firstY = cs[1];
+                isFirstSegment = false;
+            }
+
+            i.next();
+        }
+        return false;
     }
 
     /**
@@ -335,21 +199,64 @@ public class ZShape extends ZVisualComponent implements ZPenColor, ZFillColor, Z
      * @param <code>renderContext</code> The graphics context to paint into.
      */
     public void render(ZRenderContext renderContext) {
-	Graphics2D g2 = renderContext.getGraphics2D();
+        Graphics2D g2 = renderContext.getGraphics2D();
 
-	if (fillColor != null) {
-	    g2.setColor(fillColor);
-	    g2.fill(shape);
-	}
-	if (penColor != null) {
-	    if (absPenWidth) {
-		double pw = penWidth / renderContext.getCompositeMagnification();
-		stroke = new BasicStroke((float)pw, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
-	    }
-	    g2.setStroke(stroke);
-	    g2.setColor(penColor);
-	    g2.draw(shape);
-	}
+        if (fillPaint != null) {
+            g2.setPaint(fillPaint);
+            g2.fill(getShape());
+        }
+        if (penPaint != null) {
+            if (absPenWidth) {
+                double pw = penWidth / renderContext.getCompositeMagnification();
+
+                AffineTransform saveTransform = g2.getTransform();
+                AffineTransform newTransform = getStrokeTransformForAbsPenWidth(pw);
+
+                double scale = newTransform.getScaleX();
+
+                // If the abs line is growing so much that its overtaking the bounds
+                // of the object then just fill the bounds with the line paint.
+                if (scale <= 0) {
+                    g2.setPaint(penPaint);
+                    g2.fill(getBoundsReference());
+                    return;
+                }
+
+                pw *= 1 / scale;
+                g2.transform(newTransform);
+
+                if (stroke != null) {
+                    stroke = new BasicStroke((float)pw, stroke.getEndCap(), stroke.getLineJoin());
+                } else {
+                    stroke = new BasicStroke((float)pw, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
+                }
+
+                g2.setStroke(stroke);
+                g2.setPaint(penPaint);
+                g2.draw(getShape());
+
+                g2.setTransform(saveTransform);
+            } else {
+                g2.setStroke(stroke);
+                g2.setPaint(penPaint);
+                g2.draw(getShape());
+            }
+        }
+    }
+
+    /**
+     * This method returns a transform used for the implementation of abs pen width.
+     */
+    protected AffineTransform getStrokeTransformForAbsPenWidth(double aPenWidth) {
+        double scale = (bounds.getWidth()-aPenWidth)/bounds.getWidth();
+        Point2D center = bounds.getCenter2D();
+
+        sharedTempTransform.setToIdentity();
+        sharedTempTransform.translate(center.getX(), center.getY());
+        sharedTempTransform.scale(scale, scale);
+        sharedTempTransform.translate(-center.getX(), -center.getY());
+
+        return sharedTempTransform;
     }
 
     /**
@@ -358,309 +265,16 @@ public class ZShape extends ZVisualComponent implements ZPenColor, ZFillColor, Z
      * directly.  Instead, it is called by <code>updateBounds</code> when needed.
      */
     protected void computeBounds() {
-	double xmin, ymin, xmax, ymax;
+        bounds.reset();
+        Rectangle2D shapeBounds = getFrame();
 
-	bounds.reset();
-	if (np == 0) {
-	    return;
-	}
+        double aPenWidth = getPenWidth();
+        double aHalfPenWidth = aPenWidth * 0.5;
 
-	xmin = xp[0];
-	ymin = yp[0];
-	xmax = xp[0];
-	ymax = yp[0];
-	for (int i=1; i<np; i++) {
-	    if (xp[i] < xmin) xmin = xp[i];
-	    if (yp[i] < ymin) ymin = yp[i];
-	    if (xp[i] > xmax) xmax = xp[i];
-	    if (yp[i] > ymax) ymax = yp[i];
-	}
-
-				// Expand the bounds to accomodate the pen width
-	double p, p2;
-	if (penColor == null) {
-	    p = 0.0;
-	} else {
-	    if (absPenWidth) {
-		ZRenderContext rc = getRoot().getCurrentRenderContext();
-		double mag = (rc == null) ? 1.0f : rc.getCameraMagnification();
-		p = penWidth / mag;
-	    } else {
-		p = penWidth;
-	    }
-	}
-	p2 = 0.5 * p;
-	
-	xmin -= p2;
-	ymin -= p2;
-	xmax += p2;
-	ymax += p2;
-
-	bounds.setRect(xmin, ymin, xmax - xmin, ymax - ymin);
+                            // Expand the bounds to accomodate the pen width
+        bounds.setRect(shapeBounds.getX() - aHalfPenWidth, shapeBounds.getY() - aHalfPenWidth,
+                       shapeBounds.getWidth() + aPenWidth, shapeBounds.getHeight() + aPenWidth);
     }
 
-    /////////////////////////////////////////////////////////////////////////
-    //
-    // Saving
-    //
-    /////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Write out all of this object's state.
-     * @param out The stream that this object writes into
-     */
-    public void writeObject(ZObjectOutputStream out) throws IOException {
-	super.writeObject(out);
-
-	if ((penColor != null) && (penColor != penColor_DEFAULT)) {
-	    out.writeState("java.awt.Color", "penColor", penColor);
-	}
-	if ((fillColor != null) && (fillColor != fillColor_DEFAULT)) {
-	    out.writeState("java.awt.Color", "fillColor", fillColor);
-	}
-	if (absPenWidth != absPenWidth_DEFAULT) {
-	    out.writeState("boolean", "absPenWidth", absPenWidth);
-	}
-	if (getPenWidth() != penWidth_DEFAULT) {
-	    out.writeState("double", "penWidth", getPenWidth());
-	}
-
-	PathIterator pi = shape.getPathIterator(null);
-
-				// write out winding rule
-	out.writeState("int", "windingRule", pi.getWindingRule());
-
-	int type;
-	Vector coords;
-	double[] coordinates = new double[6];
-	while (pi.isDone() == false) {
-	    type = pi.currentSegment(coordinates);
-
-				// write out segment coordinates
-	    switch(type) {
-	    case PathIterator.SEG_MOVETO:
-		coords = new Vector();
-		coords.add(new Double(coordinates[0]));
-		coords.add(new Double(coordinates[1]));
-		out.writeState("shape", "moveTo", coords);
-		break;
-
-	    case PathIterator.SEG_LINETO:
-		coords = new Vector();
-		coords.add(new Double(coordinates[0]));
-		coords.add(new Double(coordinates[1]));
-		out.writeState("shape", "lineTo", coords);
-		break;
-	    case PathIterator.SEG_QUADTO:
-		coords = new Vector();
-		coords.add(new Double(coordinates[0]));
-		coords.add(new Double(coordinates[1]));
-		coords.add(new Double(coordinates[2]));
-		coords.add(new Double(coordinates[3]));
-		out.writeState("shape", "quadTo", coords);
-		break;
-	    case PathIterator.SEG_CUBICTO:
-		coords = new Vector();
-		coords.add(new Double(coordinates[0]));
-		coords.add(new Double(coordinates[1]));
-		coords.add(new Double(coordinates[2]));
-		coords.add(new Double(coordinates[3]));
-		coords.add(new Double(coordinates[4]));
-		coords.add(new Double(coordinates[5]));
-		out.writeState("shape", "curveTo", coords);
-		break;
-	    case PathIterator.SEG_CLOSE:
-		out.writeState("shape", "close", 0);
-		break;
-	    default:
-		break;
-	    }
-	    pi.next();
-	}
-    }
-
-    /**
-     * Set some state of this object as it gets read back in.
-     * After the object is created with its default no-arg constructor,
-     * this method will be called on the object once for each bit of state
-     * that was written out through calls to ZObjectOutputStream.writeState()
-     * within the writeObject method.
-     * @param fieldType The fully qualified type of the field
-     * @param fieldName The name of the field
-     * @param fieldValue The value of the field
-     */
-    public void setState(String fieldType, String fieldName, Object fieldValue) {
-	super.setState(fieldType, fieldName, fieldValue);
-
-	GeneralPath path = new GeneralPath(shape);
-	double c1, c2, c3, c4, c5, c6;
-	if (fieldName.compareTo("penColor") == 0) {
-	    setPenColor((Color)fieldValue);
-	} else if (fieldName.compareTo("fillColor") == 0) {
-	    setFillColor((Color)fieldValue);
-	} else if (fieldName.compareTo("penWidth") == 0) {
-	    if (absPenWidth) {
-		setAbsPenWidth(((Double)fieldValue).doubleValue());
-	    } else {
-		setPenWidth(((Double)fieldValue).doubleValue());
-	    }
-	} else if (fieldName.compareTo("windingRule") == 0) {
-	    path.setWindingRule(((Integer)fieldValue).intValue());
-	} else if (fieldName.compareTo("moveTo") == 0) {
-	    Vector dim = (Vector)fieldValue;
-	    c1 = ((Double)dim.get(0)).doubleValue();
-	    c2 = ((Double)dim.get(1)).doubleValue();
-	    path.moveTo((float)c1, (float)c2);
-	} else if (fieldName.compareTo("lineTo") == 0) {
-	    Vector dim = (Vector)fieldValue;
-	    c1 = ((Double)dim.get(0)).doubleValue();
-	    c2 = ((Double)dim.get(1)).doubleValue();
-	    path.lineTo((float)c1, (float)c2);
-	} else if (fieldName.compareTo("quadTo") == 0) {
-	    Vector dim = (Vector)fieldValue;
-	    c1 = ((Double)dim.get(0)).doubleValue();
-	    c2 = ((Double)dim.get(1)).doubleValue();
-	    c3 = ((Double)dim.get(2)).doubleValue();
-	    c4 = ((Double)dim.get(3)).doubleValue();
-	    path.quadTo((float)c1, (float)c2, (float)c3, (float)c4);
-	} else if (fieldName.compareTo("curveTo") == 0) {
-	    Vector dim = (Vector)fieldValue;
-	    c1 = ((Double)dim.get(0)).doubleValue();
-	    c2 = ((Double)dim.get(1)).doubleValue();
-	    c3 = ((Double)dim.get(2)).doubleValue();
-	    c4 = ((Double)dim.get(3)).doubleValue();
-	    c5 = ((Double)dim.get(4)).doubleValue();
-	    c6 = ((Double)dim.get(5)).doubleValue();
-	    path.curveTo((float)c1, (float)c2, (float)c3, (float)c4, (float)c5, (float)c6);
-	} else if (fieldName.compareTo("close") == 0) {
-	    path.closePath();
-	}
-	shape = path;
-	computeFlattenedShape();
-	reshape();
-    }
-
-    private void writeObject(ObjectOutputStream out) throws IOException {
-	out.defaultWriteObject();
-				// write out winding rule
-	PathIterator pi = shape.getPathIterator(null);
-	out.writeInt(pi.getWindingRule());
-
-				// write out number of segments
-	int segCount = 0;
-	while (pi.isDone() == false) {
-	    segCount++;
-	    pi.next();
-	}
-	out.writeInt(segCount);
-
-	int type;
-	double[] coordinates = new double[6];
-	pi = shape.getPathIterator(null);
-	while (pi.isDone() == false) {
-	    type = pi.currentSegment(coordinates);
-				// write out segment type
-	    out.writeInt(type);
-
-				// write out segment coordinates
-	    switch(type) {
-	    case PathIterator.SEG_MOVETO:
-		out.writeDouble(coordinates[0]);
-		out.writeDouble(coordinates[1]);
-		break;
-
-	    case PathIterator.SEG_LINETO:
-		out.writeDouble(coordinates[0]);
-		out.writeDouble(coordinates[1]);
-		break;
-	    case PathIterator.SEG_QUADTO:
-		out.writeDouble(coordinates[0]);
-		out.writeDouble(coordinates[1]);
-		out.writeDouble(coordinates[2]);
-		out.writeDouble(coordinates[3]);
-		break;
-	    case PathIterator.SEG_CUBICTO:
-		out.writeDouble(coordinates[0]);
-		out.writeDouble(coordinates[1]);
-		out.writeDouble(coordinates[2]);
-		out.writeDouble(coordinates[3]);
-		out.writeDouble(coordinates[4]);
-		out.writeDouble(coordinates[5]);
-		break;
-	    case PathIterator.SEG_CLOSE:
-		break;
-	    default:
-		break;
-	    }
-	    pi.next();
-	}
-
-				// write Stroke
-	int cap = (int)((BasicStroke)stroke).getEndCap();
- 	out.writeInt(cap);
-
-	int join = (int)((BasicStroke)stroke).getLineJoin();
-	out.writeInt(join);
-    }	
-
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-	in.defaultReadObject();
-
-				// read winding rule
-	int wind = in.readInt();
-	GeneralPath path = new GeneralPath(wind);
-				// read number of segments
-	int segCount = in.readInt();
-
-	int type;
-	double c1, c2, c3, c4, c5, c6;
-	for (int i=0; i<segCount; i++) {
-				// read segment type
-	    type = in.readInt();
-				// read segment coordinates
-	    switch(type) {
-	    case PathIterator.SEG_MOVETO:
-		c1 = in.readDouble();
-		c2 = in.readDouble();
-		path.moveTo((float)c1, (float)c2);
-		break;
-
-	    case PathIterator.SEG_LINETO:
-		c1 = in.readDouble();
-		c2 = in.readDouble();
-		path.lineTo((float)c1, (float)c2);
-		break;
-	    case PathIterator.SEG_QUADTO:
-		c1 = in.readDouble();
-		c2 = in.readDouble();
-		c3 = in.readDouble();
-		c4 = in.readDouble();
-		path.quadTo((float)c1, (float)c2, (float)c3, (float)c4);
-		break;
-	    case PathIterator.SEG_CUBICTO:
-		c1 = in.readDouble();
-		c2 = in.readDouble();
-		c3 = in.readDouble();
-		c4 = in.readDouble();
-		c5 = in.readDouble();
-		c6 = in.readDouble();
-		path.curveTo((float)c1, (float)c2, (float)c3, (float)c4, (float)c5, (float)c6);
-		break;
-	    case PathIterator.SEG_CLOSE:
-		path.closePath();
-		break;
-	    default:
-		break;
-	    }
-	}
-				// read Stroke
-	int cap, join;
-	cap = in.readInt();
-	join = in.readInt();
-
-	stroke = new BasicStroke((float)penWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
-	shape = path;
-	computeFlattenedShape();
-    }
 
 }

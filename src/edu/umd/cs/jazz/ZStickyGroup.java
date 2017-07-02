@@ -13,7 +13,7 @@ import edu.umd.cs.jazz.util.*;
 import edu.umd.cs.jazz.event.*;
 
 /**
- * <b>ZStickyGroup</b>  is a constraint group that moves its children inversely to the 
+ * <b>ZStickyGroup</b>  is a constraint group that moves its children inversely to the
  * camera view, so that the children stay visually on the same place on
  * the screen, even as the camera view changes. There are two types of sticky constraints:
  * <ul>
@@ -44,7 +44,7 @@ import edu.umd.cs.jazz.event.*;
  * </pre>
  *
  * <P>
- * {@link edu.umd.cs.jazz.util.ZSceneGraphEditor} provides a convenience mechanism to locate, create 
+ * {@link edu.umd.cs.jazz.util.ZSceneGraphEditor} provides a convenience mechanism to locate, create
  * and manage nodes of this type.
  * <P>
  * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
@@ -66,7 +66,7 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
      */
     static public final int STICKYZ       = 2;
 
-				// Default values
+                                // Default values
     static public double stickyPointX_DEFAULT = 0.5;
     static public double stickyPointY_DEFAULT = 0.5;
     static public int constraintType_DEFAULT = STICKY;
@@ -102,8 +102,8 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
      * @param camera The camera the node is related to.
      */
     public ZStickyGroup(ZCamera camera) {
-	super();
-	setCamera(camera);   // Need to set the camera after initialization so that internal defaults are set
+        super();
+        setCamera(camera);   // Need to set the camera after initialization so that internal defaults are set
     }
 
     /**
@@ -111,7 +111,7 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
      * @param child The child that should go directly below this node.
      */
     public ZStickyGroup(ZNode child) {
-	super(child);
+        super(child);
     }
 
     /**
@@ -120,10 +120,9 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
      * @param child The child that should go directly below this node.
      */
     public ZStickyGroup(ZCamera camera, ZNode child) {
-	super(child);
-	setCamera(camera);   // Need to set the camera after initialization so that internal defaults are set
+        super(child);
+        setCamera(camera);   // Need to set the camera after initialization so that internal defaults are set
     }
-
 
     //****************************************************************************
     //
@@ -145,31 +144,31 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
      * @return The ZStickyGroup that represents the sticky constraint
      */
     static public ZStickyGroup makeSticky(ZNode node, ZCamera camera, int constraintType) {
-	ZGroup parent = node.getParent();
-	ZStickyGroup sticky = null;
-	ZSceneGraphEditor editor = node.editor();
+        ZGroup parent = node.getParent();
+        ZStickyGroup sticky = null;
+        ZSceneGraphEditor editor = node.editor();
 
-				// Check to see if this node already has a sticky node
-	if (editor.hasStickyGroup()) {
-	    sticky = editor.getStickyGroup();
-	}
+                                // Check to see if this node already has a sticky node
+        if (editor.hasStickyGroup()) {
+            sticky = editor.getStickyGroup();
+        }
 
-				// If there is one, and it is the wrong type, then remove it
-	if ((sticky != null) && (sticky.getConstraintType() != constraintType)) {
-	    makeUnSticky(node);
-	    sticky = null;
-	}
-				// Now we can make a new one
-	if (sticky == null) {
-				// Then, apply the new constraint
-	    sticky = editor.getStickyGroup();
-	    sticky.setCamera(camera);
-	    sticky.setConstraintType(constraintType);
-	    ZTransformGroup transform = editor.getTransformGroup();
-	    transform.concatenate(sticky.getInverseTransform());
-	}
+                                // If there is one, and it is the wrong type, then remove it
+        if ((sticky != null) && (sticky.getConstraintType() != constraintType)) {
+            makeUnSticky(node);
+            sticky = null;
+        }
+                                // Now we can make a new one
+        if (sticky == null) {
+                                // Then, apply the new constraint
+            sticky = editor.getStickyGroup();
+            sticky.setCamera(camera);
+            sticky.setConstraintType(constraintType);
+            ZTransformGroup transform = editor.getTransformGroup();
+            transform.concatenate(sticky.getInverseTransform());
+        }
 
-	return sticky;
+        return sticky;
     }
 
     /**
@@ -179,31 +178,31 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
      * @param node The node to make unsticky
      */
     static public void makeUnSticky(ZNode node) {
-	ZSceneGraphEditor editor = node.editor();
-	ZStickyGroup sticky = null;
+        ZSceneGraphEditor editor = node.editor();
+        ZStickyGroup sticky = null;
 
-				// First look for current sticky decorator
-	if (editor.hasStickyGroup()) {
-	    sticky = editor.getStickyGroup();
-				// Then, if it is sticky, make it unsticky
-	    ZNode primary;
-	    ZNode[] children = sticky.getChildren();
-	    ZGroup newParent  = sticky.getParent();
-	    AffineTransform stickyTransform = sticky.getTransform();
+                                // First look for current sticky decorator
+        if (editor.hasStickyGroup()) {
+            sticky = editor.getStickyGroup();
+                                // Then, if it is sticky, make it unsticky
+            ZNode primary;
+            ZNode[] children = sticky.getChildren();
+            ZGroup newParent  = sticky.getParent();
+            AffineTransform stickyTransform = sticky.getTransform();
 
-	    newParent.removeChild(sticky);
-	    for (int i=0; i<children.length; i++) {
-		children[i].setParent(newParent);
-		editor = children[i].editor();
-		primary = editor.getNode();
-		editor.getTransformGroup().concatenate(stickyTransform);
-	    }
-	}
+            newParent.removeChild(sticky);
+            for (int i=0; i<children.length; i++) {
+                children[i].setParent(newParent);
+                editor = children[i].editor();
+                primary = editor.getNode();
+                editor.getTransformGroup().concatenate(stickyTransform);
+            }
+        }
     }
 
     //****************************************************************************
     //
-    //			Get/Set and pairs
+    //                  Get/Set and pairs
     //
     //***************************************************************************
 
@@ -217,9 +216,9 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
      * @param y Y coordinate of the sticky point of the sticky object.
      */
     public void setStickyPoint(double x, double y) {
-	stickyPointX = x;
-	stickyPointY = y;
-	updateTransform();
+        stickyPointX = x;
+        stickyPointY = y;
+        updateTransform();
     }
 
     /**
@@ -228,9 +227,9 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
      * @return the coordinates of the fixed point of the sticky object.
      */
     public Dimension getStickyPoint() {
-	Dimension d = new Dimension();
-	d.setSize(stickyPointX, stickyPointY);
-	return d;
+        Dimension d = new Dimension();
+        d.setSize(stickyPointX, stickyPointY);
+        return d;
     }
 
     /**
@@ -239,8 +238,8 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
      * @param constraintType The constraint type for this node.
      */
     public void setConstraintType(int constraintType) {
-	this.constraintType = constraintType;
-	updateTransform();
+        this.constraintType = constraintType;
+        updateTransform();
     }
 
     /**
@@ -248,12 +247,12 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
      * @return They constraint type.
      */
     public int getConstraintType() {
-	return constraintType;
+        return constraintType;
     }
 
     //****************************************************************************
     //
-    //			Other Methods
+    //                  Other Methods
     //
     //****************************************************************************
 
@@ -265,18 +264,18 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
      * @return The new transform
      */
     public AffineTransform computeTransform() {
-	AffineTransform at = null;
+        AffineTransform at = null;
 
-	switch (constraintType) {
-	case STICKY:
-	    at = computeStickyTransform();
-	    break;
-	case STICKYZ:
-	    at = computeStickyZTransform();
-	    break;
-	}
+        switch (constraintType) {
+        case STICKY:
+            at = computeStickyTransform();
+            break;
+        case STICKYZ:
+            at = computeStickyZTransform();
+            break;
+        }
 
-	return at;
+        return at;
     }
 
     /**
@@ -287,27 +286,28 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
      * @return The new transform
      */
     public AffineTransform computeStickyTransform() {
-	AffineTransform at = new AffineTransform();
+        AffineTransform at = new AffineTransform();
 
-	if (camera != null) {
-	    try {
-		AffineTransform globalCoordFrame;
-		if (parent == null) {
-		    globalCoordFrame = new AffineTransform();
-		} else {
-		    globalCoordFrame = parent.getLocalToGlobalTransform();
-		}
-		at = globalCoordFrame.createInverse();
-		at.concatenate(camera.getInverseViewTransform());
-		at.concatenate(globalCoordFrame);
-	    } catch (NoninvertibleTransformException e) {
-				// Couldn't invert transform - not much we can do here.
-		System.out.println("ZStickyDecorator.computeTransform: Can't compute transform inverse");
-		at = new AffineTransform();
-	    }
-	}
+        if (camera != null) {
+            try {
+                AffineTransform globalCoordFrame;
+                if (parent == null) {
+                    globalCoordFrame = new AffineTransform();
+                } else {
+                    globalCoordFrame = parent.getLocalToGlobalTransform();
+                }
+                at = globalCoordFrame.createInverse();
+                at.concatenate(camera.getInverseViewTransformReference());
+                at.concatenate(globalCoordFrame);
+            } catch (NoninvertibleTransformException e) {
+                                // Couldn't invert transform - not much we can do here.
+                throw new ZNoninvertibleTransformException(e);
+//              System.out.println("ZStickyDecorator.computeTransform: Can't compute transform inverse");
+//              at = new AffineTransform();
+            }
+        }
 
-	return at;
+        return at;
     }
 
     /**
@@ -316,31 +316,33 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
      * @return the affine transform the defines the constraint.
      */
     protected AffineTransform computeStickyZTransform() {
-	AffineTransform at = new AffineTransform();
+        AffineTransform at = new AffineTransform();
 
-	if (camera != null) {
-	    double iscale = 1.0 / camera.getMagnification();
-	    ZBounds childrenBounds = new ZBounds();
-	    for (int i=0; i<numChildren; i++) {
-		childrenBounds.add(children[i].getBoundsReference());
-	    }
+        if (camera != null) {
+            double iscale = 1.0 / camera.getMagnification();
+            ZBounds childrenBounds = new ZBounds();
 
-				// Compute the position of the child so that its center point
-				// stays fixed, and it is scaled by the inverse of the camera
-				// magnification.
+            ZNode[] childrenRef = getChildrenReference();
+            for (int i=0; i<children.size(); i++) {
+                childrenBounds.add(childrenRef[i].getBoundsReference());
+            }
 
-				// This is computed by getting the "fixed" point that is not
-				// supposed to move, and creating a transform that scales
-				// around that point by the inverse of the current camera magnification.
-	    pt.setLocation((childrenBounds.getX() + (stickyPointX * childrenBounds.getWidth())),
-			    (childrenBounds.getY() + (stickyPointY * childrenBounds.getHeight())));
+                                // Compute the position of the child so that its center point
+                                // stays fixed, and it is scaled by the inverse of the camera
+                                // magnification.
 
-	    at.translate(pt.getX(), pt.getY());
-	    at.scale(iscale, iscale);
-	    at.translate(-pt.getX(), -pt.getY());
-	}
+                                // This is computed by getting the "fixed" point that is not
+                                // supposed to move, and creating a transform that scales
+                                // around that point by the inverse of the current camera magnification.
+            pt.setLocation((childrenBounds.getX() + (stickyPointX * childrenBounds.getWidth())),
+                            (childrenBounds.getY() + (stickyPointY * childrenBounds.getHeight())));
 
-	return at;
+            at.translate(pt.getX(), pt.getY());
+            at.scale(iscale, iscale);
+            at.translate(-pt.getX(), -pt.getY());
+        }
+
+        return at;
     }
 
     /**
@@ -349,18 +351,18 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
      * @see ZDebug#dump
      */
     public String dump() {
-	String str = super.dump();
+        String str = super.dump();
 
-	switch (constraintType) {
-	case STICKY:
-	    str += "\n Sticky constraint";
-	    break;
-	case STICKYZ:
-	    str += "\n Sticky-Z constraint";
-	    break;
-	}
+        switch (constraintType) {
+        case STICKY:
+            str += "\n Sticky constraint";
+            break;
+        case STICKYZ:
+            str += "\n Sticky-Z constraint";
+            break;
+        }
 
-	return str;
+        return str;
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -374,17 +376,17 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
      * @param out The stream that this object writes into
      */
     public void writeObject(ZObjectOutputStream out) throws IOException {
-	super.writeObject(out);
+        super.writeObject(out);
 
-	if (constraintType != constraintType_DEFAULT) {
-	    out.writeState("int", "constraintType", constraintType);
-	}
-	if (stickyPointX != stickyPointX_DEFAULT) {
-	    out.writeState("double", "stickyPointX", stickyPointX);
-	}
-	if (stickyPointY != stickyPointY_DEFAULT) {
-	    out.writeState("double", "stickyPointY", stickyPointY);
-	}
+        if (constraintType != constraintType_DEFAULT) {
+            out.writeState("int", "constraintType", constraintType);
+        }
+        if (stickyPointX != stickyPointX_DEFAULT) {
+            out.writeState("double", "stickyPointX", stickyPointX);
+        }
+        if (stickyPointY != stickyPointY_DEFAULT) {
+            out.writeState("double", "stickyPointY", stickyPointY);
+        }
     }
 
     /**
@@ -398,19 +400,19 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
      * @param fieldValue The value of the field
      */
     public void setState(String fieldType, String fieldName, Object fieldValue) {
-	super.setState(fieldType, fieldName, fieldValue);
+        super.setState(fieldType, fieldName, fieldValue);
 
-	if (fieldName.compareTo("constraintType") == 0) {
-	    constraintType = ((Integer)fieldValue).intValue();
-	} else if (fieldName.compareTo("stickyPointX") == 0) {
-	    stickyPointX = ((Double)fieldValue).doubleValue();
-	} else if (fieldName.compareTo("stickyPointY") == 0) {
-	    stickyPointY = ((Double)fieldValue).doubleValue();
-	}
+        if (fieldName.compareTo("constraintType") == 0) {
+            constraintType = ((Integer)fieldValue).intValue();
+        } else if (fieldName.compareTo("stickyPointX") == 0) {
+            stickyPointX = ((Double)fieldValue).doubleValue();
+        } else if (fieldName.compareTo("stickyPointY") == 0) {
+            stickyPointY = ((Double)fieldValue).doubleValue();
+        }
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-	in.defaultReadObject();
-	pt = new Point2D.Double();
+        in.defaultReadObject();
+        pt = new Point2D.Double();
     }
 }

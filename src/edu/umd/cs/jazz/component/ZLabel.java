@@ -243,8 +243,7 @@ public class ZLabel extends ZVisualComponent implements ZPenColor, Serializable 
      * @param x the X translation.
      */
     public void setTranslateX(double x) {
-	translateX = x;
-	reshape();
+        setTranslation(x, translateY);
     }
 
     /**
@@ -260,8 +259,7 @@ public class ZLabel extends ZVisualComponent implements ZPenColor, Serializable 
      * @param y the Y translation.
      */
     public void setTranslateY(double y) {
-	translateY = y;
-	reshape();
+        setTranslation(translateX, y);
     }
 
     /**
@@ -288,9 +286,7 @@ public class ZLabel extends ZVisualComponent implements ZPenColor, Serializable 
      * @param p The translation offset.
      */
     public void setTranslation(Point2D p) {
-	translateX = p.getX();
-	translateY = p.getY();
-	reshape();
+        setTranslation(p.getX(), p.getY());
     }
 
     /**
@@ -433,7 +429,12 @@ public class ZLabel extends ZVisualComponent implements ZPenColor, Serializable 
 	    setFont((Font)fieldValue);
 	} else if (fieldName.compareTo("text") == 0) {
 	    setText((String)fieldValue);
+	} else if (fieldName.compareTo("translateX") == 0) {
+	    setTranslateX(((Double)fieldValue).doubleValue());
+	} else if (fieldName.compareTo("translateY") == 0) {	    
+	    setTranslateY(((Double)fieldValue).doubleValue());
 	}
+
     }
 
     /**
@@ -451,6 +452,12 @@ public class ZLabel extends ZVisualComponent implements ZPenColor, Serializable 
 	}
 	if (getFont() != DEFAULT_FONT) {
 	    out.writeState("java.awt.Font", "font", getFont());
+	}
+	if (translateX != 0.0d) {
+	    out.writeState("Double", "translateX", new Double(translateX));
+	}
+	if (translateY != 0.0d) {
+	    out.writeState("Double", "translateY", new Double(translateY));
 	}
 	if (getText() != DEFAULT_TEXT) {
 	    out.writeState("String", "text", getText());

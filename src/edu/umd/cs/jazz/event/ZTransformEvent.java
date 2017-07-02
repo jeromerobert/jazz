@@ -23,8 +23,8 @@ import edu.umd.cs.jazz.*;
  * The event is passed to every <code>ZTransformListener</code>
  * or <code>ZTransformAdapter</code> object which registered to receive such
  * events using the transform's <code>addTransformListener</code> method.
- * (<code>ZTransformAdapter</code> objects implement the 
- * <code>ZTransformListener</code> interface.) Each such listener object 
+ * (<code>ZTransformAdapter</code> objects implement the
+ * <code>ZTransformListener</code> interface.) Each such listener object
  * gets this <code>ZTransformEvent</code> when the event occurs.
  *
  * <P>
@@ -38,7 +38,7 @@ import edu.umd.cs.jazz.*;
  * @see ZTransformListener
  * @author Ben Bederson
  */
-public class ZTransformEvent extends AWTEvent implements Serializable {
+public class ZTransformEvent extends AWTEvent implements ZEvent, Serializable {
 
     /**
      * The first number in the range of ids used for transform events.
@@ -63,14 +63,30 @@ public class ZTransformEvent extends AWTEvent implements Serializable {
 
     /**
      * Constructs a ZTransformEvent object.
-     * 
+     *
      * @param source    the ZTransform object that originated the event
      * @param id        an integer indicating the type of event
      * @param transform The original transform (for transform events)
+     * @deprecated as of Jazz 1.1, use createTransfomrChangedEvent() instead.
      */
     public ZTransformEvent(ZTransformGroup source, int id, AffineTransform transform) {
         super(source, id);
-	this.transform = transform;
+        this.transform = transform;
+    }
+
+    protected ZTransformEvent(ZTransformGroup source, int id, AffineTransform transform, Object dummy) {
+        super(source, id);
+        this.transform = transform;
+    }
+
+    /**
+     * Factory method to create a ZTransformEvent with a TRANSFORM_CHANGED ID.
+     *
+     * @param source    the ZTransform object that originated the event
+     * @param transform The original transform (for transform events)
+     */
+    public static ZTransformEvent createTransformChangedEvent(ZTransformGroup source, AffineTransform transform) {
+        return new ZTransformEvent(source, ZTransformEvent.TRANSFORM_CHANGED, transform, null);
     }
 
     /**
@@ -90,5 +106,41 @@ public class ZTransformEvent extends AWTEvent implements Serializable {
      */
     public AffineTransform getOrigTransform() {
         return transform;
+    }
+
+    /**
+     * Calls appropriate method on the listener based on this events ID.
+     */
+    public void dispatchTo(Object listener) {
+        ZTransformListener transformListener = (ZTransformListener) listener;
+        switch (getID()) {
+            case ZTransformEvent.TRANSFORM_CHANGED:
+                transformListener.transformChanged(this);
+                break;
+            default:
+                throw new RuntimeException("ZTransformEvent with bad ID");
+        }
+    }
+
+    /**
+     * Returns the ZTransformLister class.
+     */
+    public Class getListenerType() {
+        return ZTransformListener.class;
+    }
+
+    /**
+     * True if this event has been consumed.
+     */
+    public boolean isConsumed() {
+        return super.isConsumed();
+    }
+
+    /**
+     * Set the souce of this event. As the event is fired up the tree the source of the
+     * event will keep changing to reflect the scenegraph object that is firing the event.
+     */
+    public void setSource(Object aSource) {
+        source = aSource;
     }
 }

@@ -15,7 +15,7 @@ import edu.umd.cs.jazz.util.*;
 /**
  * <b>ZVisualGroup</b> is a group node that has a visual components that can be rendered.
  * It has two visual components (either or both of which could be null) which get rendered
- * before and after the node's children, respectively.  
+ * before and after the node's children, respectively.
  * <P>
  * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
  * compatible with future Jazz releases. The current serialization support is
@@ -26,7 +26,7 @@ import edu.umd.cs.jazz.util.*;
  * @author Ben Bederson
  */
 public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable {
-				// Default values
+                                // Default values
     static public final boolean visualComponentPickable_DEFAULT = true;     // True if this node's visual component is pickable
 
     /**
@@ -67,7 +67,7 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * @param child Child of the new group node.
      */
     public ZVisualGroup(ZNode child) {
-	super(child);
+        super(child);
     }
 
     /**
@@ -76,8 +76,8 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * @param newBackVisualComponent The new back visual component that this group displays.
      */
     public ZVisualGroup(ZVisualComponent newFrontVisualComponent, ZVisualComponent newBackVisualComponent) {
-	setFrontVisualComponent(newFrontVisualComponent);
-	setBackVisualComponent(newBackVisualComponent);
+        setFrontVisualComponent(newFrontVisualComponent);
+        setBackVisualComponent(newBackVisualComponent);
     }
 
     /**
@@ -88,9 +88,9 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * @param newBackVisualComponent The new back visual component that this group displays.
      */
     public ZVisualGroup(ZNode child, ZVisualComponent newFrontVisualComponent, ZVisualComponent newBackVisualComponent) {
-	super(child);
-	setFrontVisualComponent(newFrontVisualComponent);
-	setBackVisualComponent(newBackVisualComponent);
+        super(child);
+        setFrontVisualComponent(newFrontVisualComponent);
+        setBackVisualComponent(newBackVisualComponent);
     }
 
     /**
@@ -99,19 +99,18 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * @see ZSceneGraphObject#duplicateObject
      */
     protected Object duplicateObject() {
-	ZVisualGroup newGroup = (ZVisualGroup)super.duplicateObject();
-	
-	if (frontVisualComponent != null) {
-	    newGroup.frontVisualComponent = (ZVisualComponent)frontVisualComponent.clone();
-	}
+        ZVisualGroup newGroup = (ZVisualGroup)super.duplicateObject();
 
-	if (backVisualComponent != null) {
-	    newGroup.backVisualComponent = (ZVisualComponent)backVisualComponent.clone();
-	}	
-	
-	return newGroup;
+        if (frontVisualComponent != null) {
+            newGroup.frontVisualComponent = (ZVisualComponent)frontVisualComponent.clone();
+        }
+
+        if (backVisualComponent != null) {
+            newGroup.backVisualComponent = (ZVisualComponent)backVisualComponent.clone();
+        }
+
+        return newGroup;
     }
-
 
     /**
      * Set the front visual component associated with this group node.
@@ -123,18 +122,18 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * @see #setBackVisualComponent
      */
     public void setFrontVisualComponent(ZVisualComponent newFrontVisualComponent) {
-				// First remove old visual component if there was one
-	if (frontVisualComponent != null) {
-	    repaint();
-	    frontVisualComponent.removeParent(this);
-	}
-				// Now, add new visual component
-	frontVisualComponent = newFrontVisualComponent;
-	if (frontVisualComponent != null) {
-	    frontVisualComponent.addParent(this);
-	}
-	updateVolatility();
-	reshape();
+                                // First remove old visual component if there was one
+        if (frontVisualComponent != null) {
+            repaint();
+            frontVisualComponent.removeParent(this);
+        }
+                                // Now, add new visual component
+        frontVisualComponent = newFrontVisualComponent;
+        if (frontVisualComponent != null) {
+            frontVisualComponent.addParent(this);
+        }
+        updateVolatility();
+        reshape();
     }
 
     /**
@@ -142,7 +141,7 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * or null if none.
      */
     public final ZVisualComponent getFrontVisualComponent() {
-	return frontVisualComponent;
+        return frontVisualComponent;
     }
 
     /**
@@ -155,18 +154,18 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * @see #setFrontVisualComponent
      */
     public void setBackVisualComponent(ZVisualComponent newBackVisualComponent) {
-				// First remove old visual component if there was one
-	if (backVisualComponent != null) {
-	    repaint();
-	    backVisualComponent.removeParent(this);
-	}
-				// Now, add new visual component
-	backVisualComponent = newBackVisualComponent;
-	if (backVisualComponent != null) {
-	    backVisualComponent.addParent(this);
-	}
-	updateVolatility();
-	reshape();
+                                // First remove old visual component if there was one
+        if (backVisualComponent != null) {
+            repaint();
+            backVisualComponent.removeParent(this);
+        }
+                                // Now, add new visual component
+        backVisualComponent = newBackVisualComponent;
+        if (backVisualComponent != null) {
+            backVisualComponent.addParent(this);
+        }
+        updateVolatility();
+        reshape();
     }
 
     /**
@@ -174,7 +173,7 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * or null if none.
      */
     public final ZVisualComponent getBackVisualComponent() {
-	return backVisualComponent;
+        return backVisualComponent;
     }
 
     /**
@@ -187,31 +186,31 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * @see #getVolatileBounds()
      */
     protected void updateVolatility() {
-				// If this node set to volatile, then it is volatile
-	cacheVolatile = volatileBounds;
+                                // If this node set to volatile, then it is volatile
+        cacheVolatile = volatileBounds;
 
-
-			        // Else, if either visual component is volatile, then it is volatile
-	if (!cacheVolatile && frontVisualComponent != null) {
-	    cacheVolatile = frontVisualComponent.getVolatileBounds();
-	}
-	if (!cacheVolatile && backVisualComponent != null) {
-	    cacheVolatile = backVisualComponent.getVolatileBounds();
-	}
-	if (!cacheVolatile) {
+                                // Else, if either visual component is volatile, then it is volatile
+        if (!cacheVolatile && frontVisualComponent != null) {
+            cacheVolatile = frontVisualComponent.getVolatileBounds();
+        }
+        if (!cacheVolatile && backVisualComponent != null) {
+            cacheVolatile = backVisualComponent.getVolatileBounds();
+        }
+        if (!cacheVolatile) {
                                 // Else, if any of its children are volatile, then it is volatile
-	    for (int i=0; i<numChildren; i++) {
-		if (children[i].getVolatileBounds()) {
-		    cacheVolatile = true;
-		    break;
-		}
-	    }	    
-	}
+            ZNode[] childrenRef = getChildrenReference();
+            for (int i=0; i<children.size(); i++) {
+                if (childrenRef[i].getVolatileBounds()) {
+                    cacheVolatile = true;
+                    break;
+                }
+            }
+        }
 
-				// Update parent's volatility
-	if (parent != null) {
-	    parent.updateVolatility();
-	}
+                                // Update parent's volatility
+        if (parent != null) {
+            parent.updateVolatility();
+        }
     }
 
     /**
@@ -220,7 +219,7 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * @param pickable True if this node's front visual component should be pickable.
      */
     public void setFrontVisualComponentPickable(boolean frontVisualComponentPickable) {
-	this.frontVisualComponentPickable = frontVisualComponentPickable;
+        this.frontVisualComponentPickable = frontVisualComponentPickable;
     }
 
     /**
@@ -229,7 +228,7 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * @return True if this node's front visual component is pickable.
      */
     public final boolean isFrontVisualComponentPickable() {
-	return frontVisualComponentPickable;
+        return frontVisualComponentPickable;
     }
 
     /**
@@ -238,7 +237,7 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * @param pickable True if this node's back visual component should be pickable.
      */
     public void setBackVisualComponentPickable(boolean backVisualComponentPickable) {
-	this.backVisualComponentPickable = backVisualComponentPickable;
+        this.backVisualComponentPickable = backVisualComponentPickable;
     }
 
     /**
@@ -247,7 +246,7 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * @return True if this node's back visual component is pickable.
      */
     public final boolean isBackVisualComponentPickable() {
-	return backVisualComponentPickable;
+        return backVisualComponentPickable;
     }
 
     //****************************************************************************
@@ -269,39 +268,39 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * @param renderContext The graphics context to use for rendering.
      */
     public void render(ZRenderContext renderContext) {
-				// Paint back visual component
-	if (backVisualComponent != null) {
-	    backVisualComponent.render(renderContext);
-	}
+                                // Paint back visual component
+        if (backVisualComponent != null) {
+            backVisualComponent.render(renderContext);
+        }
 
-	super.render(renderContext);
+        super.render(renderContext);
 
-				// Paint front visual component
-	if (frontVisualComponent != null) {
-	    frontVisualComponent.render(renderContext);
-	}
+                                // Paint front visual component
+        if (frontVisualComponent != null) {
+            frontVisualComponent.render(renderContext);
+        }
 
-	if (ZDebug.debug) {
-	    if (frontVisualComponent != null) {
-		ZDebug.incPaintCount();	// Keep a count of how many things have been rendered
-	    }
-	    if (backVisualComponent != null) {
-		ZDebug.incPaintCount();	// Keep a count of how many things have been rendered
-	    }
-				        // Draw bounding box if requested for debugging
-	    if (ZDebug.showBounds) {
-		Graphics2D g2 = renderContext.getGraphics2D();
-		g2.setColor(new Color(60, 60, 60));
-		g2.setStroke(new BasicStroke((float)(1.0 / renderContext.getCompositeMagnification()),
-					     BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER));
-		if (frontVisualComponent != null) {
-		    g2.draw(frontVisualComponent.getBoundsReference());
-		}
-		if (backVisualComponent != null) {
-		    g2.draw(backVisualComponent.getBoundsReference());
-		}
-	    }
-	}
+        if (ZDebug.debug) {
+            if (frontVisualComponent != null) {
+                ZDebug.incPaintCount(); // Keep a count of how many things have been rendered
+            }
+            if (backVisualComponent != null) {
+                ZDebug.incPaintCount(); // Keep a count of how many things have been rendered
+            }
+                                        // Draw bounding box if requested for debugging
+            if (ZDebug.showBounds) {
+                Graphics2D g2 = renderContext.getGraphics2D();
+                g2.setColor(new Color(60, 60, 60));
+                g2.setStroke(new BasicStroke((float)(1.0 / renderContext.getCompositeMagnification()),
+                                             BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER));
+                if (frontVisualComponent != null) {
+                    g2.draw(frontVisualComponent.getBoundsReference());
+                }
+                if (backVisualComponent != null) {
+                    g2.draw(backVisualComponent.getBoundsReference());
+                }
+            }
+        }
     }
 
     /**
@@ -311,18 +310,18 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * and its children.
      */
     protected void computeBounds() {
-	super.computeBounds();
-	if (frontVisualComponent != null) {
-	    bounds.add(frontVisualComponent.getBoundsReference());
-	}
-	if (backVisualComponent != null) {
-	    bounds.add(backVisualComponent.getBoundsReference());
-	}
+        super.computeBounds();
+        if (frontVisualComponent != null) {
+            bounds.add(frontVisualComponent.getBoundsReference());
+        }
+        if (backVisualComponent != null) {
+            bounds.add(backVisualComponent.getBoundsReference());
+        }
     }
 
     //****************************************************************************
     //
-    //			Other Methods
+    //                  Other Methods
     //
     //****************************************************************************
 
@@ -348,38 +347,38 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      */
     public boolean pick(Rectangle2D rect, ZSceneGraphPath path) {
 
-	// Check front visual component
-	if (isFrontVisualComponentPickable() && (frontVisualComponent != null)) {
-	    path.push(this);
-	    if (frontVisualComponent.pick(rect, path)) {
-		if (!(frontVisualComponent instanceof ZCamera)) {
-				// Set object here rather than in component so components don't
-				// have to worry about implementation of paths.
-		    path.setObject(frontVisualComponent);
-		}
-		return true;
-	    }
-	    path.pop(this);
-	}
+        // Check front visual component
+        if (isFrontVisualComponentPickable() && (frontVisualComponent != null)) {
+            path.push(this);
+            if (frontVisualComponent.pick(rect, path)) {
+                if (!(frontVisualComponent instanceof ZCamera)) {
+                                // Set object here rather than in component so components don't
+                                // have to worry about implementation of paths.
+                    path.setObject(frontVisualComponent);
+                }
+                return true;
+            }
+            path.pop(this);
+        }
 
-	// Try picking a child of the group
-	if (super.pick(rect, path))
-	    return true;
+        // Try picking a child of the group
+        if (super.pick(rect, path))
+            return true;
 
-	if (isBackVisualComponentPickable() && (backVisualComponent != null)) {
-	    path.push(this);
-	    if (backVisualComponent.pick(rect, path)) {
-		if (!(backVisualComponent instanceof ZCamera)) {
-				// Set object here rather than in component so components don't
-				// have to worry about implementation of paths.
-		    path.setObject(backVisualComponent);
-		}
-		return true;
-	    }
-	    path.pop(this);
-	}
+        if (isBackVisualComponentPickable() && (backVisualComponent != null)) {
+            path.push(this);
+            if (backVisualComponent.pick(rect, path)) {
+                if (!(backVisualComponent instanceof ZCamera)) {
+                                // Set object here rather than in component so components don't
+                                // have to worry about implementation of paths.
+                    path.setObject(backVisualComponent);
+                }
+                return true;
+            }
+            path.pop(this);
+        }
 
-	 return false;
+         return false;
     }
 
     /**
@@ -388,12 +387,12 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * @return The front visual component's bounds in local coordinates (or null if no front visual component).
      */
     public ZBounds getFrontVisualComponentBounds() {
-	ZBounds bounds = null;
-	if (frontVisualComponent != null) {
-	    bounds = frontVisualComponent.getBounds();
-	}
+        ZBounds bounds = null;
+        if (frontVisualComponent != null) {
+            bounds = frontVisualComponent.getBounds();
+        }
 
-	return bounds;
+        return bounds;
     }
 
     /**
@@ -403,14 +402,14 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * @return The front visual component's bounds in global coordinates (or null if no front visual component).
      */
     public ZBounds getFrontVisualComponentGlobalBounds() {
-	ZBounds globalBounds = null;
-	if (frontVisualComponent != null) {
-	    globalBounds = frontVisualComponent.getBounds();
-	    AffineTransform at = getLocalToGlobalTransform();
-	    globalBounds.transform(at);
-	}
+        ZBounds globalBounds = null;
+        if (frontVisualComponent != null) {
+            globalBounds = frontVisualComponent.getBounds();
+            AffineTransform at = getLocalToGlobalTransform();
+            globalBounds.transform(at);
+        }
 
-	return globalBounds;
+        return globalBounds;
     }
 
     /**
@@ -419,12 +418,12 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * @return The back visual component's bounds in local coordinates (or null if no back visual component).
      */
     public ZBounds getBackVisualComponentBounds() {
-	ZBounds bounds = null;
-	if (backVisualComponent != null) {
-	    bounds = backVisualComponent.getBounds();
-	}
+        ZBounds bounds = null;
+        if (backVisualComponent != null) {
+            bounds = backVisualComponent.getBounds();
+        }
 
-	return bounds;
+        return bounds;
     }
 
     /**
@@ -434,14 +433,35 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * @return The back visual component's bounds in global coordinates (or null if no back visual component).
      */
     public ZBounds getBackVisualComponentGlobalBounds() {
-	ZBounds globalBounds = null;
-	if (backVisualComponent != null) {
-	    globalBounds = backVisualComponent.getBounds();
-	    AffineTransform at = getLocalToGlobalTransform();
-	    globalBounds.transform(at);
-	}
+        ZBounds globalBounds = null;
+        if (backVisualComponent != null) {
+            globalBounds = backVisualComponent.getBounds();
+            AffineTransform at = getLocalToGlobalTransform();
+            globalBounds.transform(at);
+        }
 
-	return globalBounds;
+        return globalBounds;
+    }
+
+    /**
+     * Return the bounds of this ZGroup without taking the groups children into
+     * consideration. For the class ZGroup this will always return an empty bounds. But for
+     * sublclasses such as ZVisualGroup it may return a non-empty bounds.
+     */
+    public ZBounds getShallowBounds() {
+        ZBounds result = super.getShallowBounds();
+
+        ZBounds backVisualComponentBounds = getBackVisualComponentBounds();
+        if (backVisualComponentBounds != null) {
+            result.add(backVisualComponentBounds);
+        }
+
+        ZBounds frontVisualComponentBounds = getFrontVisualComponentBounds();
+        if (frontVisualComponentBounds != null) {
+            result.add(frontVisualComponentBounds);
+        }
+
+        return result;
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -455,20 +475,20 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * @param out The stream that this object writes into
      */
     public void writeObject(ZObjectOutputStream out) throws IOException {
-	super.writeObject(out);
+        super.writeObject(out);
 
-	if (frontVisualComponent != null) {
-	    out.writeState("ZVisualComponent", "frontVisualComponent", frontVisualComponent);
-	}
-	if (frontVisualComponentPickable != visualComponentPickable_DEFAULT) {
-	    out.writeState("boolean", "frontVisualComponentPickable", frontVisualComponentPickable);
-	}
-	if (backVisualComponent != null) {
-	    out.writeState("ZVisualComponent", "backVisualComponent", backVisualComponent);
-	}
-	if (backVisualComponentPickable != visualComponentPickable_DEFAULT) {
-	    out.writeState("boolean", "backVisualComponentPickable", backVisualComponentPickable);
-	}
+        if (frontVisualComponent != null) {
+            out.writeState("ZVisualComponent", "frontVisualComponent", frontVisualComponent);
+        }
+        if (frontVisualComponentPickable != visualComponentPickable_DEFAULT) {
+            out.writeState("boolean", "frontVisualComponentPickable", frontVisualComponentPickable);
+        }
+        if (backVisualComponent != null) {
+            out.writeState("ZVisualComponent", "backVisualComponent", backVisualComponent);
+        }
+        if (backVisualComponentPickable != visualComponentPickable_DEFAULT) {
+            out.writeState("boolean", "backVisualComponentPickable", backVisualComponentPickable);
+        }
     }
 
     /**
@@ -476,16 +496,16 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * @param out The stream that this object writes into
      */
     public void writeObjectRecurse(ZObjectOutputStream out) throws IOException {
-	super.writeObjectRecurse(out);
+        super.writeObjectRecurse(out);
 
-				// Add front visual component if there is one
-	if (frontVisualComponent != null) {
-	    out.addObject(frontVisualComponent);
-	}
-				// Add back visual component if there is one
-	if (backVisualComponent != null) {
-	    out.addObject(backVisualComponent);
-	}
+                                // Add front visual component if there is one
+        if (frontVisualComponent != null) {
+            out.addObject(frontVisualComponent);
+        }
+                                // Add back visual component if there is one
+        if (backVisualComponent != null) {
+            out.addObject(backVisualComponent);
+        }
     }
 
     /**
@@ -499,16 +519,16 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * @param fieldValue The value of the field
      */
     public void setState(String fieldType, String fieldName, Object fieldValue) {
-	super.setState(fieldType, fieldName, fieldValue);
+        super.setState(fieldType, fieldName, fieldValue);
 
-	if (fieldName.compareTo("frontVisualComponent") == 0) {
-	    setFrontVisualComponent((ZVisualComponent)fieldValue);
- 	} else if (fieldName.compareTo("frontVisualComponentPickable") == 0) {
-	    setFrontVisualComponentPickable(((Boolean)fieldValue).booleanValue());
-	} else if (fieldName.compareTo("backVisualComponent") == 0) {
-	    setBackVisualComponent((ZVisualComponent)fieldValue);
- 	} else if (fieldName.compareTo("backVisualComponentPickable") == 0) {
-	    setBackVisualComponentPickable(((Boolean)fieldValue).booleanValue());
-	}
+        if (fieldName.compareTo("frontVisualComponent") == 0) {
+            setFrontVisualComponent((ZVisualComponent)fieldValue);
+        } else if (fieldName.compareTo("frontVisualComponentPickable") == 0) {
+            setFrontVisualComponentPickable(((Boolean)fieldValue).booleanValue());
+        } else if (fieldName.compareTo("backVisualComponent") == 0) {
+            setBackVisualComponent((ZVisualComponent)fieldValue);
+        } else if (fieldName.compareTo("backVisualComponentPickable") == 0) {
+            setBackVisualComponentPickable(((Boolean)fieldValue).booleanValue());
+        }
     }
 }

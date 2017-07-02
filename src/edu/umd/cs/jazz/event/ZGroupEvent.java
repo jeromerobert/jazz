@@ -23,8 +23,8 @@ import edu.umd.cs.jazz.*;
  * The event is passed to every <code>ZGroupListener</code>
  * or <code>ZGroupAdapter</code> object which registered to receive such
  * events using the group's <code>addGroupListener</code> method.
- * (<code>ZGroupAdapter</code> objects implement the 
- * <code>ZGroupListener</code> interface.) Each such listener object 
+ * (<code>ZGroupAdapter</code> objects implement the
+ * <code>ZGroupListener</code> interface.) Each such listener object
  * gets this <code>ZGroupEvent</code> when the event occurs.
  * <P>
  * ZGroupEvents now contains a method <code>isModificationEvent()</code> to
@@ -55,7 +55,7 @@ import edu.umd.cs.jazz.*;
  * @see ZGroupListener
  * @author Ben Bederson
  */
-public class ZGroupEvent extends AWTEvent implements Serializable {
+public class ZGroupEvent extends AWTEvent implements ZEvent, Serializable {
 
     /**
      * The first number in the range of ids used for group events.
@@ -67,10 +67,10 @@ public class ZGroupEvent extends AWTEvent implements Serializable {
      */
     public static final int GROUP_LAST        = 101;
 
-   /**
+    /**
      * This event indicates that a node was added to the group.
      */
-    public static final int NODE_ADDED	= GROUP_FIRST;
+    public static final int NODE_ADDED  = GROUP_FIRST;
 
     /**
      * This event indicates that a node was removed from the group.
@@ -89,7 +89,7 @@ public class ZGroupEvent extends AWTEvent implements Serializable {
      * True if this event is a modification.
      */
     private boolean modification;
-        
+
     /**
      * True if this event has been consumed.
      */
@@ -97,17 +97,47 @@ public class ZGroupEvent extends AWTEvent implements Serializable {
 
     /**
      * Constructs a ZGroupEvent object.
-     * 
+     *
      * @param source        the ZGroup object that originated the event
      * @param id            an integer indicating the type of event
      * @param child         the node that was added or removed
      * @param modification  is this event a modification?
+     * @deprecated as of Jazz 1.1, use createNodeAddedEvent() or createNodeRemovedEvent() instead.
      */
     public ZGroupEvent(ZGroup source, int id, ZNode child, boolean modification) {
         super(source, id);
-	this.child = child;
-	this.modification = modification;
-	consumed = false;
+        this.child = child;
+        this.modification = modification;
+        consumed = false;
+    }
+
+    protected ZGroupEvent(ZGroup source, int id, ZNode child, boolean modification, Object dummy) {
+        super(source, id);
+        this.child = child;
+        this.modification = modification;
+        consumed = false;
+    }
+
+    /**
+     * Factory method to create a ZGroupEvent with a NODE_ADDED ID.
+     *
+     * @param source        the ZGroup object that originated the event
+     * @param child         the node that was added or removed
+     * @param modification  is this event a modification?
+     */
+    public static ZGroupEvent createNodeAddedEvent(ZGroup source, ZNode child, boolean modification) {
+        return new ZGroupEvent(source, ZGroupEvent.NODE_ADDED, child, modification, null);
+    }
+
+    /**
+     * Factory method to create a ZGroupEvent with a NODE_REMOVED ID.
+     *
+     * @param source        the ZGroup object that originated the event
+     * @param child         the node that was added or removed
+     * @param modification  is this event a modification?
+     */
+    public static ZGroupEvent createNodeRemovedEvent(ZGroup source, ZNode child, boolean modification) {
+        return new ZGroupEvent(source, ZGroupEvent.NODE_REMOVED, child, modification, null);
     }
 
     /**
@@ -137,20 +167,52 @@ public class ZGroupEvent extends AWTEvent implements Serializable {
      * @return Does this event represent a modification?
      */
     public boolean isModificationEvent() {
-	return modification;
+        return modification;
     }
-    
+
     /**
      * True if this event has been consumed.
      */
     public boolean isConsumed() {
-	return consumed;
+        return consumed;
     }
 
     /**
      * Consume this event.
      */
     public void consume() {
-	consumed = true;
+        consumed = true;
+    }
+
+    /**
+     * Calls appropriate method on the listener based on this events ID.
+     */
+    public void dispatchTo(Object listener) {
+        ZGroupListener groupListener = (ZGroupListener) listener;
+        switch (getID()) {
+            case ZGroupEvent.NODE_ADDED:
+                groupListener.nodeAdded(this);
+                break;
+            case ZGroupEvent.NODE_REMOVED:
+                groupListener.nodeRemoved(this);
+                break;
+            default:
+                throw new RuntimeException("ZGroupEvent with bad ID");
+        }
+    }
+
+    /**
+     * Returns the ZGroupLister class.
+     */
+    public Class getListenerType() {
+        return ZGroupListener.class;
+    }
+
+    /**
+     * Set the souce of this event. As the event is fired up the tree the source of the
+     * event will keep changing to reflect the scenegraph object that is firing the event.
+     */
+    public void setSource(Object aSource) {
+        source = aSource;
     }
 }

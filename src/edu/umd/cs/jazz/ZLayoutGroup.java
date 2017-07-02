@@ -12,15 +12,20 @@ import javax.swing.*;
 
 import edu.umd.cs.jazz.io.*;
 import edu.umd.cs.jazz.util.*;
+import edu.umd.cs.jazz.event.*;
 
 /**
  * <b>ZLayoutGroup</b> is a visual group that wraps a layout manager that can position
  * the node's children. The layout manager may also include a visual
- * component that aids the layout. For instance, the tree layout manager adds links 
- * connecting the tree nodes.  
+ * component that aids the layout. For instance, the tree layout manager adds links
+ * connecting the tree nodes.
  * <P>
- * {@link edu.umd.cs.jazz.util.ZSceneGraphEditor} provides a convenience mechanism to locate, create 
+ * {@link edu.umd.cs.jazz.util.ZSceneGraphEditor} provides a convenience mechanism to locate, create
  * and manage nodes of this type.
+ * <P>
+ * <b>BUG 6/28/2001:</b> JAG - ZLayoutGroup will not invalidate the layout when one of the
+ * layoutChilds bounds changes. This means that you must manually invalidate
+ * ZlayoutGroups in those cases.
  * <P>
  * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
  * compatible with future Jazz releases. The current serialization support is
@@ -33,6 +38,8 @@ import edu.umd.cs.jazz.util.*;
 public class ZLayoutGroup extends ZVisualGroup implements ZSerializable, Serializable {
 
     static private ArrayList invalidatedNodes = new ArrayList();      // The list of layout nodes that need to be revalidated
+    static private ArrayList validatedInvalidNodes = new ArrayList(); // The list of layout nodes that have been revalidated and are ready to be removed
+
     static private boolean revalidating = false;                      // True during revalidation
 
     /**
@@ -52,6 +59,12 @@ public class ZLayoutGroup extends ZVisualGroup implements ZSerializable, Seriali
      */
     private boolean validated = true;
 
+    /**
+     * Listens to the layoutChild and invalidates the layout when
+     * a child is added or removed.
+     */
+    private transient ZGroupListener layoutUpdateManager;
+
     //****************************************************************************
     //
     // Constructors
@@ -62,6 +75,7 @@ public class ZLayoutGroup extends ZVisualGroup implements ZSerializable, Seriali
      * Constructs a new empty layout group node.
      */
     public ZLayoutGroup() {
+        setLayoutChild(this);
     }
 
     /**
@@ -72,7 +86,7 @@ public class ZLayoutGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @see #setLayoutChild
      */
     public ZLayoutGroup(ZNode child) {
-	super(child);
+        super(child);
     }
 
     /**
@@ -82,8 +96,8 @@ public class ZLayoutGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @param child Child of the new group node.
      */
     public ZLayoutGroup(ZNode child, ZGroup layoutChild) {
-	super(child);
-	setLayoutChild(layoutChild);
+        super(child);
+        setLayoutChild(layoutChild);
     }
 
     /**
@@ -92,33 +106,35 @@ public class ZLayoutGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @see ZSceneGraphObject#duplicateObject
      */
     protected Object duplicateObject() {
-	ZLayoutGroup newGroup = (ZLayoutGroup)super.duplicateObject();
-	if (layoutManager != null) {
-	    newGroup.layoutManager = (ZLayoutManager)layoutManager.clone();
-	}
-	newGroup.validated = false;
-	return newGroup;
+        ZLayoutGroup newGroup = (ZLayoutGroup)super.duplicateObject();
+        if (layoutManager != null) {
+            newGroup.layoutManager = (ZLayoutManager)layoutManager.clone();
+            newGroup.layoutUpdateManager = null;
+        }
+        newGroup.validated = false;
+        return newGroup;
     }
 
-
     /**
-     * Called to update internal object references after a clone operation 
+     * Called to update internal object references after a clone operation
      * by {@link ZSceneGraphObject#clone}.
      *
      * @see ZSceneGraphObject#updateObjectReferences
      */
     protected void updateObjectReferences(ZObjectReferenceTable objRefTable) {
-	if (layoutChild != null) {
-	    
-	    layoutChild = (ZGroup)objRefTable.getNewObjectReference(layoutChild);
-	    
-	    if (layoutChild == null) {
-		// Cloning this object also clones the children - so we can	    
-		// should be certain to get a layout child.
-		throw new RuntimeException("Problem in updateObjectReferences: " + this);
-	    }
+        super.updateObjectReferences(objRefTable);
 
-	}
+        if (layoutChild != null) {
+
+            ZGroup duplicatedLayoutChild = (ZGroup)objRefTable.getNewObjectReference(layoutChild);
+            setLayoutChild(duplicatedLayoutChild);
+            if (layoutChild == null) {
+                // Cloning this object also clones the children - so we can
+                // should be certain to get a layout child.
+                throw new RuntimeException("Problem in updateObjectReferences: " + this);
+            }
+
+        }
     }
 
     //****************************************************************************
@@ -132,8 +148,8 @@ public class ZLayoutGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @param manager The new layout manager.
      */
     public void setLayoutManager(ZLayoutManager manager) {
-	layoutManager = manager;
-	invalidate();
+        layoutManager = manager;
+        invalidate();
     }
 
     /**
@@ -141,7 +157,7 @@ public class ZLayoutGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @return The current layout manager.
      */
     public final ZLayoutManager getLayoutManager() {
-	return layoutManager;
+        return layoutManager;
     }
 
     /**
@@ -151,10 +167,31 @@ public class ZLayoutGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @param child The new layout child.
      */
     public void setLayoutChild(ZGroup child) {
-	if (!child.isDescendentOf(this)) {
-	    throw new ZNodeNotFoundException("Node " + child + " is not a descendant of " + this);
-	}
-	layoutChild = child;
+        if (child != this && !child.isDescendentOf(this)) {
+            throw new ZNodeNotFoundException("Node " + child + " is not a descendant of " + this);
+        }
+
+        if (layoutChild != null) {
+            layoutChild.removeGroupListener(layoutUpdateManager);
+        }
+
+        layoutChild = child;
+
+        if (layoutChild != null) {
+            // Listen for group events on the layout child.
+            // When a node is added or removed invalidate
+            // the current layout.
+            layoutUpdateManager = new ZGroupListener() {
+                public void nodeAdded(ZGroupEvent e) {
+                    invalidate();
+                }
+
+                public void nodeRemoved(ZGroupEvent e) {
+                    invalidate();
+                }
+            };
+            layoutChild.addGroupListener(layoutUpdateManager);
+        }
     }
 
     /**
@@ -162,12 +199,12 @@ public class ZLayoutGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @return The current layout child.
      */
     public final ZGroup getLayoutChild() {
-	return layoutChild;
+        return layoutChild;
     }
 
     //****************************************************************************
     //
-    //			Other Methods
+    //                  Other Methods
     //
     //***************************************************************************
 
@@ -176,49 +213,62 @@ public class ZLayoutGroup extends ZVisualGroup implements ZSerializable, Seriali
      * A request will be made to apply the group's layout.
      */
     public void invalidate() {
-				// We don't need to queue requests while we are revalidating
-       	if (revalidating) {
-	    return;
-	}
-	validated = false;
-	
-				// Add layout to list of invalid nodes, but merge with ancestors
-	ArrayList removeList = new ArrayList();
-	ZLayoutGroup layout;
-	
-	for (Iterator i=invalidatedNodes.iterator(); i.hasNext();) {
-	    layout = (ZLayoutGroup)i.next();
-	    if (layout == this) {
-				// We are already on the list - no further need to do anything here
-		return;
-	    } else if (layout.isAncestorOf(this)) {
-				// Do nothing if an ancestor is already invalidated
-		return;
-	    } else if (isAncestorOf(layout)) {
-				// This is an ancestor of an invalidated node, so mark this one instead
-		removeList.add(layout);
-	    }
-	}
-	invalidatedNodes.add(this);
-	
-				// Now, update the remove list
-	for (Iterator i=removeList.iterator(); i.hasNext();) {
-	    layout = (ZLayoutGroup)i.next();
-	    invalidatedNodes.remove(layout);
-	}
-				// Finally, queue a layout revalidation
-	SwingUtilities.invokeLater(new Runnable() {
-	    public void run() {
-		revalidating = true;
-		ZLayoutGroup l;
-		for (Iterator i=invalidatedNodes.iterator(); i.hasNext();) {
-		    l = (ZLayoutGroup)i.next();
-		    l.doLayout();
-		}
-		invalidatedNodes.clear();
-		revalidating = false;
-	    }
-	});
+                                // We don't need to queue requests while we are revalidating
+        if (revalidating) {
+            return;
+        }
+        validated = false;
+
+                                // Add layout to list of invalid nodes, but merge with ancestors
+        ArrayList removeList = new ArrayList();
+        ZLayoutGroup layout;
+
+        for (Iterator i=invalidatedNodes.iterator(); i.hasNext();) {
+            layout = (ZLayoutGroup)i.next();
+            if (layout == this) {
+                                // We are already on the list - no further need to do anything here
+                return;
+            } else if (layout.isAncestorOf(this)) {
+                                // Do nothing if an ancestor is already invalidated
+                return;
+            } else if (isAncestorOf(layout)) {
+                                // This is an ancestor of an invalidated node, so mark this one instead
+                removeList.add(layout);
+            }
+        }
+        invalidatedNodes.add(this);
+
+                                // Now, update the remove list
+        for (Iterator i=removeList.iterator(); i.hasNext();) {
+            layout = (ZLayoutGroup)i.next();
+            invalidatedNodes.remove(layout);
+        }
+                                // Finally, queue a layout revalidation
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                revalidating = true;
+                ZLayoutGroup l;
+                for (Iterator i=invalidatedNodes.iterator(); i.hasNext();) {
+                    l = (ZLayoutGroup)i.next();
+                    l.doLayout();
+                    validatedInvalidNodes.add(l);
+                }
+                revalidating = false;
+
+                // Remove the validated nodes in the layout queue so repaint
+                // requests on the event thread will not cause an infinite
+                // loop if volatileBounds are set
+                SwingUtilities.invokeLater(new Runnable() {
+                        public void run() {
+                            ZLayoutGroup layout;
+                            for(Iterator i=validatedInvalidNodes.iterator(); i.hasNext();) {
+                                layout = (ZLayoutGroup)i.next();
+                                invalidatedNodes.remove(layout);
+                            }
+                        }
+                    });
+            }
+        });
     }
 
     /**
@@ -228,35 +278,25 @@ public class ZLayoutGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @param aNode The node whose subtree is to be marked invalid
      */
     static void invalidateChildren(ZNode aNode) {
-	if (aNode instanceof ZGroup) {
-	    ZNode[] children = ((ZGroup)aNode).getChildren();
-	    for(int i=0; i<children.length; i++) {
-		invalidateChildren(children[i]);
-	    }
-	    if (aNode instanceof ZLayoutGroup) {
-		((ZLayoutGroup)aNode).validated = false;
-	    }	    
-	}
+        if (aNode instanceof ZGroup) {
+            ZNode[] children = ((ZGroup)aNode).getChildren();
+            for(int i=0; i<children.length; i++) {
+                invalidateChildren(children[i]);
+            }
+            if (aNode instanceof ZLayoutGroup) {
+                ((ZLayoutGroup)aNode).validated = false;
+            }
+        }
     }
-    
+
     /**
      * Force an immediate validation of this layout node (if it was invalidated).
      * This will result in this node's layout being applied immediately if it was
      * out of date, and any queued requests to layout this node will be removed.
      */
     public void validate() {
-	invalidatedNodes.remove(this);
-	doLayout();
-    }
-
-    /**
-     * Trap computeBounds requests as it indicates that our layout is out
-     * of date, and needs to be revalidated.
-     */
-    public void computeBounds() {
-	super.computeBounds();
-
-	invalidate();
+        invalidatedNodes.remove(this);
+        doLayout();
     }
 
     /**
@@ -269,25 +309,30 @@ public class ZLayoutGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @see #setLayoutChild
      */
     public void doLayout() {
-	ZLayoutManager manager = getLayoutManager();
-				// If there is a layout manager
-	if (!validated) {
-	    if (manager != null) {
-		ZGroup layoutNode = layoutChild;
-		if (layoutNode == null) {
-		    layoutNode = this;
-		}
+        ZLayoutManager manager = getLayoutManager();
+                                // If there is a layout manager
+        if (!validated) {
+            ZGroup layoutNode = layoutChild;
+            if (layoutNode == null) {
+                layoutNode = this;
+            }
 
-		manager.preLayout(layoutNode);       // Notify layout manager that recursive layout is starting
-		ZNode[] children = layoutNode.getChildren();
-		for (int i=0; i<children.length; i++) {
-		    doLayoutInternal(children[i]);
-		}
-		manager.doLayout(layoutNode);        // Do the layout
-		manager.postLayout(layoutNode);      // Notify layout manager that recursive layout is ending
-	    }
-	    validated = true;
-	}
+            if (manager != null) {
+                manager.preLayout(layoutNode);       // Notify layout manager that recursive layout is starting
+            }
+
+            ZNode[] children = layoutNode.getChildren();
+            for (int i=0; i<children.length; i++) {
+                doLayoutInternal(children[i]);
+            }
+
+            if (manager != null) {
+                manager.doLayout(layoutNode);        // Do the layout
+                manager.postLayout(layoutNode);      // Notify layout manager that recursive layout is ending
+            }
+
+            validated = true;
+        }
     }
 
     /**
@@ -296,17 +341,17 @@ public class ZLayoutGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @param node The node to check for layout
      */
     protected void doLayoutInternal(ZNode node) {
-	if (node instanceof ZLayoutGroup) {
-	    ZLayoutGroup layout = (ZLayoutGroup)node;
-	    if (!layout.validated) {
-		layout.doLayout();
-	    }
-	} else if (node instanceof ZGroup) {
-	    ZNode[] children = ((ZGroup)node).getChildren();
-	    for (int i=0; i<children.length; i++) {
-		doLayoutInternal(children[i]);
-	    }
-	}
+        if (node instanceof ZLayoutGroup) {
+            ZLayoutGroup layout = (ZLayoutGroup)node;
+            if (!layout.validated) {
+                layout.doLayout();
+            }
+        } else if (node instanceof ZGroup) {
+            ZNode[] children = ((ZGroup)node).getChildren();
+            for (int i=0; i<children.length; i++) {
+                doLayoutInternal(children[i]);
+            }
+        }
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -320,11 +365,11 @@ public class ZLayoutGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @param out The stream that this object writes into
      */
     public void writeObject(ZObjectOutputStream out) throws IOException {
-	super.writeObject(out);
+        super.writeObject(out);
 
-	if (layoutManager != null) {
-	    out.writeState("ZLayoutManager", "layoutManager", layoutManager);
-	}
+        if (layoutManager != null) {
+            out.writeState("ZLayoutManager", "layoutManager", layoutManager);
+        }
     }
 
     /**
@@ -332,12 +377,12 @@ public class ZLayoutGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @param out The stream that this object writes into
      */
     public void writeObjectRecurse(ZObjectOutputStream out) throws IOException {
-	super.writeObjectRecurse(out);
+        super.writeObjectRecurse(out);
 
-				// Add layout manager if there is one
-	if (layoutManager != null) {
-	    out.addObject(layoutManager);
-	}
+                                // Add layout manager if there is one
+        if (layoutManager != null) {
+            out.addObject(layoutManager);
+        }
     }
 
     /**
@@ -351,10 +396,32 @@ public class ZLayoutGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @param fieldValue The value of the field
      */
     public void setState(String fieldType, String fieldName, Object fieldValue) {
-	super.setState(fieldType, fieldName, fieldValue);
+        super.setState(fieldType, fieldName, fieldValue);
 
-	if (fieldName.compareTo("layoutManager") == 0) {
-	    setLayoutManager((ZLayoutManager)fieldValue);
-	}
+        if (fieldName.compareTo("layoutManager") == 0) {
+            setLayoutManager((ZLayoutManager)fieldValue);
+        }
+
+        // Reconnect to the layoutChild.
+        if (layoutChild != null) {
+            setLayoutChild(layoutChild);
+        } else {
+            setLayoutChild(this);
+        }
+    }
+
+    /**
+     * Read in all of this object's state.
+     * @param in The stream that this object reads from.
+     */
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+
+        // Reconnect to the layoutChild.
+        if (layoutChild != null) {
+            setLayoutChild(layoutChild);
+        } else {
+            setLayoutChild(this);
+        }
     }
 }

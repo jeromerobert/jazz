@@ -34,12 +34,7 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * This is guaranteed to point to a valid array,
      * even if this group does not have any parents.
      */
-    ZNode[] parents = null;
-
-    /**
-     * The actual number of parents of this component
-     */
-    int numParents = 0;
+    ZList.ZNodeList parents = ZListImpl.NullList;
 
     //****************************************************************************
     //
@@ -51,7 +46,6 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * Default constructor for visual component.
      */
     public ZVisualComponent() {
-	parents = new ZNode[1];
     }
 
     /**
@@ -60,40 +54,41 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * @see ZSceneGraphObject#duplicateObject
      */
     protected Object duplicateObject() {
-	ZVisualComponent newComponent = (ZVisualComponent)super.duplicateObject();
+        ZVisualComponent newComponent = (ZVisualComponent)super.duplicateObject();
 
-	if (parents != null) {
-	    // Perform a shallow-copy of the parents array. The 
-	    // updateObjectReferences table modifies this array. See below.
-	    newComponent.parents = (ZNode[])parents.clone();
-	}
-	return newComponent;
+        if (!parents.isNull()) {
+            // Perform a shallow-copy of the parents array. The
+            // updateObjectReferences table modifies this array. See below.
+            newComponent.parents = (ZList.ZNodeList) parents.clone();
+        }
+        return newComponent;
     }
 
     /**
-     * Called to update internal object references after a clone operation 
+     * Called to update internal object references after a clone operation
      * by {@link ZSceneGraphObject#clone}.
      *
      * @see ZSceneGraphObject#updateObjectReferences
      */
     protected void updateObjectReferences(ZObjectReferenceTable objRefTable) {
-	if (parents != null) {
-	    int n = 0;
-	    for (int i = 0; i < numParents; i++) {
-		ZNode newParent = (ZNode)objRefTable.getNewObjectReference(parents[i]);
-		if (newParent == null) {
-		    // Cloned a visual component, but did not clone its parent. 
-		    // Drop the parent from the list of parents.
-		} else {
-		    // Cloned a visual component and its parent. Add the newly cloned 
-		    // parent to the parents list
-		    parents[n++] = newParent;
-		}
-	    }
-	    numParents = n;
-	}
+        super.updateObjectReferences(objRefTable);
+        if (!parents.isNull()) {
+            int n = 0;
+            ZNode[] parentsRef = parents.getNodesReference();
+            for (int i = 0; i < parents.size(); i++) {
+                ZNode newParent = (ZNode) objRefTable.getNewObjectReference(parentsRef[i]);
+                if (newParent == null) {
+                    // Cloned a visual component, but did not clone its parent.
+                    // Drop the parent from the list of parents.
+                } else {
+                    // Cloned a visual component and its parent. Add the newly cloned
+                    // parent to the parents list
+                    parentsRef[n++] = newParent;
+                }
+            }
+            parents.setSize(n);
+        }
     }
-
 
     /**
      * Trims the capacity of the array that stores the parents list points to
@@ -103,16 +98,12 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * parents list.
      */
     public void trimToSize() {
-	ZNode[] newParents = new ZNode[numParents];
-	for (int i=0; i<numParents; i++) {
-	    newParents[i] = parents[i];
-	}
-	parents = newParents;
+        parents.trimToSize();
     }
 
     //****************************************************************************
     //
-    //			Get/Set  pairs
+    //                  Get/Set  pairs
     //
     //***************************************************************************
 
@@ -124,12 +115,11 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * @see #getVolatileBounds()
      */
     protected void updateVolatility() {
-				// Update parent's volatility
-	if (parents != null) {
-	    for (int i=0; i<numParents; i++) {
-		parents[i].updateVolatility();
-	    }
-	}
+                                // Update parent's volatility
+        ZNode[] parentsRef = parents.getNodesReference();
+        for (int i = 0; i < parents.size(); i++) {
+            parentsRef[i].updateVolatility();
+        }
     }
 
     /**
@@ -137,7 +127,7 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * Actually returns the root of the first node this is a child of.
      */
     public ZRoot getRoot() {
-        return (numParents > 0) ? parents[0].getRoot() : null;
+        return (parents.size() > 0) ? parents.getNodesReference()[0].getRoot() : null;
     }
 
     /**
@@ -147,48 +137,65 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * @return the parents of this node.
      */
     public ZNode[] getParents() {
-	ZNode[] copyParents = new ZNode[numParents];
-	System.arraycopy(parents, 0, copyParents, 0, numParents);
-
-	return copyParents;
+        return (ZNode[]) parents.toArray();
     }
 
     /**
-     * Internal method to add a node to be a new parent of this component.  The new node
+     * Return the number of parents of this visual component.
+     * @return the number of parents.
+     */
+    public int getNumParents() {
+        return parents.size();
+    }
+
+    /**
+     * Returns a reference to the parents of this component.
+     * It should not be modified by the caller.  Note that the actual number
+     * of parents could be less than the size of the array.  Determine
+     * the actual number of parents with {@link #getNumParents}.
+     * <P>
+     * <b>Warning:</b> This method returns a reference to an internal array. Any modification
+     * of this array will result in undefined behavior.
+     * <P>
+     * @return the parents of this visual component.
+     */
+    public ZNode[] getParentsReference() {
+        return parents.getNodesReference();
+    }
+
+    /**
+     * Method to add a node to be a new parent of this component.  The new node
      * is added to the end of the list of this node's parents;
+     *
+     * These methods are used primarily by the implementation of node objects 
+     * that need to update the internal scenegraph hierarchy, and should be 
+     * used with caution.  For example, instead consider using 
+     * {@link ZVisualLeaf#addVisualComponent} instead.                      
      * @param parent The new parent node.
      */
-    protected void addParent(ZNode parent) {
-	try {
-	    parents[numParents] = parent;
-	} catch (ArrayIndexOutOfBoundsException e) {
-	    ZNode[] newParents = new ZNode[parents.length * 2];
-	    System.arraycopy(parents, 0, newParents, 0, numParents);
-	    parents = newParents;
-	    parents[numParents] = parent;
-	}
-	numParents++;
+    public void addParent(ZNode parent) {
+        if (parents.isNull()) {
+            parents = new ZListImpl.ZNodeListImpl(1);
+        }
+        parents.add(parent);
     }
 
     /**
-     * Internal method to remove the specified parent node from this visual component.
+     * Method to remove the specified parent node from this visual component.
      * If the specified node wasn't a parent of this node,
      * then nothing happens.
+     *
+     * These methods are used primarily by the implementation of node objects 
+     * that need to update the internal scenegraph hierarchy, and should be 
+     * used with caution.  For example, instead consider using 
+     * {@link ZVisualLeaf#addVisualComponent} instead.
      * @param parent The parent to be removed.
      */
-    protected void removeParent(ZNode parent) {
-	for (int i=0; i<numParents; i++) {
-				// Find parent within parent list
-	    if (parent == parents[i]) {
-				// Then, slide down other parents, effectively removing this one
-		for (int j=i; j < (numParents - 1); j++) {
-		    parents[j] = parents[j+1];
-		}
-		parents[numParents - 1] = null;
-		numParents--;
-		break;
-	    }
-	}
+    public void removeParent(ZNode parent) {
+        parents.remove(parent);
+        if (parents.size() == 0) {
+            parents = ZListImpl.NullList;
+        }
     }
 
     /**
@@ -198,10 +205,10 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * @return true if this component's local bounds intersects the specified rectangle
      */
     public boolean pickBounds(Rectangle2D rect) {
-	if (getBoundsReference().intersects(rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight())) {
-	    return true;
-	}
-	return false;
+        if (getBoundsReference().intersects(rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight())) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -220,50 +227,49 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * @see ZDrawingSurface#pick(int, int)
      */
     public boolean pick(Rectangle2D rect, ZSceneGraphPath path) {
-	return pickBounds(rect);
+        return pickBounds(rect);
     }
 
     /**
-     * Paints this component. This method is called when the contents of the 
+     * Paints this component. This method is called when the contents of the
      * visual component should be painted, either when the component is being
      * shown for the first time, or when repaint() has been called.<p>
      *
-     * The clip rectangle, composite mode and transform of the Graphics2D parameter 
-     * are set by Jazz to reflect the context in which the component is being painted. 
+     * The clip rectangle, composite mode and transform of the Graphics2D parameter
+     * are set by Jazz to reflect the context in which the component is being painted.
      * However, the color, font and stroke of the Graphics2D parameter are
      * left undefined by Jazz, and each visual component must set these attributes explicitly
      * to ensure that they are painted correctly.<p>
-     * 
-     * The paint method is called by ZVisualComponent.render. Some visual components 
+     *
+     * The paint method is called by ZVisualComponent.render. Some visual components
      * may need to override render() instead of paint().<p>
      *
-     * @param Graphics2D The graphics context to use for painting. 
+     * @param Graphics2D The graphics context to use for painting.
      * @see #render(ZRenderContext)
      */
     public void paint(Graphics2D g2) {
     }
-    
+
     /**
-     * Renders this visual component.<p>  
-     * 
-     * This method is called by Jazz when the component needs to be 
+     * Renders this visual component.<p>
+     *
+     * This method is called by Jazz when the component needs to be
      * redrawn on the screen. The default implementation of render simply
      * calls paint(), passing it the graphics object stored in the renderContext:<p>
      *
      * <code>    paint(renderContext.getGraphics2D()); </code><p>
      *
      * Sophisticated visual components may need access to the state information
-     * stored in the ZRenderContext to draw themselves. Such components should override 
+     * stored in the ZRenderContext to draw themselves. Such components should override
      * render() rather than paint().<p>
      *
      * @param renderContext The graphics context to use for rendering.
      * @see #paint(Graphics2D)
      */
     public void render(ZRenderContext renderContext) {
-	paint(renderContext.getGraphics2D());
+        paint(renderContext.getGraphics2D());
     }
 
-    
     /*
      * Repaint causes the portions of the surfaces that this object
      * appears in to be marked as needing painting, and queues events to cause
@@ -284,9 +290,7 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * @see #reshape()
      */
     public void repaint() {
-	for (int i=0; i<numParents; i++) {
-	    parents[i].repaint();
-	}
+        parents.collectiveRepaint(null);
     }
 
     /**
@@ -296,9 +300,7 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * @see #repaint()
      */
     public void repaint(ZBounds repaintBounds) {
-	for (int i=0; i<numParents; i++) {
-	    parents[i].repaint(repaintBounds);
-	}
+        parents.collectiveRepaint(repaintBounds);
     }
 
     /**
@@ -307,8 +309,8 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * updateParentBounds().
      */
     protected void updateBounds() {
-	computeBounds();
-	updateParentBounds();
+        computeBounds();
+        updateParentBounds();
     }
 
     /**
@@ -316,9 +318,10 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * to recompute their bounds.
      */
     protected void updateParentBounds() {
-	for (int i=0; i<numParents; i++) {
-	    parents[i].updateBounds();
-	}
+        ZNode[] parentsRef = parents.getNodesReference();
+        for (int i = 0; i < parents.size(); i++) {
+            parentsRef[i].updateBounds();
+        }
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -332,7 +335,7 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * @param out The stream that this object writes into
      */
     public void writeObject(ZObjectOutputStream out) throws IOException {
-	super.writeObject(out);
+        super.writeObject(out);
     }
 
     /**
@@ -340,7 +343,7 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * @param out The stream that this object writes into
      */
     public void writeObjectRecurse(ZObjectOutputStream out) throws IOException {
-	super.writeObjectRecurse(out);
+        super.writeObjectRecurse(out);
     }
 
     /**
@@ -354,15 +357,15 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * @param fieldValue The value of the field
      */
     public void setState(String fieldType, String fieldName, Object fieldValue) {
-	super.setState(fieldType, fieldName, fieldValue);
+        super.setState(fieldType, fieldName, fieldValue);
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-	in.defaultReadObject();
+        in.defaultReadObject();
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
-	trimToSize();   // Remove extra unused array elements
-	out.defaultWriteObject();
+        trimToSize();   // Remove extra unused array elements
+        out.defaultWriteObject();
     }
 }

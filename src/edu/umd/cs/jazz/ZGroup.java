@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz;
@@ -19,7 +19,7 @@ import edu.umd.cs.jazz.event.*;
  * <b>ZGroup</b> is a node with children. Applications may use ZGroup to "group" children.
  * By inserting a group node above several children, the group node can then be
  * manipulated which will affect all of its children. Groups are typically used when
- * several objects should be treated as a semantic unit.  
+ * several objects should be treated as a semantic unit.
  *
  * <P>
  * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
@@ -31,7 +31,7 @@ import edu.umd.cs.jazz.event.*;
  * @author Ben Bederson
  */
 public class ZGroup extends ZNode implements ZSerializable, Serializable {
-				// Default values
+                                // Default values
     static public final boolean childrenPickable_DEFAULT = true;     // True if this group should pick its children
     static public final boolean childrenFindable_DEFAULT = true;     // True if this group should find its children
     static public final boolean hasOneChild_DEFAULT = false;     // True if this group can have no more than one child
@@ -41,12 +41,7 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * This is guaranteed to point to a valid array,
      * even if this group does not have any children.
      */
-    ZNode[] children = null;
-
-    /**
-     * The actual number of children of this group.
-     */
-    int numChildren = 0;
+    protected ZList.ZNodeList children = ZListImpl.NullList;
 
     /**
      * Cached volatility computation.
@@ -78,7 +73,6 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * Constructs an empty ZGroup.
      */
     public ZGroup() {
-	children = new ZNode[1];
     }
 
     /**
@@ -90,8 +84,8 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @param child Child of the new group node.
      */
     public ZGroup(ZNode child) {
-	this();
-	insertAbove(child);
+        this();
+        insertAbove(child);
     }
 
     /**
@@ -100,19 +94,20 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @see ZSceneGraphObject#duplicateObject
      */
     protected Object duplicateObject() {
-	ZGroup newGroup = (ZGroup)super.duplicateObject();
+        ZGroup newGroup = (ZGroup)super.duplicateObject();
 
-				// Do a deep copy of children
-	if (children != null) {
-	    newGroup.children = new ZNode[children.length];
-	    for (int i = 0; i < numChildren; i++) {
-		ZNode newChild = (ZNode)children[i].clone();
-		newGroup.children[i] = newChild;   
-		newChild.parent = newGroup;
-	    }
-	}
+                                // Do a deep copy of children
+        if (!children.isNull()) {
+            newGroup.children = new ZListImpl.ZNodeListImpl(children.size());
+            ZNode[] childrenRef = getChildrenReference();
+            for (int i = 0; i < children.size(); i++) {
+                ZNode newChild = (ZNode) childrenRef[i].clone();
+                newGroup.children.add(newChild);
+                newChild.parent = newGroup;
+            }
+        }
 
-	return newGroup;
+        return newGroup;
     }
 
     /**
@@ -123,11 +118,8 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * children list.
      */
     public void trimToSize() {
-	ZNode[] newChildren = new ZNode[numChildren];
-	for (int i=0; i<numChildren; i++) {
-	    newChildren[i] = children[i];
-	}
-	children = newChildren;
+        super.trimToSize();
+        children.trimToSize();
     }
 
     /**
@@ -137,7 +129,7 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * If this node already had a parent, then it will be removed
      * before being inserted.  If this node already had children, then
      * they will be left alone, and the new child will be the last
-     * child of this node.  
+     * child of this node.
      * <P>
      * This method may fire NODE_ADDED or NODE_REMOVED ZGroupEvents.
      * ZGroupEvents now contains a method <code>isModificationEvent()</code> to
@@ -150,65 +142,59 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @see ZGroupEvent
      */
     public void insertAbove(ZNode child) {
-				// If this node already has a parent, then remove it.
-	if (parent != null) {
-	    parent.removeChild(this,false);
-	}
+                                // If this node already has a parent, then remove it.
+        if (parent != null) {
+            parent.removeChild(this,false);
+        }
 
-				// Now, go ahead and insert this above the specified child.
-	ZGroup prevParent = parent;
-	ZGroup p = child.getParent();
-	if (p != null) {
-				// First, find out the position of the child in its parent child list,
-				// and put this in its place.
-	    ZNode[] cousins = p.children;
-	    for (int i=0; i<cousins.length; i++) {
-		if (cousins[i] == child) {
-		    cousins[i] = this;
-		    child.parent = null;
-		    break;
-		}
-	    }
-	    parent = p;
-	}	
-	addChildImpl(child,false);     // Then, add the child below this.
+                                // Now, go ahead and insert this above the specified child.
+        ZGroup prevParent = parent;
+        ZGroup p = child.getParent();
+        if (p != null) {
+                                // First, find out the position of the child in its parent child list,
+                                // and put this in its place.
+            p.children.replaceWith(child, this);
+            child.parent = null;
+            parent = p;
+        }
+        addChildImpl(child,false);     // Then, add the child below this.
 
-	
-	// Fire the necessary events - after we've updated the tree
-	
-	// If the new parent is null - then this was just a normal
-	// removeChild and not a modification 
-	if (prevParent != null &&
-	    p == null) {
-	    prevParent.fireGroupEvent(ZGroupEvent.NODE_REMOVED,this,false);
-	}
-	else if (prevParent != null) {
-	    prevParent.fireGroupEvent(ZGroupEvent.NODE_REMOVED,this,true);
-	}
 
-	// If the child's previous parent is null - then this was just a normal
-	// addChild and not a modification	
-	if (p != null) {
-	    p.fireGroupEvent(ZGroupEvent.NODE_REMOVED,child,true);
+        // Fire the necessary events - after we've updated the tree
 
-	    // If this' previous parent is null - then this was just a
-	    // normal addChild and not a modification
-	    if (prevParent == null) {
-		p.fireGroupEvent(ZGroupEvent.NODE_ADDED,this,false);
-	    }
-	    else {
-		p.fireGroupEvent(ZGroupEvent.NODE_ADDED,this,true);	
-	    }
-	    
-	    this.fireGroupEvent(ZGroupEvent.NODE_ADDED,child,true);
-	}
-	else {
-	    this.fireGroupEvent(ZGroupEvent.NODE_ADDED,child,false);
-	}
-	
+        // If the new parent is null - then this was just a normal
+        // removeChild and not a modification
+        if (prevParent != null &&
+            p == null) {
+            prevParent.childRemovedNotification(this, false);
+        }
+        else if (prevParent != null) {
+            prevParent.childRemovedNotification(this, true);
+        }
+
+        // If the child's previous parent is null - then this was just a normal
+        // addChild and not a modification
+        if (p != null) {
+            p.childRemovedNotification(child,true);
+
+            // If this' previous parent is null - then this was just a
+            // normal addChild and not a modification
+            if (prevParent == null) {
+                p.childAddedNotification(this,false);
+            }
+            else {
+                p.childAddedNotification(this,true);
+            }
+
+            this.childAddedNotification(child,true);
+        }
+        else {
+            this.childAddedNotification(child,false);
+        }
+
         reshape();
     }
-    
+
     /**
      * Extract this node from the tree, merging the nodes above and below it.
      * If this node has a parent, then this node's children will be added
@@ -227,76 +213,79 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @see ZGroupEvent
      */
     public void extract() {
-	ZNode child;
-	ZGroup origParent = parent;
+        ZNode child;
+        ZGroup origParent = parent;
 
-				// Note: We must remove this from its parent before
-				// we move up the children because the parent could
-				// have 'hasOneChild' set, and thus only be able to
-				// have one child at a time.
+                                // Note: We must remove this from its parent before
+                                // we move up the children because the parent could
+                                // have 'hasOneChild' set, and thus only be able to
+                                // have one child at a time.
 
-	ZNode beforeNode = null;
-	if (parent != null) {
-				// First, find the cousin of this node that is just after
-				// this in its parent children list.  We'll use that to
-				// move the children in front of after this node is removed
-				// from the list.
-	    int numChildren = parent.getNumChildren();
-	    ZNode[] parentChildren = parent.getChildrenReference();
-	    for (int i=0; i<numChildren; i++) {
-		if (this == parentChildren[i]) {
-		    if (i < (numChildren - 1)) {
-			beforeNode = parentChildren[i + 1];
-		    }
-		    break;
-		}
-	    }
+        ZNode beforeNode = null;
+        if (parent != null) {
+                                // First, find the cousin of this node that is just after
+                                // this in its parent children list.  We'll use that to
+                                // move the children in front of after this node is removed
+                                // from the list.
+            int numChildren = parent.getNumChildren();
+            ZNode[] parentChildren = parent.getChildrenReference();
+            for (int i=0; i<numChildren; i++) {
+                if (this == parentChildren[i]) {
+                    if (i < (numChildren - 1)) {
+                        beforeNode = parentChildren[i + 1];
+                    }
+                    break;
+                }
+            }
 
-				// Now remove this from its parent
-	    parent.removeChild(this,false);
-	}
+                                // Now remove this from its parent
+            parent.removeChild(this,false);
+        }
 
-	                        // Store reference to the first child to fire events later
-	int prevNumChildren = numChildren;
-	ZNode firstChild = children[0];
+                                // Store reference to the first child to fire events later
+        int prevNumChildren = children.size();
+        ZNode firstChild = null;
+        if (prevNumChildren > 0) {
+            firstChild = (ZNode) children.get(0);
+        }
 
-	
-				// Then, move this node's children to its original parent				
-	while (numChildren > 0) {
-	    child = children[0];
+                                // Then, move this node's children to its original parent
+        while (children.size() > 0) {
+            child = getChild(0);
 
-	    if (origParent != null) {
-		
-		origParent.addChildImpl(child,false);
-		
-		if (beforeNode == null) {
-		    origParent.raise(child);
-		} else {
-		    origParent.lowerTo(child, beforeNode);
-		}
-	    }
-	    else {
-	      // Its okay to fire the events here because
-	      // the parent is null - which means *this* wasn't
-	      // removed from its parent and the children
-	      // won't be added again anywhere in this method
-	      this.removeChild(child,true);
-	    }
-	}
+            if (origParent != null) {
 
+                origParent.addChildImpl(child,false);
 
-	// Now fire the necessary events - after we've updated the tree
-	if (origParent != null) {
-	    origParent.fireGroupEvent(ZGroupEvent.NODE_REMOVED,this,false);
-	    
-	    int index = origParent.indexOf(firstChild);
-	    for(int i=0; i<prevNumChildren; i++) {
-		this.fireGroupEvent(ZGroupEvent.NODE_REMOVED,origParent.getChild(index+i),true);
-	    }	
-	    for(int i=0; i<prevNumChildren; i++) {
-		origParent.fireGroupEvent(ZGroupEvent.NODE_ADDED,origParent.getChild(index+i),true);	    
-	    }	
-	}
+                if (beforeNode == null) {
+                    origParent.raise(child);
+                } else {
+                    origParent.lowerTo(child, beforeNode);
+                }
+            }
+            else {
+              // Its okay to fire the events here because
+              // the parent is null - which means *this* wasn't
+              // removed from its parent and the children
+              // won't be added again anywhere in this method
+              this.removeChild(child,true);
+            }
+        }
+
+        // Now fire the necessary events - after we've updated the tree
+        if (origParent != null) {
+            origParent.childRemovedNotification(this,false);
+
+            if (prevNumChildren > 0) {
+                int index = origParent.indexOf(firstChild);
+                for(int i=0; i<prevNumChildren; i++) {
+                    this.childRemovedNotification(origParent.getChild(index+i),true);
+                }
+                for(int i=0; i<prevNumChildren; i++) {
+                    origParent.childAddedNotification(origParent.getChild(index+i),true);
+                }
+            }
+        }
     }
 
     /**
@@ -318,52 +307,115 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @param child The new child node.
      * @see ZGroupEvent
      */
-    public void addChild(ZNode child) {	
-	addChildImpl(child,true);
+    public void addChild(ZNode child) {
+        addChildImpl(child,true);
     }
 
     /**
      * The implementation of the addChild method
      * @param child The child to be added
      * @param fireEvent Should the group event be fired
-     */   
+     */
     protected void addChildImpl(ZNode child, boolean fireEvent) {
-				// Check if can't have more than one child
-	if (hasOneChild() && (numChildren >= 1)) {
-	    throw new ZTooManyChildrenException(this, "Can't have more than one child when hasOneChild flag set");
-	}
+                                // Check if can't have more than one child
+        if (hasOneChild() && (children.size() >= 1)) {
+            throw new ZTooManyChildrenException(this, "Can't have more than one child when hasOneChild flag set");
+        }
 
-				// First remove child from existing parent if one
-	if (child.parent != null) {
-	    child.parent.removeChild(child,fireEvent);
-	}
+                                // First remove child from existing parent if one
+        if (child.parent != null) {
+            child.parent.removeChild(child,fireEvent);
+        }
 
-				// Then, allocate space for new child and copy it
-	try {
-	    children[numChildren] = child;
-	} catch (ArrayIndexOutOfBoundsException e) {
-	    ZNode[] newChildren = new ZNode[(numChildren == 0) ? 1 : (2 * numChildren)];
-	    System.arraycopy(children, 0, newChildren, 0, numChildren);
-	    children = newChildren;
-	    children[numChildren] = child;
-	}
-				// Finally, update parent pointer, and number of children
-	child.parent = this;
-	numChildren++;
-	updateVolatility();	// Need to update volatility since new child could be volatile
-	updateHasNodeListener(); // Need to update hasNodeListener since new child could have a node listener
+        if (children.isNull()) {
+            children = new ZListImpl.ZNodeListImpl(1);
+        }
 
-				// Manually update bounds and repaint since reshape would result
-				// in entire group being painted twice.  Since we're adding a new
-				// item, we only have to repaint the new part.
-	updateBounds();
-	child.repaint();
+        children.add(child);
 
-	if (fireEvent) {
-	    fireGroupEvent(ZGroupEvent.NODE_ADDED,child,false);
-	}
+                                // Finally, update parent pointer.
+        child.parent = this;
+
+        if (!volatileBounds && child.getVolatileBounds()) {
+            updateVolatility();     // Need to update volatility since new child could be volatile
+        }
+
+        if (!hasNodeListener && child.hasNodeListener) {
+            updateHasNodeListener(); // Need to update hasNodeListener since new child could have a node listener
+        }
+                                // Manually update bounds and repaint since reshape would result
+                                // in entire group being painted twice.  Since we're adding a new
+                                // item, we only have to repaint the new part.
+        if (!getBoundsReference().contains(child.getBoundsReference())) {
+            updateBounds();
+        }
+
+        child.repaint();
+
+        if (fireEvent) {
+            childAddedNotification(child, false);
+        }
     }
-    
+
+    /**
+     * Adds a collection of nodes to be new children of this group node. If you are added a large
+     * number of children to a group this method will be much faster then repeatedly calling
+     * ZGroup's addChild method.
+     *
+     * @param newChildren The children to be added
+     */
+    public void addChildren(Collection newChildren) {
+        addChildren(newChildren, true);
+    }
+
+    /**
+     * Adds a collection of nodes to be new children of this group node. If you are added a large
+     * number of children to a group this method will be much faster then repeatedly calling
+     * ZGroup's addChild method.
+     *
+     * @param newChildren The children to be added
+     * @param fireGroupEvents True if this group should fire ZGroupEvents for each node added.
+     *                        Setting this flag to false can improve performance, but will break
+     *                        code that depends on group events being fired.
+     */
+    public void addChildren(Collection newChildren, boolean fireGroupEvents) {
+        if (hasOneChild() && (children.size() >= 1)) {
+            throw new ZTooManyChildrenException(this, "Can't have more than one child when hasOneChild flag set");
+        }
+
+
+        if (children.isNull()) {
+            children = new ZListImpl.ZNodeListImpl(1);
+        }
+
+        Iterator i = newChildren.iterator();
+        while (i.hasNext()) {
+            ZNode child = (ZNode) i.next();
+
+                                // First remove child from existing parent if one
+            if (child.parent != null) {
+                child.parent.removeChild(child, fireGroupEvents);
+            }
+
+            children.add(child);
+
+                                // Finally, update parent pointer.
+            child.parent = this;
+            if (fireGroupEvents) {
+                childAddedNotification(child, false);
+            }
+        }
+
+        updateVolatility();     // Need to update volatility since new child could be volatile
+        updateHasNodeListener(); // Need to update hasNodeListener since new child could have a node listener
+
+                                // Manually update bounds and repaint since reshape would result
+                                // in entire group being painted twice.  Since we're adding a new
+                                // item, we only have to repaint the new part.
+        updateBounds();
+        repaint();
+    }
+
     /**
      * Remove all chidren from this group node.
      * If the node has no children, then nothing happens.
@@ -375,19 +427,57 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * position in a single scenegraph or between two different scenegraphs.
      * A true addition or removal event is one in which a node is first
      * added to or removed from a scenegraph.
+     *
      * @param child The child to be removed.
      * @see ZGroupEvent
      */
-
     public void removeAllChildren() {
-	for (int i=numChildren-1; i >= 0; i--) {
-	    removeChildImpl(i, true);
-	}
+        removeAllChildren(true);
+    }
+
+    /**
+     * Remove all chidren from this group node.
+     * If the node has no children, then nothing happens.
+     *
+     * If the fireGroupEvents flag is true this method may fire NODE_ADDED or NODE_REMOVED ZGroupEvents.
+     * ZGroupEvents now contains a method <code>isModificationEvent()</code> to
+     * distinguish a modification event from a <bold>true</bold> node addition
+     * or removal.  A modification event is one in which a node changes
+     * position in a single scenegraph or between two different scenegraphs.
+     * A true addition or removal event is one in which a node is first
+     * added to or removed from a scenegraph.
+     *
+     * @param fireGroupEvents True if this group should fire ZGroupEvents for each node removed.
+     *                        Setting this flag to false can improve performance, but will break
+     *                        code that depends on group events being fired.
+     * @see ZGroupEvent
+     */
+    public void removeAllChildren(boolean fireGroupEvents) {
+        int numChildren = getNumChildren();
+
+        if (numChildren == 0) {
+            return;
+        }
+
+        ZNode[] childrenNodes = getChildrenReference();
+        for (int i = 0; i < numChildren; i++) {
+            childrenNodes[i].parent = null;
+            if (fireGroupEvents) {
+                childRemovedNotification(childrenNodes[i], false);
+            }
+        }
+
+        children = ZListImpl.NullList;
+
+        repaint();
+        updateHasNodeListener();
+        updateVolatility();
+        updateBounds();
     }
 
     /**
      * Remove the child at the specified position of this group node's children.
-     * Any subsequent children are shifted to the left (one is subtracted from 
+     * Any subsequent children are shifted to the left (one is subtracted from
      * their indices).
      * <P>
      * This method may fire NODE_ADDED or NODE_REMOVED ZGroupEvents.
@@ -401,7 +491,7 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @see ZGroupEvent
      */
     public void removeChild(int index) {
-	removeChildImpl(index, true);
+        removeChildImpl(index, true);
     }
 
     /**
@@ -421,13 +511,9 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @see ZGroupEvent
      */
     protected void removeChild(ZNode child, boolean fireEvent) {
-	for (int i=0; i<numChildren; i++) {
-				// Find child within children list
-	    if (child == children[i]) {
-		removeChildImpl(i, fireEvent);
-		break;
-	    }
-	}
+        int index = children.indexOf(child);
+        if (index == -1) return;
+        removeChildImpl(index, fireEvent);
     }
 
     /**
@@ -446,7 +532,7 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @see ZGroupEvent
      */
     public void removeChild(ZNode child) {
-	removeChild(child, true);
+        removeChild(child, true);
     }
 
     /**
@@ -454,28 +540,32 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * position of the child to be removed @param fireEvent Should the group event be
      * fired */
     protected void removeChildImpl(int index, boolean fireEvent) {
-	if ((index >= 0) && (index < numChildren)) {
-	    ZNode child = children[index];
-	    child.repaint(); // Repaint area that child was in before removing it so it damages the proper area
-				// Then, slide down other children, effectively removing this one
-	    for (int j=index; j < (numChildren - 1); j++) {
-		children[j] = children[j+1];
-	    }
-	    children[numChildren - 1] = null;
-	    numChildren--;
-	    child.parent = null;
-	    updateVolatility();	  // Need to update volatility since previous child could have be volatile
-	    updateHasNodeListener();  // Need to update node listener since previous child could have been the last node listener
-	    
-				// Manually update bounds and repaint since reshape would result
-				// in entire group being painted twice.  Since we're removing a single
-				// we only have to repaint that area.
-	    updateBounds();
-	    
-	    if (fireEvent) {
-		fireGroupEvent(ZGroupEvent.NODE_REMOVED,child,false);
-	    }
-	}
+        ZNode removedChild = (ZNode) children.remove(index);
+
+        if (removedChild == null) return;
+
+        removedChild.repaint(); // Repaint area that child was in before removing it so it damages the proper area
+        removedChild.parent = null;
+
+        if (removedChild.getVolatileBounds()) {
+            updateVolatility(); // Need to update volatility since previous child could have be volatile
+        }
+
+        if (removedChild.hasNodeListener()) {
+            updateHasNodeListener(); // Need to update node listener since previous child could have been the last node listener
+        }
+                            // Manually update bounds and repaint since reshape would result
+                            // in entire group being painted twice.  Since we're removing a single
+                            // we only have to repaint that area.
+        updateBounds();
+
+        if (children.size() == 0) {
+            children = ZListImpl.NullList;
+        }
+
+        if (fireEvent) {
+            childRemovedNotification(removedChild,false);
+        }
     }
 
     /**
@@ -484,20 +574,9 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @return The index of the child, or -1 if not found
      */
     public int indexOf(ZNode child) {
-	int index = -1;
-
-	int numChildren = getNumChildren();
-	ZNode[] parentChildren = getChildrenReference();
-	for (int i=0; i<numChildren; i++) {
-	    if (child == parentChildren[i]) {
-		index = i;
-		break;
-	    }
-	}
-
-	return index;
+        return children.indexOf(child);
     }
-    
+
     /**
      * Return a copy of the array of children of this node.
      * This method always returns an array, even when there
@@ -505,50 +584,55 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @return the children of this node.
      */
     public ZNode[] getChildren() {
-	ZNode[] copyChildren = new ZNode[numChildren];
-	System.arraycopy(children, 0, copyChildren, 0, numChildren);
+        if (children.isNull()) {
+            return new ZNode[0];
+        }
 
-	return copyChildren;
+        ZNode[] childrenRef = getChildrenReference();
+        ZNode[] copyChildren = new ZNode[children.size()];
+        System.arraycopy(childrenRef, 0, copyChildren, 0, children.size());
+
+        return copyChildren;
     }
 
     /**
      * Return an iterator over the children of this group in the proper order.
-     * @return the iterator 
+     * @return the iterator
      */
     public Iterator getChildrenIterator() {
-	return new ZNodeIterator(children, numChildren);
+        return children.iterator();
     }
 
     /**
      * Return an iterator over the children of this group in the proper order.
-     * @return the iterator 
+     * @deprecated use getChildrenIterator() instead.
+     * @return the iterator
      */
     public Iterator iterator() {
-	return new ZNodeIterator(children, numChildren);
+        return children.iterator();
     }
-
-
 
     /**
      * Returns the i'th child of this node.
      * @return the i'th child of this node.
      */
     public ZNode getChild(int i) {
-        if (i >= numChildren || i < 0)
-	    throw new IndexOutOfBoundsException(
-		"Index: "+i+", Size: "+numChildren);
-        return children[i];
+        return getChildrenReference()[i];
     }
 
     /**
-     * Internal method to return a reference to the actual children of this node.
+     * Returns a reference to the actual children of this node.
      * It should not be modified by the caller.  Note that the actual number
      * of children could be less than the size of the array.  Determine
      * the actual number of children with {@link #getNumChildren}.
+     * <P>
+     * <b>Warning:</b> This method returns a reference to an internal array. Any modification
+     * of this array will result in undefined behavior.
+     * <P>
      * @return the children of this node.
      */
-    protected ZNode[] getChildrenReference() {
-	return children;
+    public ZNode[] getChildrenReference() {
+        return children.getNodesReference();
     }
 
     /**
@@ -556,7 +640,7 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @return the number of children.
      */
     public int getNumChildren() {
-	return numChildren;
+        return children.size();
     }
 
     /**
@@ -566,18 +650,8 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @param child the child node to be raised.
      */
     public void raise(ZNode child) {
-	for (int i=0; i<numChildren; i++) {
-				// Find child within children list
-	    if (child == children[i]) {
-				// Then, slide down other children, and add this child to the end
-		for (int j=i; j < (numChildren - 1); j++) {
-		    children[j] = children[j+1];
-		}
-		children[numChildren - 1] = child;
-		child.repaint();
-		break;
-	    }
-	}
+        children.moveElementToIndex(child, children.size() - 1);
+        child.repaint();
     }
 
     /**
@@ -593,64 +667,57 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @param afterNode The node to raise this node after.
      */
     public void raiseTo(ZNode child, ZNode afterNode) {
-	if (afterNode == null) {
-	    raise(child);
-	} else {
-	    int i;
-	    int childIndex = -1;
-	    int afterIndex = -1;
-				// Find nodes within children list
-	    for (i=0; i<numChildren; i++) {
-		if (child == children[i]) {
-		    childIndex = i;
-		}
-		if (afterNode == children[i]) {
-		    afterIndex = i;
-		}
-		if ((childIndex >= 0) && (afterIndex >= 0)) {
-		    break;
-		}
-	    }
-				// If child and ref node found then continue
-	    if ((childIndex >= 0) && (afterIndex >= 0)) {
-				// If child before ref node
-		if (childIndex < afterIndex) {
-				// Slide down other children, and add this child after the ref node
-		    for (i=childIndex; i<afterIndex; i++) {
-			children[i] = children[i+1];
-		    }
-		    children[afterIndex] = child;
-				// Else, child after ref node
-		} else {
-		    for (i=childIndex; i>(afterIndex + 1); i--) {
-			children[i] = children[i-1];
-		    }
-		    children[afterIndex + 1] = child;
-		}
-	    }
-	    child.repaint();
-	}
+        if (afterNode == null) {
+            raise(child);
+            return;
+        }
+
+        int i;
+        int childIndex = -1;
+        int afterIndex = -1;
+        ZNode[] childrenRef = children.getNodesReference();
+
+                            // Find nodes within children list
+        for (i=0; i<children.size(); i++) {
+            if (child == childrenRef[i]) {
+                childIndex = i;
+            }
+            if (afterNode == childrenRef[i]) {
+                afterIndex = i;
+            }
+            if ((childIndex >= 0) && (afterIndex >= 0)) {
+                break;
+            }
+        }
+                            // If child and ref node found then continue
+        if ((childIndex >= 0) && (afterIndex >= 0)) {
+                            // If child before ref node
+            if (childIndex < afterIndex) {
+                            // Slide down other children, and add this child after the ref node
+                for (i=childIndex; i<afterIndex; i++) {
+                    childrenRef[i] = childrenRef[i+1];
+                }
+                childrenRef[afterIndex] = child;
+                            // Else, child after ref node
+            } else {
+                for (i=childIndex; i>(afterIndex + 1); i--) {
+                    childrenRef[i] = childrenRef[i-1];
+                }
+                childrenRef[afterIndex + 1] = child;
+            }
+        }
+        child.repaint();
     }
 
     /**
      * Lowers the specified child node within the drawing order of this node's children,
      * so it gets rendered below (before) all of its siblings.
-     * This is done by moving the child node to the end of this node's children list.
+     * This is done by moving the child node to the front of this node's children list.
      * @param child the child to be lowered.
      */
     public void lower(ZNode child) {
-	for (int i=0; i<numChildren; i++) {
-				// Find child within children list
-	    if (child == children[i]) {
-				// Then, slide up other children, and add this child to the beginning
-		for (int j=i; j > 0; j--) {
-		    children[j] = children[j-1];
-		}
-		children[0] = child;
-		child.repaint();
-		break;
-	    }
-	}
+        children.moveElementToIndex(child, 0);
+        child.repaint();
     }
 
     /**
@@ -666,43 +733,46 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @param beforeNode The node to lower this node before.
      */
     public void lowerTo(ZNode child, ZNode beforeNode) {
-	if (beforeNode == null) {
-	    lower(child);
-	} else {
-	    int i;
-	    int childIndex = -1;
-	    int beforeIndex = -1;
-				// Find nodes within children list
-	    for (i=0; i<numChildren; i++) {
-		if (child == children[i]) {
-		    childIndex = i;
-		}
-		if (beforeNode == children[i]) {
-		    beforeIndex = i;
-		}
-		if ((childIndex >= 0) && (beforeIndex >= 0)) {
-		    break;
-		}
-	    }
-				// If child and ref node found then continue
-	    if ((childIndex >= 0) && (beforeIndex >= 0)) {
-				// If child before ref node
-		if (childIndex < beforeIndex) {
-				// Slide down other children, and add this child before the ref node
-		    for (i=childIndex; i<(beforeIndex - 1); i++) {
-			children[i] = children[i+1];
-		    }
-		    children[beforeIndex - 1] = child;
-				// Else, child before ref node
-		} else {
-		    for (i=childIndex; i>beforeIndex; i--) {
-			children[i] = children[i-1];
-		    }
-		    children[beforeIndex] = child;
-		}
-	    }
-	    child.repaint();
-	}
+        if (beforeNode == null) {
+            lower(child);
+            return;
+        }
+
+        int i;
+        int childIndex = -1;
+        int beforeIndex = -1;
+        ZNode[] childrenRef = children.getNodesReference();
+
+                            // Find nodes within children list
+        for (i=0; i<children.size(); i++) {
+            if (child == childrenRef[i]) {
+                childIndex = i;
+            }
+            if (beforeNode == childrenRef[i]) {
+                beforeIndex = i;
+            }
+            if ((childIndex >= 0) && (beforeIndex >= 0)) {
+                break;
+            }
+        }
+                            // If child and ref node found then continue
+        if ((childIndex >= 0) && (beforeIndex >= 0)) {
+                            // If child before ref node
+            if (childIndex < beforeIndex) {
+                            // Slide down other children, and add this child before the ref node
+                for (i=childIndex; i<(beforeIndex - 1); i++) {
+                    childrenRef[i] = childrenRef[i+1];
+                }
+                childrenRef[beforeIndex - 1] = child;
+                            // Else, child before ref node
+            } else {
+                for (i=childIndex; i>beforeIndex; i--) {
+                    childrenRef[i] = childrenRef[i-1];
+                }
+                childrenRef[beforeIndex] = child;
+            }
+        }
+        child.repaint();
     }
 
     /**
@@ -715,22 +785,14 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @see #getVolatileBounds()
      */
     protected void updateVolatility() {
-				// If this node set to volatile, then it is volatile
-	cacheVolatile = volatileBounds;
-	if (!cacheVolatile) {
-				// Else, if any of its children are volatile, then it is volatile
-	    for (int i=0; i<numChildren; i++) {
-		if (children[i].getVolatileBounds()) {
-		    cacheVolatile = true;
-		    break;
-		}
-	    }
-	}
+                                // If this node set to volatile, then it is volatile
+        cacheVolatile = volatileBounds;
 
-				// Update parent's volatility
-	if (parent != null) {
-	    parent.updateVolatility();
-	}
+        if (!cacheVolatile && !children.isNull()) {
+            cacheVolatile = children.collectiveHasVolatileBounds();
+        }
+
+        super.updateVolatility();
     }
 
     /**
@@ -746,7 +808,7 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @see #setVolatileBounds(boolean)
      */
     public boolean getVolatileBounds() {
-	return cacheVolatile;
+        return cacheVolatile;
     }
 
     //****************************************************************************
@@ -765,7 +827,7 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @see ZDrawingSurface#pick
      */
     public void setChildrenPickable(boolean childrenPickable) {
-	this.childrenPickable = childrenPickable;
+        this.childrenPickable = childrenPickable;
     }
 
     /**
@@ -773,7 +835,7 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @return True if this node picks its children.
      */
     public final boolean getChildrenPickable() {
-	return childrenPickable;
+        return childrenPickable;
     }
 
     /**
@@ -788,7 +850,7 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @param childrenFindable True if this node should find its children
      */
     public void setChildrenFindable(boolean childrenFindable) {
-	this.childrenFindable = childrenFindable;
+        this.childrenFindable = childrenFindable;
     }
 
     /**
@@ -796,7 +858,7 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @return True if the children of this node are findable.
      */
     public final boolean getChildrenFindable() {
-	return childrenFindable;
+        return childrenFindable;
     }
 
     /**
@@ -811,10 +873,10 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @see ZSceneGraphEditor
      */
     public void setHasOneChild(boolean oneChild) {
-	if (oneChild && numChildren > 1) {
-	    throw new ZTooManyChildrenException(this, "Can't have more than one child when hasOneChild flag set");
-	}
-	hasOneChild = oneChild;
+        if (oneChild && children.size() > 1) {
+            throw new ZTooManyChildrenException(this, "Can't have more than one child when hasOneChild flag set");
+        }
+        hasOneChild = oneChild;
     }
 
     /**
@@ -823,7 +885,7 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @see ZSceneGraphEditor
      */
     public final boolean hasOneChild() {
-	return hasOneChild;
+        return hasOneChild;
     }
 
     //****************************************************************************
@@ -844,19 +906,10 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @param renderContext The graphics context to use for rendering.
      */
     public void render(ZRenderContext renderContext) {
-	if (numChildren == 0) {
-	    return;
-	}
+        if (children.size() == 0)
+            return;
 
-	ZBounds visibleBounds = renderContext.getVisibleBounds();
-
-				// Paint children
-	//System.out.println("ZGroup painting children: "+numChildren);
-	for (int i=0; i<numChildren; i++) {
-	    if (visibleBounds.intersects(children[i].getBoundsReference())) {
-		children[i].render(renderContext);
-	    }
-	}
+        children.collectiveRender(renderContext, renderContext.getVisibleBounds());
     }
 
     /**
@@ -866,10 +919,17 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * of its children's bounds
      */
     protected void computeBounds() {
-	bounds.reset();
-	for (int i=0; i<numChildren; i++) {
-	    bounds.add(children[i].getBoundsReference());
-	}
+        bounds.reset();
+        bounds = children.collectiveBoundsReference(bounds);
+    }
+
+    /**
+     * Return the bounds of this ZGroup without taking the groups children into
+     * consideration. For the class ZGroup this will always return an empty bounds. But for
+     * sublclasses such as ZVisualGroup it may return a non-empty bounds.
+     */
+    public ZBounds getShallowBounds() {
+        return new ZBounds();
     }
 
     // *********************************************************************
@@ -877,19 +937,15 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
     // Event methods
     //
     // *********************************************************************
-    
+
     /**
      * This method overriddes ZNode.removeNodeListener so as to properly update
      * the hasNodeListener bit taking into consideration the ZGroup's children.
      * @param l The node listener to be removed
      */
     public void removeNodeListener(ZNodeListener l) {
-        listenerList.remove(ZNodeListener.class, l);
-	if (listenerList.getListenerCount() == 0) {
-	    listenerList = null;
-	}
-
-	updateHasNodeListener();
+        super.removeNodeListener(l);
+        updateHasNodeListener();
     }
 
     /**
@@ -898,38 +954,35 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * notifies its parent.
      */
     public void updateHasNodeListener() {
-	boolean hadListener = hasNodeListener;
+        boolean hadListener = hasNodeListener;
 
-	hasNodeListener = false;       
-	if (listenerList != null &&
-	    listenerList.getListenerCount(ZNodeListener.class) > 0) {
-	    hasNodeListener = true;
-	}
-	else {
-	    for(int i=0; i<numChildren; i++) {
-		if (children[i].hasNodeListener()) {
-		    hasNodeListener = true;
-		    break;
-		}
-	    }
-	}
+        hasNodeListener = false;
+        if (listenerList != null &&
+            listenerList.getListenerCount(ZNodeListener.class) > 0) {
+            hasNodeListener = true;
+        }
+        else {
+            for(int i=0; i<children.size(); i++) {
+                if (((ZNode)children.get(i)).hasNodeListener()) {
+                    hasNodeListener = true;
+                    break;
+                }
+            }
+        }
 
-	if (parent != null &&
-	    hasNodeListener != hadListener) {
-	    parent.updateHasNodeListener();
-	}
+        if (parent != null &&
+            hasNodeListener != hadListener) {
+            parent.updateHasNodeListener();
+        }
     }
-    
+
     /**
      * Adds the specified group listener to receive group events from this node.
      *
      * @param l the group listener.
      */
     public void addGroupListener(ZGroupListener l) {
-	if (listenerList == null) {
-	    listenerList = new EventListenerList();
-	}
-        listenerList.add(ZGroupListener.class, l);
+        getListenerList().add(ZGroupListener.class, l);
     }
 
     /**
@@ -939,64 +992,76 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @param l the group listener.
      */
     public void removeGroupListener(ZGroupListener l) {
-        listenerList.remove(ZGroupListener.class, l);
-	if (listenerList.getListenerCount() == 0) {
-	    listenerList = null;
-	}
+        removeEventListener(ZGroupListener.class, l);
     }
 
     /**
      * Notifies all listeners that have registered interest for
-     * notification on this event type, then percolates the event up scenegraph,
-     * notifying any listeners on any higher ZGroup nodes.  The event instance
-     * is lazily created using the parameters passed into
-     * the fire method.  The listener list is processed in last to
+     * notification on ZGroupEvents that a child has been added to the
+     * group, then percolates the event up scenegraph, notifying any
+     * listeners on any higher ZGroup nodes. The listener list is processed in last to
      * first order.
-     * @param id The event id (NODE_ADDED, NODE_REMOVED)
      * @param child The child being added or removed from this node
      * @param isModification true if this is a modification event.
      * @see EventListenerList
      * @see ZGroupEvent
      */
-    protected void fireGroupEvent(int id, ZNode child, boolean isModification) {
-	ZNode node = this;
-	ZGroupEvent e = new ZGroupEvent((ZGroup)node, id, child, isModification);
-	do {
-	    if (e.isConsumed()) {
-		break;
-	    }
+    public void childAddedNotification(ZNode child, boolean isModification) {
+        ZGroupEvent e = null;
+        ZNode node = this;
+        do {
+            if (e != null && e.isConsumed()) {
+                break;
+            }
 
-	    if (node instanceof ZGroup) {
-				// Guaranteed to return a non-null array
-		if (node.listenerList != null) {
-		    Object[] listeners = node.listenerList.getListenerList();
+            if (node instanceof ZGroup) {
+                // Only create the event if we have a listener.
+                if (e == null && node.hasLisenerOfType(ZGroupListener.class)) {
+                    e = ZGroupEvent.createNodeAddedEvent(this, child, isModification);
+                }
+                if (e != null) {
+                    node.fireEvent(e);
+                }
+            }
+            node = node.getParent();
+        } while (node != null);
+    }
 
-				// Process the listeners last to first, notifying
-				// those that are interested in this event
-		    for (int i = listeners.length-2; i>=0; i-=2) {
-			if (listeners[i]==ZGroupListener.class) {
-			    switch (id) {
-			    case ZGroupEvent.NODE_ADDED:
-				((ZGroupListener)listeners[i+1]).nodeAdded(e);
-				break;
-			    case ZGroupEvent.NODE_REMOVED:
-				((ZGroupListener)listeners[i+1]).nodeRemoved(e);
-				break;
-			    }
-			    if (e.isConsumed()) {
-				break;
-			    }
-			}
-		    }
-		}
-	    }
-	    node = node.getParent();
-	} while (node != null);
+    /**
+     * Notifies all listeners that have registered interest for
+     * notification on ZGroupEvents that a child has been removed from the
+     * group, then percolates the event up scenegraph, notifying any
+     * listeners on any higher ZGroup nodes. The listener list is processed in last to
+     * first order.
+     * @param child The child being added or removed from this node
+     * @param isModification true if this is a modification event.
+     * @see EventListenerList
+     * @see ZGroupEvent
+     */
+    public void childRemovedNotification(ZNode child, boolean isModification) {
+        ZGroupEvent e = null;
+        ZNode node = this;
+        do {
+            if (e != null && e.isConsumed()) {
+                break;
+            }
+
+            if (node instanceof ZGroup) {
+                // Only create the event if we have a listener.
+                if (e == null && node.hasLisenerOfType(ZGroupListener.class)) {
+                    e = ZGroupEvent.createNodeRemovedEvent(this, child, isModification);
+                }
+                if (e != null) {
+                    node.fireEvent(e);
+                }
+            }
+            node = node.getParent();
+        } while (node != null);
     }
 
     //****************************************************************************
     //
-    //			Other Methods
+    //                  Other Methods
     //
     //****************************************************************************
 
@@ -1015,27 +1080,22 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @see ZDrawingSurface#pick(int, int)
      */
     public boolean pick(Rectangle2D rect, ZSceneGraphPath path) {
-	boolean picked = false;
+        if (isPickable()) {
+            path.push(this);
 
-	if (isPickable()) {
-	    path.push(this);
+            ZSceneGraphObject picked = children.collectivePick(rect, path);
+            if (picked != null) {
+                if (!getChildrenPickable()) {
+                    path.pop(this);
+                    path.setObject(this);
+                }
+                return true;
+            }
 
-	    for (int i=(numChildren - 1); i>=0; i--) {
-		if (children[i].pick(rect, path)) {
-		    if (!getChildrenPickable()) {
-		    	// Can't pick children - set the picked object to the group
-		    	path.pop(this);
-		        path.setObject(this);
-		    }
-		    return true;
-		}
-	    }
-
-	    // Remove me from the path if the pick failed
-	    path.pop(this);
-	}
-
-	return false;
+            // Remove me from the path if the pick failed
+            path.pop(this);
+        }
+        return false;
     }
 
     /**
@@ -1054,24 +1114,25 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @see ZFindFilter
      */
     protected int findNodes(ZFindFilter filter, ArrayList nodes) {
-	int nodesSearched = 1;
+        int nodesSearched = 1;
 
-				// Only search if node is findable.
-	if (isFindable()) {
-				// Check if this node is accepted by the filter
-	    if (filter.accept(this)) {
-		nodes.add(this);
-	    }
+                                // Only search if node is findable.
+        if (isFindable()) {
+                                // Check if this node is accepted by the filter
+            if (filter.accept(this)) {
+                nodes.add(this);
+            }
 
-				// Check node's children
-	    if (getChildrenFindable() && filter.childrenFindable(this)) {
-		for (int i=0; i<numChildren; i++) {
-		    nodesSearched += children[i].findNodes(filter, nodes);
-		}
-	    }
-	}
+                                // Check node's children
+            if (getChildrenFindable() && filter.childrenFindable(this)) {
+                ZNode[] childrenRef = getChildrenReference();
+                for (int i=0; i<children.size(); i++) {
+                    nodesSearched += childrenRef[i].findNodes(filter, nodes);
+                }
+            }
+        }
 
-	return nodesSearched;
+        return nodesSearched;
     }
 
     /**
@@ -1080,13 +1141,13 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @see ZDebug#dump
      */
     public String dump() {
-	String str = super.dump();
+        String str = super.dump();
 
-	if (hasOneChild()) {
-	    str += "\n HasOneChild";
-	}
+        if (hasOneChild()) {
+            str += "\n HasOneChild";
+        }
 
-	return str;
+        return str;
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -1100,21 +1161,19 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @param out The stream that this object writes into
      */
     public void writeObject(ZObjectOutputStream out) throws IOException {
-	super.writeObject(out);
+        super.writeObject(out);
 
-	if (numChildren > 0) {
-	    ZNode[] copyChildren = getChildren();  // Array can have some empty slots
-	    out.writeState("List", "children", Arrays.asList(copyChildren));
-	}
-	if (childrenPickable != childrenPickable_DEFAULT) {
-	    out.writeState("boolean", "childrenPickable", childrenPickable);
-	}
-	if (childrenFindable != childrenFindable_DEFAULT) {
-	    out.writeState("boolean", "childrenFindable", childrenFindable);
-	}
-	if (hasOneChild != hasOneChild_DEFAULT) {
-	    out.writeState("boolean", "hasOneChild", hasOneChild);
-	}
+        children.writeObject("children", out);
+
+        if (childrenPickable != childrenPickable_DEFAULT) {
+            out.writeState("boolean", "childrenPickable", childrenPickable);
+        }
+        if (childrenFindable != childrenFindable_DEFAULT) {
+            out.writeState("boolean", "childrenFindable", childrenFindable);
+        }
+        if (hasOneChild != hasOneChild_DEFAULT) {
+            out.writeState("boolean", "hasOneChild", hasOneChild);
+        }
     }
 
     /**
@@ -1122,12 +1181,13 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @param out The stream that this object writes into
      */
     public void writeObjectRecurse(ZObjectOutputStream out) throws IOException {
-	super.writeObjectRecurse(out);
+        super.writeObjectRecurse(out);
 
-				// Add children
-	for (int i=0; i<numChildren; i++) {
-	    out.addObject(children[i]);
-	}
+                                // Add children
+        ZNode[] childrenRef = children.getNodesReference();
+        for (int i=0; i<children.size(); i++) {
+            out.addObject(childrenRef[i]);
+        }
     }
 
     /**
@@ -1141,61 +1201,21 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
      * @param fieldValue The value of the field
      */
     public void setState(String fieldType, String fieldName, Object fieldValue) {
-	super.setState(fieldType, fieldName, fieldValue);
+        super.setState(fieldType, fieldName, fieldValue);
 
-	if (fieldName.compareTo("children") == 0) {
-	    ZNode child;
-	    for (Iterator i=((Vector)fieldValue).iterator(); i.hasNext();) {
-		child = (ZNode)i.next();
-		addChild(child);
-	    }
- 	} else if (fieldName.compareTo("childrenPickable") == 0) {
-	    setChildrenPickable(((Boolean)fieldValue).booleanValue());
- 	} else if (fieldName.compareTo("childrenFindable") == 0) {
-	    setChildrenFindable(((Boolean)fieldValue).booleanValue());
- 	} else if (fieldName.compareTo("hasOneChild") == 0) {
-	    setHasOneChild(((Boolean)fieldValue).booleanValue());
-	}
+        if (fieldName.compareTo("children") == 0) {
+            addChildren((Vector)fieldValue, false);
+        } else if (fieldName.compareTo("childrenPickable") == 0) {
+            setChildrenPickable(((Boolean)fieldValue).booleanValue());
+        } else if (fieldName.compareTo("childrenFindable") == 0) {
+            setChildrenFindable(((Boolean)fieldValue).booleanValue());
+        } else if (fieldName.compareTo("hasOneChild") == 0) {
+            setHasOneChild(((Boolean)fieldValue).booleanValue());
+        }
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
-	trimToSize();   // Remove extra unused array elements
-	out.defaultWriteObject();
-    }
-
-    /**
-     * An iterator class to support iterating over the children of a group.
-     */
-    class ZNodeIterator implements Iterator {
-	private ZNode[] array;
-	private int len;
-	private int index;
-
-	public ZNodeIterator(ZNode[] array, int len) {
-	    this.array = array;
-	    this.len = len;
-	    index = 0;
-	}
-	
-	public boolean hasNext() {
-	    return (index < len);
-	}
-	
-	public Object next() {
-	    Object obj = null;
-
-	    if (index >= len) {
-		throw new NoSuchElementException();
-	    } else {
-		obj = array[index];
-		index++;
-	    }
-	    
-	    return obj;
-	}
-	
-	public void remove() {
-	    throw new UnsupportedOperationException();
-	}
+        trimToSize();   // Remove extra unused array elements
+        out.defaultWriteObject();
     }
 }

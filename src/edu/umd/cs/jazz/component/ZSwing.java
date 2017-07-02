@@ -23,24 +23,24 @@ import edu.umd.cs.jazz.util.*;
   This message was sent to Sun on August 27, 1999
 
   -----------------------------------------------
-  
+
   We are currently developing Jazz, a "scenegraph" for use in 2D graphics.
   One of our ultimate goals is to support Swing lightweight components
-  within Jazz, whose graphical space supports arbitray affine transforms. 
+  within Jazz, whose graphical space supports arbitray affine transforms.
   The challenge in this pursuit is getting the components to respond and
   render properly though not actually displayed in a standard Java component
-  hierarchy. 
+  hierarchy.
 
-  
+
   The first issues involved making the Swing components focusable and
   showing.  This was accomplished by adding the Swing components to a 0x0
   JComponent which was in turn added to our main Jazz application component.
   To our good fortune, a Java component is showing merely if it and its
   ancestors are showing and not based on whether it is ACTUALLY visible.
   Likewise, focus in a JComponent depends merely on the component's
-  containing window having focus. 
-  
-  
+  containing window having focus.
+
+
   The second issue involved capturing the repaint calls on a Swing
   component.  Normally, for a repaint and the consequent call to
   paintImmediately, a Swing component obtains the Graphics object necessary
@@ -62,13 +62,13 @@ import edu.umd.cs.jazz.util.*;
   a component while that component is painting.  (A similar problem faced
   the Swing team over this same issue.  They solved it by inserting a
   CellRendererPane to capture the renderer's invalidate calls.)
-  
-  
+
+
   Another issue arose over the forwarding of mouse events to the Swing
   components.  Since our Swing components are not actually displayed on
   screen in the standard manner, we must manually dispatch any MouseEvents
   we want the component to receive.  Hence, we needed to find the deepest
-  visible component at a particular location that accepts MouseEvents. 
+  visible component at a particular location that accepts MouseEvents.
   Finding the deepest visible component at a point was achieved with the
   "findComponentAt" method in java.awt.Container.  With the
   "getListeners(Class listenerType)" method added in JDK1.3 Beta we are able
@@ -79,8 +79,8 @@ import edu.umd.cs.jazz.util.*;
   inaccessible.  In order to dispatch events correctly we would need a
   public accessor to the method "boolean eventEnabled(AWTEvent)" in
   java.awt.Component.
-  
-  
+
+
   Still another issue involves the management of cursors when the mouse is
   over a Swing component in our application.  To the Java mechanisms, the
   mouse never appears to enter the bounds of the Swing components since they
@@ -90,8 +90,8 @@ import edu.umd.cs.jazz.util.*;
   component's cursor changes while we are over that Swing component (for
   instance, if you resize a Table Column).  In order to manage cursors
   properly, we would need setCursor to fire property change events.
-  
-  
+
+
   With the above fixes, most Swing components work.  The only Swing
   components that are definitely broken are ToolTips and those that rely on
   JPopupMenu. In order to implement ToolTips properly, we would need to have
@@ -99,8 +99,8 @@ import edu.umd.cs.jazz.util.*;
   is possible with RepaintManager.  In order to implement JPopupMenu, we
   will likely need to reimplement JPopupMenu to function in Jazz with
   a transformed Graphics and to insert itself in the proper place in the
-  Jazz scenegraph. 
-  
+  Jazz scenegraph.
+
 */
 
 
@@ -123,7 +123,7 @@ import edu.umd.cs.jazz.util.*;
  *       that do not have double buffering turned off or have a smaller font
  *       size than the minimum font size of the original ZSwing's component
  *       hierarchy.
- *   
+ *
  *       For instance, the following bit of code will give unexpected
  *       results:
  *       <pre>
@@ -160,14 +160,24 @@ public class ZSwing extends ZVisualComponent implements Serializable, PropertyCh
      * The minimum font size in the Swing hierarchy rooted at the component
      */
     protected double minFontSize = Double.MAX_VALUE;
-    
+
     /**
-     * Used as a hashtable key for this object in the Swing component's     
-     * client properties. 
+     * The default stroke
+     */
+    protected transient Stroke defaultStroke = new BasicStroke();
+
+    /**
+     * The default font
+     */
+    protected Font defaultFont = new Font("Serif",Font.PLAIN,12);
+
+    /**
+     * Used as a hashtable key for this object in the Swing component's
+     * client properties.
      */
     public static final String VISUAL_COMPONENT_KEY = "ZSwing";
-    
-   /**
+
+    /**
      * Constructs a new visual component wrapper for the Swing component
      * and adds the Swing component to the SwingWrapper component of
      * the ZCanvas
@@ -177,12 +187,12 @@ public class ZSwing extends ZVisualComponent implements Serializable, PropertyCh
      */
     public ZSwing(ZCanvas zbc,JComponent component) {
 
-	this.component = component;	
-	component.putClientProperty(VISUAL_COMPONENT_KEY, this);
-	init(component);
-	zbc.getSwingWrapper().add(component);
-	
-	reshape();
+        this.component = component;
+        component.putClientProperty(VISUAL_COMPONENT_KEY, this);
+        init(component);
+        zbc.getSwingWrapper().add(component);
+
+        reshape();
     }
 
     /**
@@ -198,17 +208,19 @@ public class ZSwing extends ZVisualComponent implements Serializable, PropertyCh
      * @param renderContext Contains information about current render.
      */
     public void render(ZRenderContext renderContext) {
-	Graphics2D g2 = renderContext.getGraphics2D();
-	
-	if ((renderContext.getCompositeMagnification() < renderCutoff &&
-	    renderContext.getDrawingSurface().isInteracting()) ||
-	    (minFontSize*renderContext.getCompositeMagnification() < 0.5)) {
-	    paintAsGreek(g2);
-	}
-	else {
-	    paint(g2);
-	}
-	
+        Graphics2D g2 = renderContext.getGraphics2D();
+        g2.setStroke(defaultStroke);
+        g2.setFont(defaultFont);
+
+        if ((renderContext.getCompositeMagnification() < renderCutoff &&
+            renderContext.getDrawingSurface().isInteracting()) ||
+            (minFontSize*renderContext.getCompositeMagnification() < 0.5)) {
+            paintAsGreek(g2);
+        }
+        else {
+            paint(g2);
+        }
+
     }
 
     /**
@@ -216,35 +228,35 @@ public class ZSwing extends ZVisualComponent implements Serializable, PropertyCh
      * @param g2 The graphics used to render the filled rectangle
      */
     public void paintAsGreek(Graphics2D g2) {
-	Color background = component.getBackground();
-	Color foreground = component.getForeground();
-	Rectangle2D rect = new Rectangle2D.Double(bounds.getX(),
-						 bounds.getY(),
-						 bounds.getWidth(),
-						 bounds.getHeight());
-	
-	if (background != null) {
-	    g2.setColor(background);
-	}
-	g2.fill(rect);
+        Color background = component.getBackground();
+        Color foreground = component.getForeground();
+        Rectangle2D rect = new Rectangle2D.Double(bounds.getX(),
+                                                 bounds.getY(),
+                                                 bounds.getWidth(),
+                                                 bounds.getHeight());
 
-	if (foreground != null) {
-	    g2.setColor(foreground);
-	}
-	g2.draw(rect);
+        if (background != null) {
+            g2.setColor(background);
+        }
+        g2.fill(rect);
+
+        if (foreground != null) {
+            g2.setColor(foreground);
+        }
+        g2.draw(rect);
 
     }
-    
+
     /**
      * Forwards the paint request to the Swing component to paint normally
      * @param g2 The graphics this visual component should pass to the Swing
      *           component
      */
     public void paint(Graphics2D g2) {
-	ZCanvas.ZBasicRepaintManager manager = (ZCanvas.ZBasicRepaintManager)RepaintManager.currentManager(component);
-	manager.lockRepaint(component);
-	component.paint(g2);
-	manager.unlockRepaint(component);
+        ZCanvas.ZBasicRepaintManager manager = (ZCanvas.ZBasicRepaintManager)RepaintManager.currentManager(component);
+        manager.lockRepaint(component);
+        component.paint(g2);
+        manager.unlockRepaint(component);
     }
 
     /**
@@ -253,30 +265,30 @@ public class ZSwing extends ZVisualComponent implements Serializable, PropertyCh
      * @param repaintBounds The bounding box to repaint within this component
      */
     public void repaint(ZBounds repaintBounds) {
-	ZNode[] parents = getParents();
-	int numParents = parents.length;
+        ZNode[] parentsRef = getParentsReference();
+        int numParents = getNumParents();
 
-	for(int i=0; i<numParents; i++) {
-	    if (i == numParents - 1) {
-		parents[i].repaint(repaintBounds);
-	    }
-	    else {
-		parents[i].repaint((ZBounds)repaintBounds.clone());
-	    }
-	}
+        for(int i=0; i<numParents; i++) {
+            if (i == numParents - 1) {
+                parentsRef[i].repaint(repaintBounds);
+            }
+            else {
+                parentsRef[i].repaint((ZBounds)repaintBounds.clone());
+            }
+        }
     }
-    
+
     /**
      * Sets the Swing component's bounds to its preferred bounds
      * unless it already is set to its preferred size.  Also
      * updates the visual components copy of these bounds
      */
     public void computeBounds() {
-	Dimension d = component.getPreferredSize();
-	bounds.setRect(0, 0, d.getWidth(), d.getHeight());
-	if (!component.getSize().equals(d)) {
-	    component.setBounds(0, 0, (int)d.getWidth(), (int)d.getHeight());
-	}
+        Dimension d = component.getPreferredSize();
+        bounds.setRect(0, 0, d.getWidth(), d.getHeight());
+        if (!component.getSize().equals(d)) {
+            component.setBounds(0, 0, (int)d.getWidth(), (int)d.getHeight());
+        }
     }
 
     /**
@@ -284,7 +296,7 @@ public class ZSwing extends ZVisualComponent implements Serializable, PropertyCh
      * @return The Swing component that this visual component wraps
      */
     public JComponent getComponent() {
-	return component;
+        return component;
     }
 
     /**
@@ -301,22 +313,22 @@ public class ZSwing extends ZVisualComponent implements Serializable, PropertyCh
     void init(Component c) {
         Component[] children = null;
         if (c instanceof Container) {
-            children = ((Container)c).getComponents();	    
+            children = ((Container)c).getComponents();
         }
 
-	if (c.getFont() != null) {
-	    minFontSize = Math.min(minFontSize,c.getFont().getSize());
-	}
-	
+        if (c.getFont() != null) {
+            minFontSize = Math.min(minFontSize,c.getFont().getSize());
+        }
+
         if (children != null) {
             for (int j=0; j<children.length; j++) {
                 init(children[j]);
             }
-        }                                  
+        }
 
         if (c instanceof JComponent) {
             ((JComponent)c).setDoubleBuffered(false);
-	    c.addPropertyChangeListener("font",this);
+            c.addPropertyChangeListener("font",this);
         }
     }
 
@@ -324,39 +336,9 @@ public class ZSwing extends ZVisualComponent implements Serializable, PropertyCh
      * Listens for changes in font on components rooted at this ZSwing
      */
     public void propertyChange(PropertyChangeEvent evt) {
-	if (component.isAncestorOf((Component)evt.getSource()) &&
-	    ((Component)evt.getSource()).getFont() != null) {
-	    minFontSize = Math.min(minFontSize,((Component)evt.getSource()).getFont().getSize());
-	}
+        if (component.isAncestorOf((Component)evt.getSource()) &&
+            ((Component)evt.getSource()).getFont() != null) {
+            minFontSize = Math.min(minFontSize,((Component)evt.getSource()).getFont().getSize());
+        }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

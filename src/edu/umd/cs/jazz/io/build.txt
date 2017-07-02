@@ -5,10 +5,10 @@
 #
 
 1. Download and install JavaCC.
-	- JavaCC can be found at http://www.sun.com/suntest/products/JavaCC/index.html
+	- JavaCC can be found at http://www.metamata.com/JavaCC/
 	- The file you downloaded is a self-running/installing java program.
 	  run the program using java:
-	  java JavaCC1_0.class
+	  java JavaCC2_0
 	- Install the software where you like (i.e.: c:\download) recommended
 	- Modify the PATH environment variable to include the bin directory of the
 	  JavaCC install (c:\java\JavaCC\bin in this example).
@@ -31,4 +31,4 @@
 	javacc.bat ZInternalParser.jj
 
 4. Build the package normally :
-	make
+	build all

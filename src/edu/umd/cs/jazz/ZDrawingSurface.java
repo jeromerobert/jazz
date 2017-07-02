@@ -75,6 +75,9 @@ public class ZDrawingSurface implements Printable, Serializable {
 				// Defined once per surface, and reused for efficiency.
     private Rectangle             tmpRepaintRect = null;
 
+				// Only allow paintingImmediately to be called once at a time
+    private boolean               paintingImmediately = false;
+
     //****************************************************************************
     //
     //                 Constructors
@@ -173,6 +176,14 @@ public class ZDrawingSurface implements Printable, Serializable {
 	return interactingRenderQuality;
     }
 
+    /**
+     * Get the component that this surface is attached to, or null if none.
+     * @return The component this surface is attached to, or null if none.
+     */
+    public JComponent getComponent() {
+	return component;
+    }
+    
     /**
      * Set the component that this surface is attached to, or null if none.
      * @param aComponent The component this surface is attached to, or null if none.
@@ -355,9 +366,16 @@ public class ZDrawingSurface implements Printable, Serializable {
      * and marked for future repainting.
      */
     public void paintImmediately() {
+	if (paintingImmediately) {
+				// Stop recursion or paintDirtyRegions will throw an exception
+	    return;
+	}
+
+	paintingImmediately = true;
 	if (component != null) {
 	    RepaintManager.currentManager(component).paintDirtyRegions();
 	}
+	paintingImmediately = false;
     }
 
     /**
@@ -498,5 +516,4 @@ public class ZDrawingSurface implements Printable, Serializable {
 	str += "\n Camera: " + camera;
 	return str;
     }
-
 }

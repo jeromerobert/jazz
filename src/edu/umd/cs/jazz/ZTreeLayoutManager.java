@@ -29,7 +29,7 @@ import edu.umd.cs.jazz.component.ZStroke;
  *
  * @author  Jin Tong
  * @author  Ben Bederson
- * @author  Lance Good 
+ * @author  Lance Good
  */
 public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serializable, Cloneable {
 
@@ -60,7 +60,7 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      * (ie. left-most or top-most)
      */
     public static final int HEAD_SIDE = 2;
-    
+
     /**
      * This option connects parent nodes to child nodes with a straight line
      */
@@ -72,7 +72,6 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      */
     public static final int LINK_ANGLEDLINE   = 1;
 
-    
     //
     // Internal Variables
     //
@@ -86,7 +85,7 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      * A Permanent holder for an Origin point.
      */
     protected static final Point2D ORIGIN = new Point2D.Double(0.0, 0.0);
-    
+
     /**
      * The Current Heading Style.
      */
@@ -137,29 +136,29 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
     /**
      *  The current level of recursion in this layout manager.
      */
-    protected int recurseLevel = 0;    
+    protected int recurseLevel = 0;
 
     /**
      * The default constructor - uses all default values
      */
     public ZTreeLayoutManager() {
-	areaManager = new Hashtable();
-	transformTable = new Hashtable();
-    	transformNodes = new ArrayList();
+        areaManager = new Hashtable();
+        transformTable = new Hashtable();
+        transformNodes = new ArrayList();
     }
 
     /**
      * Return a clone of this object.
      */
     public Object clone() {
-	Object newObject;
-	try {
-	    newObject = super.clone();
-	} catch (CloneNotSupportedException e) {
-	    throw new RuntimeException("Error in Object.clone(): " + e);
-	}
+        Object newObject;
+        try {
+            newObject = super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException("Error in Object.clone(): " + e);
+        }
 
-	return newObject;
+        return newObject;
     }
 
     /**
@@ -170,55 +169,53 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      * @param linkStyle If links are displayed, the style of links - LINK_STRAIGHTLINE or LINK_ANGLEDLINE
      */
     public ZTreeLayoutManager(int orientation, int headingStyle, boolean showLink, int linkStyle) {
-	currentOrientation = orientation;
-	currentHeadStyle = headingStyle;
-	if (showLink) {
-	    linkVisible = true;
-	    setLinkStyle(null, linkStyle);
-	}
-	else {
-	    linkVisible = false;
-	}
+        currentOrientation = orientation;
+        currentHeadStyle = headingStyle;
+        if (showLink) {
+            linkVisible = true;
+            setLinkStyle(null, linkStyle);
+        }
+        else {
+            linkVisible = false;
+        }
     }
-    
+
     /**
      * Set the current orientation. If the orientation
-     * is not supported, nothing will happen. 
+     * is not supported, nothing will happen.
      * @param orientation   the desired orientation - ORIENT_VERTICAL or ORIENT_HORIZONTAL
      * @return              <code>true</code> if orientation
      *                      set, <code>false</code> if orientation
      *                      not supported.
      */
     public boolean setCurrentOrientation(ZLayoutGroup layout, int orientation) {
-	boolean rc;
+        boolean rc;
 
-	if ((orientation == ORIENT_VERTICAL) ||
-	    (orientation == ORIENT_HORIZONTAL)) {
-	    currentOrientation = orientation;
-	    rc = true;
-	}
-	else {
-	    rc = false;
-	}
+        if ((orientation == ORIENT_VERTICAL) ||
+            (orientation == ORIENT_HORIZONTAL)) {
+            currentOrientation = orientation;
+            rc = true;
+        }
+        else {
+            rc = false;
+        }
 
-	if (layout != null && rc == true) {
-	    ZLayoutGroup.invalidateChildren(layout);
-      	    layout.invalidate();
-	}
+        if (layout != null && rc == true) {
+            ZLayoutGroup.invalidateChildren(layout);
+            layout.invalidate();
+        }
 
-	return rc;
-    }   
-
+        return rc;
+    }
 
     /**
      * Get the current orientation.
      * @return the current orientation for this tree.
      */
     public int getCurrentOrientation() {
-	return currentOrientation;
+        return currentOrientation;
     }
 
-    
     /**
      * Set the current heading style.
      * @param h    the desired heading style - HEAD_IN, HEAD_OUT, or HEAD_SIDE
@@ -226,36 +223,34 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      *             otherwise
      */
     public boolean setCurrentHeadingStyle(ZLayoutGroup layout, int h) {
-	boolean rc;
+        boolean rc;
 
-	if (((h == HEAD_IN) ||
-	     (h == HEAD_OUT) ||
-	     (h == HEAD_SIDE)) &&
-	     currentHeadStyle != h) {
-	    currentHeadStyle = h;
-	    rc = true;
-	}
-	else {
-	    rc = false;
-	}
+        if (((h == HEAD_IN) ||
+             (h == HEAD_OUT) ||
+             (h == HEAD_SIDE)) &&
+             currentHeadStyle != h) {
+            currentHeadStyle = h;
+            rc = true;
+        }
+        else {
+            rc = false;
+        }
 
-	if (layout != null && rc == true) {
-	    ZLayoutGroup.invalidateChildren(layout);
-	    layout.invalidate();
-	}
+        if (layout != null && rc == true) {
+            ZLayoutGroup.invalidateChildren(layout);
+            layout.invalidate();
+        }
 
-	return rc;
+        return rc;
     }
-
 
     /**
      * Get the current heading style
      * @return the current heading style
      */
     public int getCurrentHeadStyle() {
-	return currentHeadStyle;
+        return currentHeadStyle;
     }
-
 
     /**
      * Set the current vertical spacing.
@@ -264,15 +259,14 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      *             otherwise
      */
     public boolean setCurrentXSpacing(double x) {
-	if ((x > 0.0) && (x != currentXSpacing)) {
-	    currentXSpacing = x;
-	    return true;
-	}
-	else {
-	    return false;
-	}
+        if ((x > 0.0) && (x != currentXSpacing)) {
+            currentXSpacing = x;
+            return true;
+        }
+        else {
+            return false;
+        }
     }
-
 
     /**
      * Set the current horizontal spacing.
@@ -281,42 +275,38 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      *             otherwise
      */
     public boolean setCurrentYSpacing(double y) {
-	if ((y > 0.0) && (y != currentYSpacing)) {
-	    currentYSpacing = y;
-	    return true;
-	}
-	else {
-	    return false;
-	}
+        if ((y > 0.0) && (y != currentYSpacing)) {
+            currentYSpacing = y;
+            return true;
+        }
+        else {
+            return false;
+        }
     }
-
 
     /**
      * Get the current x spacing
      * @return   current x spacing
      */
     public double getCurrentXSpacing() {
-	return currentXSpacing;
+        return currentXSpacing;
     }
-
 
     /**
      * Get the current y spacing
      * @return   current y spacing
      */
     public double getCurrentYSpacing() {
-	return currentYSpacing;
+        return currentYSpacing;
     }
-
 
     /**
      * Get the value of linkStyle.
      * @return Value of linkStyle.
      */
     public int getLinkStyle() {
-	return currentLinkStyle;
+        return currentLinkStyle;
     }
-
 
     /**
      * Set the value of linkStyle.
@@ -324,26 +314,25 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      * @return <code>true</code> if set successfuly
      */
     public boolean setLinkStyle(ZLayoutGroup layout, int v) {
-	boolean rc;
-	
-	if (((v == ZTreeLayoutManager.LINK_STRAIGHTLINE) ||
-	     (v == ZTreeLayoutManager.LINK_ANGLEDLINE)) &&
-	    (v != currentLinkStyle)) {
-	    currentLinkStyle = v;
-	    rc = true;
-	}
-	else {
-	    rc = false;
-	}
-	
-	if (layout != null) {
-	    ZLayoutGroup.invalidateChildren(layout);
-	    layout.invalidate();
-	}
-	
-	return rc;
-    }
+        boolean rc;
 
+        if (((v == ZTreeLayoutManager.LINK_STRAIGHTLINE) ||
+             (v == ZTreeLayoutManager.LINK_ANGLEDLINE)) &&
+            (v != currentLinkStyle)) {
+            currentLinkStyle = v;
+            rc = true;
+        }
+        else {
+            rc = false;
+        }
+
+        if (layout != null) {
+            ZLayoutGroup.invalidateChildren(layout);
+            layout.invalidate();
+        }
+
+        return rc;
+    }
 
     /**
      * Method from the ZLayoutManager interface
@@ -351,7 +340,7 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      * @param aLayoutGroup The layout group currently under consideration
      */
     public void preLayout(ZGroup aLayoutGroup) {
-	recurseLevel++;
+        recurseLevel++;
     }
 
     /**
@@ -361,8 +350,8 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      * @param millis The number of milliseconds over which to animate layout changes.
      */
     public void doLayout(ZGroup node, int millis) {
-	System.out.println("WARNING: Layout animation not implemented yet - layout being applied without animation.");
-	doLayout(node);
+        System.out.println("WARNING: Layout animation not implemented yet - layout being applied without animation.");
+        doLayout(node);
     }
 
     /**
@@ -372,13 +361,13 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      */
     public void doLayout(ZGroup aLayoutGroup) {
 
-	ZNode primary = aLayoutGroup.editor().getNode();
-	
-	if (primary instanceof ZGroup) {
-	    calculateChildrenLayout((ZGroup)primary);
-	}
-	
-	computeNodeArea(primary);
+        ZNode primary = aLayoutGroup.editor().getNode();
+
+        if (primary instanceof ZGroup) {
+            calculateChildrenLayout((ZGroup)primary);
+        }
+
+        computeNodeArea(primary);
     }
 
 
@@ -388,210 +377,207 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      * @param aLayoutGroup The layout group currently under consideration
      */
     public void postLayout(ZGroup aLayoutGroup) {
-	recurseLevel--;
-	if (recurseLevel == 0) {
-	    updateTree();
-	    resetTransformVariables();
-	    updateInvalidLinks(aLayoutGroup.editor().getLayoutGroup());
-	}
+        recurseLevel--;
+        if (recurseLevel == 0) {
+            updateTree();
+            resetTransformVariables();
+            updateInvalidLinks(aLayoutGroup.editor().getLayoutGroup());
+        }
     }
 
-
     /**
-     * Appropriately Lays out the children of the provided node 
+     * Appropriately Lays out the children of the provided node
      * @param aPrimaryGroup The primary group for which the children should be laid out
      */
     protected void calculateChildrenLayout(ZGroup aPrimaryGroup) {
-	double lastX = 0.0;
-	double lastY = 0.0;
-	Area currentUsage = new Area();
-	Area childUsage = null;
-	ZBounds immediateChildrenBounds = new ZBounds();
+        double lastX = 0.0;
+        double lastY = 0.0;
+        Area currentUsage = new Area();
+        Area childUsage = null;
+        ZBounds immediateChildrenBounds = new ZBounds();
 
-	ZNode[] children = aPrimaryGroup.getChildren();
-	ZSceneGraphEditor childEditor;
-	ZNode childPrimary;
-	double[] matrix = new double[6];
+        ZNode[] children = aPrimaryGroup.getChildren();
+        ZSceneGraphEditor childEditor;
+        ZNode childPrimary;
+        double[] matrix = new double[6];
 
-	for(int i=0; i<children.length; i++) {
-	    childEditor = children[i].editor();
-	    childPrimary = childEditor.getNode();
-	    ZBounds bounds = null;
+        for(int i=0; i<children.length; i++) {
+            childEditor = children[i].editor();
+            childPrimary = childEditor.getNode();
+            ZBounds bounds = null;
 
-	    if (i == 0) {
+            if (i == 0) {
 
-		Point2D trans = setDestinationPoint(childPrimary, ORIGIN);
-		updateChildArea(childPrimary, trans);		
-
-		
-		bounds = getFrontVisualComponentBounds(childPrimary);
-		if (bounds == null) {
-		    bounds = new ZBounds();
-		}
-		bounds.transform(childEditor.getTransformGroup().getTransform());
-		padBounds(bounds);
-		bounds.setRect(0.0,0.0,bounds.getWidth(),bounds.getHeight());
-
-		currentUsage.add(getNodeArea(childPrimary));
-	
-		lastX = bounds.getWidth();
-		lastY = bounds.getHeight();
-	    }
-	    else {
-		Point2D dest;
-		if (currentOrientation == ORIENT_VERTICAL) {
-		    dest = new Point2D.Double(lastX,0.0);
-		}
-		else {
-		    dest = new Point2D.Double(0.0,lastY);
-		}
-
-		Point2D trans = setDestinationPoint(childPrimary,dest);
-
-		childUsage = updateChildArea(childPrimary,trans);
-
-		do {
-
-		    trans = computeOverlap(currentUsage, childUsage);
-
-		    dest.setLocation(dest.getX()+trans.getX(),
-				     dest.getY()+trans.getY());
+                Point2D trans = setDestinationPoint(childPrimary, ORIGIN);
+                updateChildArea(childPrimary, trans);
 
 
-		    translateDestinationPoint(childPrimary,trans);
-		    childUsage = updateChildArea(childPrimary,trans);
+                bounds = getFrontVisualComponentBounds(childPrimary);
+                if (bounds == null) {
+                    bounds = new ZBounds();
+                }
+                bounds.transform(childEditor.getTransformGroup().getTransform());
+                padBounds(bounds);
+                bounds.setRect(0.0,0.0,bounds.getWidth(),bounds.getHeight());
 
-		} while (trans.getX() > 0.0 || trans.getY() > 0.0);
+                currentUsage.add(getNodeArea(childPrimary));
+
+                lastX = bounds.getWidth();
+                lastY = bounds.getHeight();
+            }
+            else {
+                Point2D dest;
+                if (currentOrientation == ORIENT_VERTICAL) {
+                    dest = new Point2D.Double(lastX,0.0);
+                }
+                else {
+                    dest = new Point2D.Double(0.0,lastY);
+                }
+
+                Point2D trans = setDestinationPoint(childPrimary,dest);
+
+                childUsage = updateChildArea(childPrimary,trans);
+
+                do {
+
+                    trans = computeOverlap(currentUsage, childUsage);
+
+                    dest.setLocation(dest.getX()+trans.getX(),
+                                     dest.getY()+trans.getY());
 
 
-		bounds = getFrontVisualComponentBounds(childPrimary);
-		if (bounds == null) {
-		    bounds = new ZBounds();
-		}
-		bounds.transform(childEditor.getTransformGroup().getTransform());		
-		padBounds(bounds);
+                    translateDestinationPoint(childPrimary,trans);
+                    childUsage = updateChildArea(childPrimary,trans);
 
-		bounds.setRect(dest.getX(),dest.getY(),
-			       bounds.getWidth(),bounds.getHeight());
+                } while (trans.getX() > 0.0 || trans.getY() > 0.0);
 
-		currentUsage.add(childUsage);
 
-		lastX = bounds.getX()+bounds.getWidth();
-		lastY = bounds.getY()+bounds.getHeight();
-	    }
+                bounds = getFrontVisualComponentBounds(childPrimary);
+                if (bounds == null) {
+                    bounds = new ZBounds();
+                }
+                bounds.transform(childEditor.getTransformGroup().getTransform());
+                padBounds(bounds);
 
-	    immediateChildrenBounds.add(bounds);
-	}
+                bounds.setRect(dest.getX(),dest.getY(),
+                               bounds.getWidth(),bounds.getHeight());
 
-	if (children.length > 0) {
-	    ZBounds bounds = getFrontVisualComponentBounds(aPrimaryGroup);
+                currentUsage.add(childUsage);
 
-	    if (bounds != null) {
+                lastX = bounds.getX()+bounds.getWidth();
+                lastY = bounds.getY()+bounds.getHeight();
+            }
 
-		double transX = 0.0;
-		double transY = 0.0;
+            immediateChildrenBounds.add(bounds);
+        }
 
-		Rectangle2D allChildrenBounds = currentUsage.getBounds();
+        if (children.length > 0) {
+            ZBounds bounds = getFrontVisualComponentBounds(aPrimaryGroup);
 
-		if (currentHeadStyle == HEAD_IN) {
-		    if (currentOrientation == ORIENT_VERTICAL) {
-			transX = 0.5*(bounds.getWidth()-immediateChildrenBounds.getWidth()) +
-			    bounds.getX()-immediateChildrenBounds.getX();
-			transY = bounds.getHeight() + 0.5*currentYSpacing;
+            if (bounds != null) {
 
-		    }
-		    else {
-			transX = bounds.getWidth() + 0.5*currentXSpacing;
+                double transX = 0.0;
+                double transY = 0.0;
 
-			transY = 0.5*(bounds.getHeight()-immediateChildrenBounds.getHeight()) +
-			    bounds.getY()-immediateChildrenBounds.getY();
-			
-		    }
-		}
-		else if (currentHeadStyle == HEAD_OUT) {
-		    if (currentOrientation == ORIENT_VERTICAL) {
-			transX = 0.5*(bounds.getWidth()-allChildrenBounds.getWidth()) +
-			    bounds.getX()-allChildrenBounds.getX();
-			transY = bounds.getHeight() + 0.5*currentYSpacing;
-		    }
-		    else {
-			transX = bounds.getWidth() + 0.5*currentXSpacing;
-			transY = 0.5*(bounds.getHeight()-allChildrenBounds.getHeight()) +
-			    bounds.getY()-allChildrenBounds.getY();
-		    }
-		}
-		else {
-		    if (currentOrientation == ORIENT_VERTICAL) {
-			transX = bounds.getX()-immediateChildrenBounds.getX()-0.5*currentXSpacing;
-			transY = bounds.getHeight() + 0.5*currentYSpacing;
-		    }
-		    else {
-			transX = bounds.getWidth() + 0.5*currentXSpacing;
-			transY = bounds.getY()-immediateChildrenBounds.getY()-0.5*currentYSpacing;			
-		    }
-		}
+                Rectangle2D allChildrenBounds = currentUsage.getBounds();
 
-		Point2D trans = new Point2D.Double(transX,transY);
+                if (currentHeadStyle == HEAD_IN) {
+                    if (currentOrientation == ORIENT_VERTICAL) {
+                        transX = 0.5*(bounds.getWidth()-immediateChildrenBounds.getWidth()) +
+                            bounds.getX()-immediateChildrenBounds.getX();
+                        transY = bounds.getHeight() + 0.5*currentYSpacing;
 
-		// Translate each child the appropriate amount
-		for(int i=0; i<children.length; i++) {
-		    childPrimary = children[i].editor().getNode();
-		    translateDestinationPoint(childPrimary, trans);
-		    updateChildArea(childPrimary,trans);
-		}
+                    }
+                    else {
+                        transX = bounds.getWidth() + 0.5*currentXSpacing;
 
-	    }	    
-	}
+                        transY = 0.5*(bounds.getHeight()-immediateChildrenBounds.getHeight()) +
+                            bounds.getY()-immediateChildrenBounds.getY();
 
-					// Update the links if available
-	ZLayoutGroup layoutGroup = aPrimaryGroup.editor().getLayoutGroup();
-	if ((layoutGroup != null) && (linkVisible)) {
-	    ZVisualComponent vc = layoutGroup.getFrontVisualComponent();
-	    ZTreeLayoutManagerLink link = null;
-	    if ((vc == null) || !(vc instanceof ZTreeLayoutManagerLink)) {
-		link = new ZTreeLayoutManagerLink();
-		layoutGroup.setFrontVisualComponent(link);
-	    } else {
-		link = (ZTreeLayoutManagerLink)vc;
-		link.setLinkDirty(true);
-	    }
-	}
-	// Need to set immediate children links dirty in case they aren't
-	// explicity laid out themselves
-	if ((linkVisible)) {
-	    for (int i=0; i<children.length; i++) {
-		childEditor = children[i].editor();
-		if (childEditor.hasLayoutGroup()) {
-		    ZVisualComponent vc = childEditor.getLayoutGroup().getFrontVisualComponent();
-		    if (vc instanceof ZTreeLayoutManagerLink) {
-			((ZTreeLayoutManagerLink)vc).setLinkDirty(true);
-		    }
-		}
-	    }
-	}	
-	
+                    }
+                }
+                else if (currentHeadStyle == HEAD_OUT) {
+                    if (currentOrientation == ORIENT_VERTICAL) {
+                        transX = 0.5*(bounds.getWidth()-allChildrenBounds.getWidth()) +
+                            bounds.getX()-allChildrenBounds.getX();
+                        transY = bounds.getHeight() + 0.5*currentYSpacing;
+                    }
+                    else {
+                        transX = bounds.getWidth() + 0.5*currentXSpacing;
+                        transY = 0.5*(bounds.getHeight()-allChildrenBounds.getHeight()) +
+                            bounds.getY()-allChildrenBounds.getY();
+                    }
+                }
+                else {
+                    if (currentOrientation == ORIENT_VERTICAL) {
+                        transX = bounds.getX()-immediateChildrenBounds.getX()-0.5*currentXSpacing;
+                        transY = bounds.getHeight() + 0.5*currentYSpacing;
+                    }
+                    else {
+                        transX = bounds.getWidth() + 0.5*currentXSpacing;
+                        transY = bounds.getY()-immediateChildrenBounds.getY()-0.5*currentYSpacing;
+                    }
+                }
+
+                Point2D trans = new Point2D.Double(transX,transY);
+
+                // Translate each child the appropriate amount
+                for(int i=0; i<children.length; i++) {
+                    childPrimary = children[i].editor().getNode();
+                    translateDestinationPoint(childPrimary, trans);
+                    updateChildArea(childPrimary,trans);
+                }
+
+            }
+        }
+
+                                        // Update the links if available
+        ZLayoutGroup layoutGroup = aPrimaryGroup.editor().getLayoutGroup();
+        if ((layoutGroup != null) && (linkVisible)) {
+            ZVisualComponent vc = layoutGroup.getFrontVisualComponent();
+            ZTreeLayoutManagerLink link = null;
+            if ((vc == null) || !(vc instanceof ZTreeLayoutManagerLink)) {
+                link = new ZTreeLayoutManagerLink();
+                layoutGroup.setFrontVisualComponent(link);
+            } else {
+                link = (ZTreeLayoutManagerLink)vc;
+                link.setLinkDirty(true);
+            }
+        }
+        // Need to set immediate children links dirty in case they aren't
+        // explicity laid out themselves
+        if ((linkVisible)) {
+            for (int i=0; i<children.length; i++) {
+                childEditor = children[i].editor();
+                if (childEditor.hasLayoutGroup()) {
+                    ZVisualComponent vc = childEditor.getLayoutGroup().getFrontVisualComponent();
+                    if (vc instanceof ZTreeLayoutManagerLink) {
+                        ((ZTreeLayoutManagerLink)vc).setLinkDirty(true);
+                    }
+                }
+            }
+        }
+
     }
-
 
     /**
      * Actually transforms all nodes that have a stored transform in the
      * transformTable
      */
     protected void updateTree() {
-	
-	Object[] groups = transformNodes.toArray();
-	
-	AffineTransform[] transforms = new AffineTransform[groups.length];
-	
-	for(int i=0; i<groups.length; i++) {
-	    transforms[i] = ((ZTransformGroup)groups[i]).getTransform();
-	    transforms[i].preConcatenate((AffineTransform)transformTable.get(groups[i]));
-	    ((ZTransformGroup)groups[i]).setTransform(transforms[i]);
-	}
-	    
+
+        Object[] groups = transformNodes.toArray();
+
+        AffineTransform[] transforms = new AffineTransform[groups.length];
+
+        for(int i=0; i<groups.length; i++) {
+            transforms[i] = ((ZTransformGroup)groups[i]).getTransform();
+            transforms[i].preConcatenate((AffineTransform)transformTable.get(groups[i]));
+            ((ZTransformGroup)groups[i]).setTransform(transforms[i]);
+        }
+
     }
 
-    
     /**
      * Translates the transform corresponding to the given
      * node in the transformTable.
@@ -602,26 +588,25 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      * @param trans the amount to translate
      */
     protected void translateDestinationPoint(ZNode aPrimaryNode, final Point2D trans) {
-	AffineTransform at = new AffineTransform();
-	at.translate(trans.getX(),trans.getY());
+        AffineTransform at = new AffineTransform();
+        at.translate(trans.getX(),trans.getY());
 
-	ZTransformGroup transGroup = aPrimaryNode.editor().getTransformGroup();
-	
-	AffineTransform oldAt = (AffineTransform)transformTable.get(transGroup);
+        ZTransformGroup transGroup = aPrimaryNode.editor().getTransformGroup();
 
-	if (oldAt == null) {
-	    transformNodes.add(transGroup);
-	    transformTable.put(transGroup, at);
-	}
-	else {
-	    // Since the transform can only be translations we don't
-	    // have to worry about preconcatenate or concatenate
-	    // We also know that the node has been added to the list
-	    oldAt.concatenate(at);
-	    transformTable.put(transGroup, oldAt);
-	}
+        AffineTransform oldAt = (AffineTransform)transformTable.get(transGroup);
+
+        if (oldAt == null) {
+            transformNodes.add(transGroup);
+            transformTable.put(transGroup, at);
+        }
+        else {
+            // Since the transform can only be translations we don't
+            // have to worry about preconcatenate or concatenate
+            // We also know that the node has been added to the list
+            oldAt.concatenate(at);
+            transformTable.put(transGroup, oldAt);
+        }
     }
-
 
     /**
      * Sets the bounds location for the given node to the specified point.
@@ -634,31 +619,30 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      *         <code>dest</code>
      */
     protected Point2D setDestinationPoint(ZNode aPrimaryNode, final Point2D dest) {
-	ZTransformGroup transGroup = aPrimaryNode.editor().getTransformGroup();
-	AffineTransform at = transGroup.getTransform();		
-	ZBounds localBounds = getFrontVisualComponentBounds(aPrimaryNode);
-	
-	if (localBounds == null) {
-	    localBounds = new ZBounds();	    
-	}
-	localBounds.transform(at);
-	padBounds(localBounds);
+        ZTransformGroup transGroup = aPrimaryNode.editor().getTransformGroup();
+        AffineTransform at = transGroup.getTransform();
+        ZBounds localBounds = getFrontVisualComponentBounds(aPrimaryNode);
 
-	// Make the new transform be such that if it is preconcatenated with
-	// the old one - the primaryNode is at dest
-	Point2D trans = new Point2D.Double((dest.getX()-localBounds.getX()),(dest.getY()-localBounds.getY()));
+        if (localBounds == null) {
+            localBounds = new ZBounds();
+        }
+        localBounds.transform(at);
+        padBounds(localBounds);
 
-	at.setToTranslation(trans.getX(),trans.getY());  
+        // Make the new transform be such that if it is preconcatenated with
+        // the old one - the primaryNode is at dest
+        Point2D trans = new Point2D.Double((dest.getX()-localBounds.getX()),(dest.getY()-localBounds.getY()));
 
-	// This is really slick - put on a hashtable returns the last object
-	// stored with this key or null if none
-	if (transformTable.put(transGroup,at) == null) {
-	    transformNodes.add(transGroup);
-	};
+        at.setToTranslation(trans.getX(),trans.getY());
 
-	return trans;
+        // This is really slick - put on a hashtable returns the last object
+        // stored with this key or null if none
+        if (transformTable.put(transGroup,at) == null) {
+            transformNodes.add(transGroup);
+        };
+
+        return trans;
     }
-
 
     /**
      * Translates the child nodes area, potentially stored in the area manager,
@@ -669,24 +653,23 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      */
     protected Area updateChildArea(ZNode aPrimaryNode, Point2D trans) {
 
-	AffineTransform at = new AffineTransform();
-	at.translate(trans.getX(),trans.getY());
+        AffineTransform at = new AffineTransform();
+        at.translate(trans.getX(),trans.getY());
 
-	Area area = (Area)areaManager.get(aPrimaryNode);
+        Area area = (Area)areaManager.get(aPrimaryNode);
 
-	if (area == null) {
-	    ZBounds bounds = aPrimaryNode.getBounds();
-	    bounds.transform(aPrimaryNode.editor().getTransformGroup().getTransform());
-	    padBounds(bounds);
-	    area = new Area(bounds);
-	}
-	    
-	area.transform(at);
-       
-	areaManager.put(aPrimaryNode,area);
-	return area;
+        if (area == null) {
+            ZBounds bounds = aPrimaryNode.getBounds();
+            bounds.transform(aPrimaryNode.editor().getTransformGroup().getTransform());
+            padBounds(bounds);
+            area = new Area(bounds);
+        }
+
+        area.transform(at);
+
+        areaManager.put(aPrimaryNode,area);
+        return area;
     }
-
 
     /**
      * Computes the given nodes area - this includes the bounds of its visual
@@ -695,63 +678,61 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      */
     protected void computeNodeArea(ZNode aPrimaryNode) {
 
-	Area area;
-	AffineTransform at = aPrimaryNode.editor().getTransformGroup().getTransform();
-				// Now add node's own local bounds
-	ZBounds bounds = getFrontVisualComponentBounds(aPrimaryNode);
+        Area area;
+        AffineTransform at = aPrimaryNode.editor().getTransformGroup().getTransform();
+                                // Now add node's own local bounds
+        ZBounds bounds = getFrontVisualComponentBounds(aPrimaryNode);
 
-	if (bounds != null) {
-	    bounds.transform(at);
-	    padBounds(bounds);
-	    area = new Area(bounds);
-	}
-	else {
-	    area = new Area();
-	}
-    
-			        // Walk through all children to add their area/bounds
-	if (aPrimaryNode instanceof ZGroup) {
-	    ZNode[] children = ((ZGroup)aPrimaryNode).getChildren();
-	    ZSceneGraphEditor editor;
-	    for (int i=0; i<children.length; i++) {
-		editor = children[i].editor();
-		Area childArea;
+        if (bounds != null) {
+            bounds.transform(at);
+            padBounds(bounds);
+            area = new Area(bounds);
+        }
+        else {
+            area = new Area();
+        }
 
-		try {		    
-		    childArea = getNodeArea(editor.getNode());
-		}
-		catch (Exception e) {
-		    childArea = new Area();
-		}
-		
-		childArea.transform(at);
-		area.add(childArea);
-	    }
-	}
-	
-				// Put it in the table.
-	areaManager.put(aPrimaryNode,area);
+                                // Walk through all children to add their area/bounds
+        if (aPrimaryNode instanceof ZGroup) {
+            ZNode[] children = ((ZGroup)aPrimaryNode).getChildren();
+            ZSceneGraphEditor editor;
+            for (int i=0; i<children.length; i++) {
+                editor = children[i].editor();
+                Area childArea;
+
+                try {
+                    childArea = getNodeArea(editor.getNode());
+                }
+                catch (Exception e) {
+                    childArea = new Area();
+                }
+
+                childArea.transform(at);
+                area.add(childArea);
+            }
+        }
+
+                                // Put it in the table.
+        areaManager.put(aPrimaryNode,area);
     }
-
 
     /**
      * Gets the stored area for the given node
      * @param aPrimaryNode The node for which the area is desired
      */
     protected Area getNodeArea(ZNode aPrimaryNode) throws ConcurrentModificationException {
-				// If node has area info in areaManager,
-	                        // return a copy
-				// Otherwise, return the bounds.
-	Area area = (Area)(((Area)areaManager.get(aPrimaryNode)).clone());
+                                // If node has area info in areaManager,
+                                // return a copy
+                                // Otherwise, return the bounds.
+        Area area = (Area)(((Area)areaManager.get(aPrimaryNode)).clone());
 
-	// updateChildrenArea was already called, this shouldn't happen
-	if (area == null) {
-	    throw new ConcurrentModificationException("Jazz Scenegraph Modified Outside The Swing Event Thread");
-	}
+        // updateChildrenArea was already called, this shouldn't happen
+        if (area == null) {
+            throw new ConcurrentModificationException("Jazz Scenegraph Modified Outside The Swing Event Thread");
+        }
 
-	return area;
+        return area;
     }
-
 
     /**
      * Convenience method to get the bounds of the front visual component of
@@ -759,16 +740,15 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      * @param aVisualNode The node for which the visual component bounds are desired
      */
     protected ZBounds getFrontVisualComponentBounds(ZNode aVisualNode) {
-	ZBounds bounds = null;
-	if (aVisualNode instanceof ZVisualLeaf) {
-	    bounds = ((ZVisualLeaf)aVisualNode).getFirstVisualComponent().getBounds();
-	} else if (aVisualNode instanceof ZVisualGroup) {
-	    bounds = ((ZVisualGroup)aVisualNode).getFrontVisualComponentBounds();
-	}
+        ZBounds bounds = null;
+        if (aVisualNode instanceof ZVisualLeaf) {
+            bounds = ((ZVisualLeaf)aVisualNode).getFirstVisualComponent().getBounds();
+        } else if (aVisualNode instanceof ZVisualGroup) {
+            bounds = ((ZVisualGroup)aVisualNode).getFrontVisualComponentBounds();
+        }
 
-	return bounds;
+        return bounds;
     }
-
 
     /**
      * Convenience method to pad the given bounds with the current spacing
@@ -776,15 +756,14 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      * @return Convenience return of the padded bounds
      */
     protected ZBounds padBounds(ZBounds bounds) {
-	double spaceX = getCurrentXSpacing();
-	double spaceY = getCurrentYSpacing();
-	bounds.setRect((bounds.getX()) - 0.5*spaceX,
-		       (bounds.getY()) - 0.5*spaceY,
-		       (bounds.getWidth()) + spaceX,
-		       (bounds.getHeight())+ spaceY);
-	return bounds;
+        double spaceX = getCurrentXSpacing();
+        double spaceY = getCurrentYSpacing();
+        bounds.setRect((bounds.getX()) - 0.5*spaceX,
+                       (bounds.getY()) - 0.5*spaceY,
+                       (bounds.getWidth()) + spaceX,
+                       (bounds.getHeight())+ spaceY);
+        return bounds;
     }
-
 
     /**
      * Returns the overlap of the two given areas
@@ -794,84 +773,79 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      */
     protected Point2D computeOverlap(Area a, Area b) {
 
-	Point2D.Double retVal = new Point2D.Double();
-	double x = 0f;
-	double y = 0f;
-	Area tmp = (Area)a.clone();
-	tmp.intersect(b);
-	if (!tmp.isEmpty()) {
+        Point2D.Double retVal = new Point2D.Double();
+        double x = 0f;
+        double y = 0f;
+        Area tmp = (Area)a.clone();
+        tmp.intersect(b);
+        if (!tmp.isEmpty()) {
 
-	    Rectangle bound = tmp.getBounds();
-	    if (currentOrientation == ORIENT_VERTICAL) {
-		// Warning: the clash area bound's width may not
-		//  always be the right offset to translate. This is
-		//  just a safe (yet potentially slow) solution: to move
-		//  the spacing when the width is too big
+            Rectangle bound = tmp.getBounds();
+            if (currentOrientation == ORIENT_VERTICAL) {
+                // Warning: the clash area bound's width may not
+                //  always be the right offset to translate. This is
+                //  just a safe (yet potentially slow) solution: to move
+                //  the spacing when the width is too big
 
 
-	        x = (bound.getWidth() > currentXSpacing) ?
-		    currentXSpacing:
-		bound.getWidth();
+                x = (bound.getWidth() > currentXSpacing) ?
+                    currentXSpacing:
+                bound.getWidth();
 
-	    }
-	    else { // left right layout
-		
-		y = (bound.getHeight() > currentYSpacing) ?
-		    currentYSpacing:
-		bound.getHeight();
+            }
+            else { // left right layout
 
-	    }
-	}
-	retVal.setLocation(x,y);	
+                y = (bound.getHeight() > currentYSpacing) ?
+                    currentYSpacing:
+                bound.getHeight();
 
-	// Now we try to eliminate rounding error and any unnecessary translation
-	Rectangle2D bounds = tmp.getBounds2D();
-	Rectangle2D boundsRound = new Rectangle2D.Double((double)(int)(bounds.getX()+1.0),
-							(double)(int)(bounds.getY()+1.0),
-							(double)(int)(bounds.getWidth()),
-							(double)(int)(bounds.getHeight()));
-	Area round = new Area(boundsRound);
-	tmp.intersect(round);
-	if (tmp.isEmpty()) {
-	    retVal.setLocation(0.0, 0.0);
-	}
-	
-	return retVal;
+            }
+        }
+        retVal.setLocation(x,y);
+
+        // Now we try to eliminate rounding error and any unnecessary translation
+        Rectangle2D bounds = tmp.getBounds2D();
+        Rectangle2D boundsRound = new Rectangle2D.Double((double)(int)(bounds.getX()+1.0),
+                                                        (double)(int)(bounds.getY()+1.0),
+                                                        (double)(int)(bounds.getWidth()),
+                                                        (double)(int)(bounds.getHeight()));
+        Area round = new Area(boundsRound);
+        tmp.intersect(round);
+        if (tmp.isEmpty()) {
+            retVal.setLocation(0.0, 0.0);
+        }
+
+        return retVal;
     }
-
 
     /**
      * Resets the transformTable and the transformNodes
      */
     protected void resetTransformVariables() {
-	transformTable.clear();
-	transformNodes.clear();
+        transformTable.clear();
+        transformNodes.clear();
     }
 
-    
     /**
      * Updates all links, in depth-first order, below the supplied ZNode
      * @param top The node below which all links should be updated
      */
     protected static void updateInvalidLinks(ZNode top) {
-	if (top instanceof ZGroup) {
-	    
-	    ZNode[] children = ((ZGroup)top).getChildren();
-	    for(int i=0; i<children.length; i++) {
-		updateInvalidLinks(children[i]);
-	    }
-	    
-	    if (top instanceof ZLayoutGroup) {
-		ZVisualComponent vis = ((ZLayoutGroup)top).getFrontVisualComponent();
-		if (vis instanceof ZTreeLayoutManagerLink) {
-		    ((ZTreeLayoutManagerLink)vis).updateLink();
-		}		    
-	    }
-	}
-    }
-	
+        if (top instanceof ZGroup) {
 
-    
+            ZNode[] children = ((ZGroup)top).getChildren();
+            for(int i=0; i<children.length; i++) {
+                updateInvalidLinks(children[i]);
+            }
+
+            if (top instanceof ZLayoutGroup) {
+                ZVisualComponent vis = ((ZLayoutGroup)top).getFrontVisualComponent();
+                if (vis instanceof ZTreeLayoutManagerLink) {
+                    ((ZTreeLayoutManagerLink)vis).updateLink();
+                }
+            }
+        }
+    }
 
     /////////////////////////////////////////////////////////////////////////
     //
@@ -879,32 +853,30 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
     //
     /////////////////////////////////////////////////////////////////////////
 
-
     /**
      * Write out all of this object's state.
      * @param out The stream that this object writes into
      */
     public void writeObject(ZObjectOutputStream out) throws IOException {
-	if (currentHeadStyle != HEAD_IN) {
-	    out.writeState("int", "currentHeadStyle", currentHeadStyle);
-	}
-	if (currentXSpacing != DEFAULT_SPACING) {
-	    out.writeState("double", "currentXSpacing", currentXSpacing);
-	}
-	if (currentYSpacing != DEFAULT_SPACING) {
-	    out.writeState("double", "currentYSpacing", currentYSpacing);
-	}
-	if (currentLinkStyle != LINK_STRAIGHTLINE) {
-	    out.writeState("int", "currentLinkStyle", currentLinkStyle);
-	}
-	out.writeState("boolean", "linkVisible", linkVisible);
+        if (currentHeadStyle != HEAD_IN) {
+            out.writeState("int", "currentHeadStyle", currentHeadStyle);
+        }
+        if (currentXSpacing != DEFAULT_SPACING) {
+            out.writeState("double", "currentXSpacing", currentXSpacing);
+        }
+        if (currentYSpacing != DEFAULT_SPACING) {
+            out.writeState("double", "currentYSpacing", currentYSpacing);
+        }
+        if (currentLinkStyle != LINK_STRAIGHTLINE) {
+            out.writeState("int", "currentLinkStyle", currentLinkStyle);
+        }
+        out.writeState("boolean", "linkVisible", linkVisible);
 
-	out.writeState("java.util.HashTable", "areaManager", areaManager);
-	out.writeState("java.util.HashTable", "transformTable", transformTable);
-	out.writeState("java.util.ArrayList", "transformNodes", transformNodes);
-	out.writeState("int", "recurseLevel", recurseLevel);
+        out.writeState("java.util.HashTable", "areaManager", areaManager);
+        out.writeState("java.util.HashTable", "transformTable", transformTable);
+        out.writeState("java.util.ArrayList", "transformNodes", transformNodes);
+        out.writeState("int", "recurseLevel", recurseLevel);
     }
-
 
     /**
      * Specify which objects this object references in order to write out the scenegraph properly
@@ -912,7 +884,6 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      */
     public void writeObjectRecurse(ZObjectOutputStream out) throws IOException {
     }
-
 
     /**
      * Set some state of this object as it gets read back in.
@@ -925,28 +896,27 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      * @param fieldValue The value of the field
      */
     public void setState(String fieldType, String fieldName, Object fieldValue) {
-	if (fieldName.compareTo("currentHeadStyle") == 0) {
-	    currentHeadStyle = ((Integer)fieldValue).intValue();
-	} else if (fieldName.compareTo("currentXSpacing") == 0) {
-	    setCurrentXSpacing(((Double)fieldValue).doubleValue());
-	} else if (fieldName.compareTo("currentYSpacing") == 0) {
-	    setCurrentYSpacing(((Double)fieldValue).doubleValue());
-	} else if (fieldName.compareTo("currentLinkStyle") == 0) {
-	    currentLinkStyle = ((Integer)fieldValue).intValue();
-	} else if (fieldName.compareTo("linkVisible") == 0) {
-	    linkVisible = ((Boolean)fieldValue).booleanValue();
-	} else if (fieldName.compareTo("areaManager") == 0) {
-	    areaManager = (Hashtable)fieldValue;
-	} else if (fieldName.compareTo("transformTable") == 0) {
-	    transformTable = (Hashtable)fieldValue;
-	} else if (fieldName.compareTo("transformNodes") == 0) {
-	    transformNodes = (ArrayList)fieldValue;
-	} else if (fieldName.compareTo("recurseLevel") == 0) {
-	    recurseLevel = ((Integer)fieldValue).intValue();
-	}
+        if (fieldName.compareTo("currentHeadStyle") == 0) {
+            currentHeadStyle = ((Integer)fieldValue).intValue();
+        } else if (fieldName.compareTo("currentXSpacing") == 0) {
+            setCurrentXSpacing(((Double)fieldValue).doubleValue());
+        } else if (fieldName.compareTo("currentYSpacing") == 0) {
+            setCurrentYSpacing(((Double)fieldValue).doubleValue());
+        } else if (fieldName.compareTo("currentLinkStyle") == 0) {
+            currentLinkStyle = ((Integer)fieldValue).intValue();
+        } else if (fieldName.compareTo("linkVisible") == 0) {
+            linkVisible = ((Boolean)fieldValue).booleanValue();
+        } else if (fieldName.compareTo("areaManager") == 0) {
+            areaManager = (Hashtable)fieldValue;
+        } else if (fieldName.compareTo("transformTable") == 0) {
+            transformTable = (Hashtable)fieldValue;
+        } else if (fieldName.compareTo("transformNodes") == 0) {
+            transformNodes = (ArrayList)fieldValue;
+        } else if (fieldName.compareTo("recurseLevel") == 0) {
+            recurseLevel = ((Integer)fieldValue).intValue();
+        }
     }
 
-    
     /**
      * This Visual Component renders the links between a ZVisualGroup parent
      * node and its visual children for the ZTreeLayoutManager
@@ -954,7 +924,7 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      * The scenegraph structure should look something like:
      *
      *    ...
-     *    ZLayoutNode      
+     *    ZLayoutNode
      *      => ZTreeLayoutManagerLink [Visual link between PARENT and CHILD(ren)]
      *      ...
      *      ZTransformNode
@@ -966,432 +936,431 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
      *               ZVisual(Group or Leaf) [**This is a CHILD]
      *
      *
-     * NOTE:  This visual component cannot be reused 
+     * NOTE:  This visual component cannot be reused
      *        (ie. have more than one parent per instance)
      */
     class ZTreeLayoutManagerLink extends ZVisualComponent implements ZStroke {
-	
-	//  Pen color of the link     
-	protected Color penColor  = Color.black;
-	
-	// The Basic Stroke
-	protected BasicStroke stroke = new BasicStroke(2);
-	
-	// The pen width
-	protected double penWidth = 1;
-	
-	// The visual link
-	Shape visLink = null;
-	
-	// Control for link dirty, this one is local
-	protected  boolean linkDirty = true;
-	
-	
-	public ZTreeLayoutManagerLink() {
-	    setLinkDirty(true);
-	}
-	
-	/**
-	 * Correctly computes the bounds for this link
-	 */
-	protected void computeBounds() {
-	    if (visLink != null) {
-		bounds = new ZBounds(visLink.getBounds());
-	    }
-	    else {
-		bounds.setRect(0.0,0.0,0.0,0.0);
-	    }
-	}
-	
-	/**
-	 * Get the value of linkDirty.
-	 * @return Value of linkDirty.
-	 */
-	public boolean getLinkDirty() {return linkDirty;}
-	
-	/**
-	 * Set the value of linkDirty.
-	 * @param v  Value to assign to linkDirty.
-	 */
-	public void setLinkDirty(boolean  v) {linkDirty = v;}
-	
-	
-	/**
-	 * Get the pen color of the selection visual
-	 * @return the pen color
-	 */   
-	public Color getPenColor() {
-	    return penColor;
-	}
-	
-	/**
-	 * Specify the pen color of the selection visual
-	 * @param color The new pen color
-	 */
-	public void setPenColor(Color color) {
-	    penColor = color;
-	    setLinkDirty(true);
-	    repaint();
-	}   
-	
-	/**
-	 * Get the current stroke
-	 * @return The current stroke.
-	 */
-	public Stroke getStroke() {
-	    return stroke;
-	}
 
-	/**
-	 * Sets the stroke
-	 * @param s the new stroke
-	 */
-	public void setStroke(Stroke s) {
-	    if (s instanceof BasicStroke) {
-		stroke = (BasicStroke)s;
-		repaint();
-	    }
-	}
+        //  Pen color of the link
+        protected Color penColor  = Color.black;
 
-	/**
-	 * Get the current pen width
-	 * @return The current pen width
-	 */
-	public double getPenWidth() {
-	    return penWidth;
-	}
+        // The Basic Stroke
+        protected BasicStroke stroke = new BasicStroke(2);
 
-	/**
-	 * Sets the pen width
-	 * @param w The new pen width
-	 */
-	public void setPenWidth(double w) {
-	    penWidth = w;
-	    repaint();
-	}
+        // The pen width
+        protected double penWidth = 1;
 
-	/**
-	 * Not implemented.
-	 */
-	public void setAbsPenWidth(double w) {
-	}
+        // The visual link
+        Shape visLink = null;
 
-	/**
-	 * Not implemented.
-	 */
-	public double getAbsPenWidth() {
-	    return 0.0d;
-	}
-
-	/**
-	 * Renders this link
-	 * @param renderContext The current rendering context
-	 */
-	public void render(ZRenderContext renderContext) {
-	    Graphics2D g2 = renderContext.getGraphics2D();
-	    
-	    double mag = renderContext.getCompositeMagnification();
-	    
-	    if (mag*stroke.getLineWidth() != penWidth) {
-		stroke = new BasicStroke((float)(penWidth/mag));
-	    }
-	    
-	    g2.setStroke(stroke);
-	    
-	    paint(g2);
-	}
-	
-	/**
-	 * Paints this link
-	 * @param g2 The graphics to paint into.
-	 */
-	public void paint(Graphics2D g2) {
-	    if (visLink != null) {
-		g2.setColor(penColor);
-		g2.draw(visLink);
-	    }
-	}
-	
-	/**
-	 * Update/Create the visLink if needed.
-	 */
-	protected void updateLink() {
-	    if (!linkDirty) {
-		return;
-	    } else {
-		linkDirty = false;
-		
-		ZNode parent = parents[0];
-		ZNode parentPrimary = null;
-		ZSceneGraphEditor editor;
-		ZTransformGroup parentTransform = null;
-		ZNode[] children = null;	    
-		
-		// The parent's editor
-		editor = parent.editor();
-		// The parent's primary node
-		parentPrimary = editor.getNode();
-		// The parent primary's transform
-		parentTransform = editor.getTransformGroup();
-		
-		// Make sure we actually got a Group with Children
-		if (parentPrimary instanceof ZGroup) {
-		    children = ((ZGroup)parentPrimary).getChildren();
-		    
-		    if (children.length == 0) {
-			visLink = null;
-			reshape();
-			return;
-		    }
-		} else {
-		    visLink = null;
-		    reshape();
-		    return;
-		}
-		
-		// Get ParentPrimary's local bounds
-		ZBounds parentBounds = ZTreeLayoutManager.this.getFrontVisualComponentBounds(parentPrimary);
-		if (parentBounds == null) {
-		    parentBounds = new ZBounds();
-		}
-		
-		// Transform the parentPrimary bounds so that they will be
-		// appropriate for parent
-	    
-		// Transform the bounds by the ParentPrimary's transform to put
-		// them in the correct coord system for parent (since it is
-		// actually above ParentPrimary's transform node
-		parentBounds.transform(parentTransform.getTransform());
-		
-		ZNode child = null;
-		ZNode childPrimary = null;
-		ZTransformGroup childTransform = null;
-		ZBounds childBounds = null;
-		
-		if (children.length > 0) {
-		    visLink = new GeneralPath();
-		}
-		else {
-		    return;
-		}
-		
-		switch (ZTreeLayoutManager.this.currentLinkStyle) {
-		case ZTreeLayoutManager.LINK_STRAIGHTLINE:
-
-		    for (int i=0; i<children.length; i++) {
-			// Get all the child nodes - top, primary, transform
-			child = children[i];
-			childPrimary = child.editor().getNode();
-			childTransform = childPrimary.editor().getTransformGroup();
-			
-			// Get the local bounds for childPrimary's vis component
-			childBounds = ZTreeLayoutManager.this.getFrontVisualComponentBounds(childPrimary);
-			
-			// Transform the bounds for parent - since parent is
-			// above the transform node for ParentPrimary
-			childBounds.transform(childTransform.getTransform());
-			childBounds.transform(parentTransform.getTransform());
-			
-			if (ZTreeLayoutManager.this.getCurrentOrientation() == ZTreeLayoutManager.ORIENT_VERTICAL) {		    
-			    ((GeneralPath) visLink).moveTo((float)(parentBounds.getX() + parentBounds.getWidth() / 2.0),
-							   (float)(parentBounds.getY() + parentBounds.getHeight()));
-			    ((GeneralPath) visLink).lineTo((float)(childBounds.getX() + childBounds.getWidth() / 2.0),
-							   (float)childBounds.getY());
-			}
-			else {
-			    ((GeneralPath) visLink).moveTo((float)(parentBounds.getX() + parentBounds.getWidth()),
-							   (float)(parentBounds.getY() + parentBounds.getHeight() / 2.0));
-			    ((GeneralPath) visLink).lineTo((float)childBounds.getX(),
-							   (float)(childBounds.getY() + childBounds.getHeight() / 2.0));
-			}
-		    }
-		    
-		    break;
-		case ZTreeLayoutManager.LINK_ANGLEDLINE:
-		    
-		    ZBounds firstBounds = null;
-		    ZBounds lastBounds = null;
-		    boolean start = true;
-		    ZNode first = null;
-		    ZNode last = null;
-		    
-		    for (int i=0; i<children.length; i++) {
-			
-			// Get all the child nodes - top, primary, transform
-			child = children[i];
-			childPrimary = child.editor().getNode();
-			childTransform = childPrimary.editor().getTransformGroup();
-			
-			if (start) {
-			    start = false;
-			    first = child;
-			}
-			
-			// Get the local bounds
-			childBounds = ZTreeLayoutManager.this.getFrontVisualComponentBounds(childPrimary);
-			
-			// Transform the childPrimary bounds so that they will
-			// be appropriate for parent
-			
-			// Put them in the coord system of the parent - since
-			// parent is above ParentPrimary's transform node
-			childBounds.transform(childTransform.getTransform());
-			childBounds.transform(parentTransform.getTransform());
-			
-
-			double yMiddle = parentBounds.getY()+parentBounds.getHeight() + (childBounds.getY() - (parentBounds.getY()+parentBounds.getHeight())) / 2.0;
-			double xMiddle = parentBounds.getX()+parentBounds.getWidth() + (childBounds.getX() - (parentBounds.getX()+parentBounds.getWidth())) / 2.0;
-			
-			
-			if (first == child) {
-			    firstBounds = childBounds;
-			}
-			
-			if ((first == child) && (ZTreeLayoutManager.this.getCurrentHeadStyle() == ZTreeLayoutManager.HEAD_SIDE)) {
-			    // Draw the line up from the child
-			    if (ZTreeLayoutManager.this.getCurrentOrientation() == ZTreeLayoutManager.ORIENT_VERTICAL) {
+        // Control for link dirty, this one is local
+        protected  boolean linkDirty = true;
 
 
-				((GeneralPath) visLink).moveTo((float)(parentBounds.getX() + parentBounds.getWidth() / 2.0),
-							       (float)yMiddle);
-				((GeneralPath) visLink).lineTo((float)(parentBounds.getX() + parentBounds.getWidth() / 2.0),
-							       (float)(parentBounds.getY() + parentBounds.getHeight()));
+        public ZTreeLayoutManagerLink() {
+            setLinkDirty(true);
+        }
 
-				((GeneralPath) visLink).moveTo((float)(childBounds.getX() + childBounds.getWidth() /2.0),
-							       (float)yMiddle);
+        /**
+         * Correctly computes the bounds for this link
+         */
+        protected void computeBounds() {
+            if (visLink != null) {
+                bounds = new ZBounds(visLink.getBounds());
+            }
+            else {
+                bounds.setRect(0.0,0.0,0.0,0.0);
+            }
+        }
 
-				((GeneralPath) visLink).lineTo((float)(parentBounds.getX() + parentBounds.getWidth() / 2.0),
-							       (float)yMiddle);
+        /**
+         * Get the value of linkDirty.
+         * @return Value of linkDirty.
+         */
+        public boolean getLinkDirty() {return linkDirty;}
 
-				((GeneralPath) visLink).moveTo((float)(childBounds.getX() + childBounds.getWidth() / 2.0),
-							       (float)childBounds.getY());
-
-				((GeneralPath) visLink).lineTo((float)(childBounds.getX() + childBounds.getWidth() /2.0),
-							       (float)yMiddle);
-				
-			    }
-			    else { //if (ZTreeLayoutManager.getCurrentOrientation() == ZTreeLayoutManager.Orientation_HORIZONTAL)
-
-				((GeneralPath) visLink).moveTo((float)xMiddle,
-							       (float)(parentBounds.getY() + parentBounds.getHeight() / 2.0));
-				((GeneralPath) visLink).lineTo((float)(parentBounds.getX() + parentBounds.getWidth()),
-							       (float)(parentBounds.getY() + parentBounds.getHeight() / 2.0));
-
-				((GeneralPath) visLink).moveTo((float)xMiddle,
-							       (float)(childBounds.getY() + childBounds.getHeight() / 2.0));
-
-				((GeneralPath) visLink).lineTo((float)xMiddle,
-							       (float)(parentBounds.getY() + parentBounds.getHeight() / 2.0));
-
-				((GeneralPath) visLink).moveTo((float)childBounds.getX(),
-							       (float)(childBounds.getY() + childBounds.getHeight() / 2.0));
-
-				((GeneralPath) visLink).lineTo((float)xMiddle,
-							       (float)(childBounds.getY() +  childBounds.getHeight() / 2.0));			
-
-			    }
-			}
-			else {
-			    // Draw the line up from the child
-			    if (ZTreeLayoutManager.this.getCurrentOrientation() == ZTreeLayoutManager.ORIENT_VERTICAL) {
-				
-				((GeneralPath) visLink).moveTo((float)(childBounds.getX() + childBounds.getWidth() / 2.0),
-							       (float)childBounds.getY());
-
-				((GeneralPath) visLink).lineTo((float)(childBounds.getX() + childBounds.getWidth() / 2.0),
-							       (float)yMiddle);
-				
-			    }
-			    else { //if (ZTreeLayoutManager.getCurrentOrientation() == ZTreeLayoutManager.Orientation_HORIZONTAL)
-				// Half up link
-				((GeneralPath) visLink).moveTo((float)childBounds.getX(),
-							       (float)(childBounds.getY() + childBounds.getHeight() / 2.0));
-
-				((GeneralPath) visLink).lineTo((float)xMiddle,
-							       (float)(childBounds.getY() + childBounds.getHeight() / 2.0));
-				
-			    }
-			}
-			last = child;
-			lastBounds = childBounds;
-		    } // end for
-
-		    double yMiddle = parentBounds.getY()+parentBounds.getHeight() + (firstBounds.getY() - (parentBounds.getY()+parentBounds.getHeight())) / 2.0;
-		    double xMiddle = parentBounds.getX()+parentBounds.getWidth() + (firstBounds.getX() - (parentBounds.getX()+parentBounds.getWidth())) / 2.0;
-		    
-		    // Draw down link if not Heading_SIDE -- Heading_SIDE's down link has already benn drawn
-		    if (ZTreeLayoutManager.this.getCurrentHeadStyle() != ZTreeLayoutManager.HEAD_SIDE) {
-			if (ZTreeLayoutManager.this.getCurrentOrientation() == ZTreeLayoutManager.ORIENT_VERTICAL) {
-			    
-			    ((GeneralPath) visLink).moveTo((float)(parentBounds.getX() + parentBounds.getWidth() / 2.0),
-							   (float)(parentBounds.getY() + parentBounds.getHeight()));
-
-			    ((GeneralPath) visLink).lineTo((float)(parentBounds.getX() + parentBounds.getWidth() / 2.0),
-							   (float)yMiddle);
-			    
-			}
-			else { //if (ZTreeLayoutManager.getCurrentOrientation() == ZTreeLayoutManager.Orientation_HORIZONTAL)
-			    ((GeneralPath) visLink).moveTo((float)(parentBounds.getX() + parentBounds.getWidth()),
-							   (float)(parentBounds.getY() + parentBounds.getHeight() / 2.0));
+        /**
+         * Set the value of linkDirty.
+         * @param v  Value to assign to linkDirty.
+         */
+        public void setLinkDirty(boolean  v) {linkDirty = v;}
 
 
-			    ((GeneralPath) visLink).lineTo((float)xMiddle,
-			    			   (float)(parentBounds.getY() + parentBounds.getHeight() / 2.0));
-			
-			}
-		    }
-		    
-		    // Now draw the straight line
-		    if (first != last) {
-			if  (ZTreeLayoutManager.this.getCurrentHeadStyle() == ZTreeLayoutManager.HEAD_SIDE) {
-			    if (ZTreeLayoutManager.this.getCurrentOrientation() == ZTreeLayoutManager.ORIENT_VERTICAL) {
+        /**
+         * Get the pen color of the selection visual
+         * @return the pen color
+         */
+        public Color getPenColor() {
+            return penColor;
+        }
 
-				
-				((GeneralPath) visLink).moveTo((float)(lastBounds.getX() + lastBounds.getWidth() / 2.0),
-							       (float)yMiddle);
+        /**
+         * Specify the pen color of the selection visual
+         * @param color The new pen color
+         */
+        public void setPenColor(Color color) {
+            penColor = color;
+            setLinkDirty(true);
+            repaint();
+        }
 
-				((GeneralPath) visLink).lineTo((float)(firstBounds.getX() + (firstBounds.getWidth()) / 2.0),
-							       (float)yMiddle);
+        /**
+         * Get the current stroke
+         * @return The current stroke.
+         */
+        public Stroke getStroke() {
+            return stroke;
+        }
 
-				
-			    }
-			    else { //if (ZTreeLayoutManager.getCurrentOrientation() == ZTreeLayoutManager.Orientation_HORIZONTAL)
+        /**
+         * Sets the stroke
+         * @param s the new stroke
+         */
+        public void setStroke(Stroke s) {
+            if (s instanceof BasicStroke) {
+                stroke = (BasicStroke)s;
+                repaint();
+            }
+        }
 
-				((GeneralPath) visLink).moveTo((float)xMiddle,
-							       (float)(lastBounds.getY() + lastBounds.getHeight() / 2.0));
-				((GeneralPath) visLink).lineTo((float)xMiddle,
-							       (float)(firstBounds.getY() + firstBounds.getHeight() / 2.0));
-				
-			    }
-			}
-			else {
-			    if (ZTreeLayoutManager.this.getCurrentOrientation() == ZTreeLayoutManager.ORIENT_VERTICAL) {
+        /**
+         * Get the current pen width
+         * @return The current pen width
+         */
+        public double getPenWidth() {
+            return penWidth;
+        }
 
-				((GeneralPath) visLink).moveTo((float)(lastBounds.getX() + lastBounds.getWidth() / 2.0),
-							       (float)yMiddle);
-				
-				((GeneralPath) visLink).lineTo((float)(firstBounds.getX() + firstBounds.getWidth() / 2.0),
-							       (float)yMiddle);
-							       
-			    }
-			    else { //if (ZTreeLayoutManager.getCurrentOrientation() == ZTreeLayoutManager.Orientation_HORIZONTAL)
+        /**
+         * Sets the pen width
+         * @param w The new pen width
+         */
+        public void setPenWidth(double w) {
+            penWidth = w;
+            repaint();
+        }
 
-				((GeneralPath) visLink).moveTo((float)xMiddle,
-							       (float)(lastBounds.getY() + lastBounds.getHeight() / 2.0));
-				((GeneralPath) visLink).lineTo((float)xMiddle,
-							       (float)(firstBounds.getY() + firstBounds.getHeight() /2.0));
-				
-			    }
-			}
-		    }
-		    
-		    break;
-		}
-		
-	    }
-	    
-	    reshape();	    
-	}
+        /**
+         * Not implemented.
+         */
+        public void setAbsPenWidth(double w) {
+        }
+
+        /**
+         * Not implemented.
+         */
+        public double getAbsPenWidth() {
+            return 0.0d;
+        }
+
+        /**
+         * Renders this link
+         * @param renderContext The current rendering context
+         */
+        public void render(ZRenderContext renderContext) {
+            Graphics2D g2 = renderContext.getGraphics2D();
+
+            double mag = renderContext.getCompositeMagnification();
+
+            if (mag*stroke.getLineWidth() != penWidth) {
+                stroke = new BasicStroke((float)(penWidth/mag));
+            }
+
+            g2.setStroke(stroke);
+
+            paint(g2);
+        }
+
+        /**
+         * Paints this link
+         * @param g2 The graphics to paint into.
+         */
+        public void paint(Graphics2D g2) {
+            if (visLink != null) {
+                g2.setColor(penColor);
+                g2.draw(visLink);
+            }
+        }
+
+        /**
+         * Update/Create the visLink if needed.
+         */
+        protected void updateLink() {
+            if (!linkDirty) {
+                return;
+            } else {
+                linkDirty = false;
+
+                ZNode parent = (ZNode) parents.get(0);
+                ZNode parentPrimary = null;
+                ZSceneGraphEditor editor;
+                ZTransformGroup parentTransform = null;
+                ZNode[] children = null;
+
+                // The parent's editor
+                editor = parent.editor();
+                // The parent's primary node
+                parentPrimary = editor.getNode();
+                // The parent primary's transform
+                parentTransform = editor.getTransformGroup();
+
+                // Make sure we actually got a Group with Children
+                if (parentPrimary instanceof ZGroup) {
+                    children = ((ZGroup)parentPrimary).getChildren();
+
+                    if (children.length == 0) {
+                        visLink = null;
+                        reshape();
+                        return;
+                    }
+                } else {
+                    visLink = null;
+                    reshape();
+                    return;
+                }
+
+                // Get ParentPrimary's local bounds
+                ZBounds parentBounds = ZTreeLayoutManager.this.getFrontVisualComponentBounds(parentPrimary);
+                if (parentBounds == null) {
+                    parentBounds = new ZBounds();
+                }
+
+                // Transform the parentPrimary bounds so that they will be
+                // appropriate for parent
+
+                // Transform the bounds by the ParentPrimary's transform to put
+                // them in the correct coord system for parent (since it is
+                // actually above ParentPrimary's transform node
+                parentBounds.transform(parentTransform.getTransform());
+
+                ZNode child = null;
+                ZNode childPrimary = null;
+                ZTransformGroup childTransform = null;
+                ZBounds childBounds = null;
+
+                if (children.length > 0) {
+                    visLink = new GeneralPath();
+                }
+                else {
+                    return;
+                }
+
+                switch (ZTreeLayoutManager.this.currentLinkStyle) {
+                case ZTreeLayoutManager.LINK_STRAIGHTLINE:
+
+                    for (int i=0; i<children.length; i++) {
+                        // Get all the child nodes - top, primary, transform
+                        child = children[i];
+                        childPrimary = child.editor().getNode();
+                        childTransform = childPrimary.editor().getTransformGroup();
+
+                        // Get the local bounds for childPrimary's vis component
+                        childBounds = ZTreeLayoutManager.this.getFrontVisualComponentBounds(childPrimary);
+
+                        // Transform the bounds for parent - since parent is
+                        // above the transform node for ParentPrimary
+                        childBounds.transform(childTransform.getTransform());
+                        childBounds.transform(parentTransform.getTransform());
+
+                        if (ZTreeLayoutManager.this.getCurrentOrientation() == ZTreeLayoutManager.ORIENT_VERTICAL) {
+                            ((GeneralPath) visLink).moveTo((float)(parentBounds.getX() + parentBounds.getWidth() / 2.0),
+                                                           (float)(parentBounds.getY() + parentBounds.getHeight()));
+                            ((GeneralPath) visLink).lineTo((float)(childBounds.getX() + childBounds.getWidth() / 2.0),
+                                                           (float)childBounds.getY());
+                        }
+                        else {
+                            ((GeneralPath) visLink).moveTo((float)(parentBounds.getX() + parentBounds.getWidth()),
+                                                           (float)(parentBounds.getY() + parentBounds.getHeight() / 2.0));
+                            ((GeneralPath) visLink).lineTo((float)childBounds.getX(),
+                                                           (float)(childBounds.getY() + childBounds.getHeight() / 2.0));
+                        }
+                    }
+
+                    break;
+                case ZTreeLayoutManager.LINK_ANGLEDLINE:
+
+                    ZBounds firstBounds = null;
+                    ZBounds lastBounds = null;
+                    boolean start = true;
+                    ZNode first = null;
+                    ZNode last = null;
+
+                    for (int i=0; i<children.length; i++) {
+
+                        // Get all the child nodes - top, primary, transform
+                        child = children[i];
+                        childPrimary = child.editor().getNode();
+                        childTransform = childPrimary.editor().getTransformGroup();
+
+                        if (start) {
+                            start = false;
+                            first = child;
+                        }
+
+                        // Get the local bounds
+                        childBounds = ZTreeLayoutManager.this.getFrontVisualComponentBounds(childPrimary);
+
+                        // Transform the childPrimary bounds so that they will
+                        // be appropriate for parent
+
+                        // Put them in the coord system of the parent - since
+                        // parent is above ParentPrimary's transform node
+                        childBounds.transform(childTransform.getTransform());
+                        childBounds.transform(parentTransform.getTransform());
+
+
+                        double yMiddle = parentBounds.getY()+parentBounds.getHeight() + (childBounds.getY() - (parentBounds.getY()+parentBounds.getHeight())) / 2.0;
+                        double xMiddle = parentBounds.getX()+parentBounds.getWidth() + (childBounds.getX() - (parentBounds.getX()+parentBounds.getWidth())) / 2.0;
+
+
+                        if (first == child) {
+                            firstBounds = childBounds;
+                        }
+
+                        if ((first == child) && (ZTreeLayoutManager.this.getCurrentHeadStyle() == ZTreeLayoutManager.HEAD_SIDE)) {
+                            // Draw the line up from the child
+                            if (ZTreeLayoutManager.this.getCurrentOrientation() == ZTreeLayoutManager.ORIENT_VERTICAL) {
+
+
+                                ((GeneralPath) visLink).moveTo((float)(parentBounds.getX() + parentBounds.getWidth() / 2.0),
+                                                               (float)yMiddle);
+                                ((GeneralPath) visLink).lineTo((float)(parentBounds.getX() + parentBounds.getWidth() / 2.0),
+                                                               (float)(parentBounds.getY() + parentBounds.getHeight()));
+
+                                ((GeneralPath) visLink).moveTo((float)(childBounds.getX() + childBounds.getWidth() /2.0),
+                                                               (float)yMiddle);
+
+                                ((GeneralPath) visLink).lineTo((float)(parentBounds.getX() + parentBounds.getWidth() / 2.0),
+                                                               (float)yMiddle);
+
+                                ((GeneralPath) visLink).moveTo((float)(childBounds.getX() + childBounds.getWidth() / 2.0),
+                                                               (float)childBounds.getY());
+
+                                ((GeneralPath) visLink).lineTo((float)(childBounds.getX() + childBounds.getWidth() /2.0),
+                                                               (float)yMiddle);
+
+                            }
+                            else { //if (ZTreeLayoutManager.getCurrentOrientation() == ZTreeLayoutManager.Orientation_HORIZONTAL)
+
+                                ((GeneralPath) visLink).moveTo((float)xMiddle,
+                                                               (float)(parentBounds.getY() + parentBounds.getHeight() / 2.0));
+                                ((GeneralPath) visLink).lineTo((float)(parentBounds.getX() + parentBounds.getWidth()),
+                                                               (float)(parentBounds.getY() + parentBounds.getHeight() / 2.0));
+
+                                ((GeneralPath) visLink).moveTo((float)xMiddle,
+                                                               (float)(childBounds.getY() + childBounds.getHeight() / 2.0));
+
+                                ((GeneralPath) visLink).lineTo((float)xMiddle,
+                                                               (float)(parentBounds.getY() + parentBounds.getHeight() / 2.0));
+
+                                ((GeneralPath) visLink).moveTo((float)childBounds.getX(),
+                                                               (float)(childBounds.getY() + childBounds.getHeight() / 2.0));
+
+                                ((GeneralPath) visLink).lineTo((float)xMiddle,
+                                                               (float)(childBounds.getY() +  childBounds.getHeight() / 2.0));
+
+                            }
+                        }
+                        else {
+                            // Draw the line up from the child
+                            if (ZTreeLayoutManager.this.getCurrentOrientation() == ZTreeLayoutManager.ORIENT_VERTICAL) {
+
+                                ((GeneralPath) visLink).moveTo((float)(childBounds.getX() + childBounds.getWidth() / 2.0),
+                                                               (float)childBounds.getY());
+
+                                ((GeneralPath) visLink).lineTo((float)(childBounds.getX() + childBounds.getWidth() / 2.0),
+                                                               (float)yMiddle);
+
+                            }
+                            else { //if (ZTreeLayoutManager.getCurrentOrientation() == ZTreeLayoutManager.Orientation_HORIZONTAL)
+                                // Half up link
+                                ((GeneralPath) visLink).moveTo((float)childBounds.getX(),
+                                                               (float)(childBounds.getY() + childBounds.getHeight() / 2.0));
+
+                                ((GeneralPath) visLink).lineTo((float)xMiddle,
+                                                               (float)(childBounds.getY() + childBounds.getHeight() / 2.0));
+
+                            }
+                        }
+                        last = child;
+                        lastBounds = childBounds;
+                    } // end for
+
+                    double yMiddle = parentBounds.getY()+parentBounds.getHeight() + (firstBounds.getY() - (parentBounds.getY()+parentBounds.getHeight())) / 2.0;
+                    double xMiddle = parentBounds.getX()+parentBounds.getWidth() + (firstBounds.getX() - (parentBounds.getX()+parentBounds.getWidth())) / 2.0;
+
+                    // Draw down link if not Heading_SIDE -- Heading_SIDE's down link has already benn drawn
+                    if (ZTreeLayoutManager.this.getCurrentHeadStyle() != ZTreeLayoutManager.HEAD_SIDE) {
+                        if (ZTreeLayoutManager.this.getCurrentOrientation() == ZTreeLayoutManager.ORIENT_VERTICAL) {
+
+                            ((GeneralPath) visLink).moveTo((float)(parentBounds.getX() + parentBounds.getWidth() / 2.0),
+                                                           (float)(parentBounds.getY() + parentBounds.getHeight()));
+
+                            ((GeneralPath) visLink).lineTo((float)(parentBounds.getX() + parentBounds.getWidth() / 2.0),
+                                                           (float)yMiddle);
+
+                        }
+                        else { //if (ZTreeLayoutManager.getCurrentOrientation() == ZTreeLayoutManager.Orientation_HORIZONTAL)
+                            ((GeneralPath) visLink).moveTo((float)(parentBounds.getX() + parentBounds.getWidth()),
+                                                           (float)(parentBounds.getY() + parentBounds.getHeight() / 2.0));
+
+
+                            ((GeneralPath) visLink).lineTo((float)xMiddle,
+                                                   (float)(parentBounds.getY() + parentBounds.getHeight() / 2.0));
+
+                        }
+                    }
+
+                    // Now draw the straight line
+                    if (first != last) {
+                        if  (ZTreeLayoutManager.this.getCurrentHeadStyle() == ZTreeLayoutManager.HEAD_SIDE) {
+                            if (ZTreeLayoutManager.this.getCurrentOrientation() == ZTreeLayoutManager.ORIENT_VERTICAL) {
+
+
+                                ((GeneralPath) visLink).moveTo((float)(lastBounds.getX() + lastBounds.getWidth() / 2.0),
+                                                               (float)yMiddle);
+
+                                ((GeneralPath) visLink).lineTo((float)(firstBounds.getX() + (firstBounds.getWidth()) / 2.0),
+                                                               (float)yMiddle);
+
+
+                            }
+                            else { //if (ZTreeLayoutManager.getCurrentOrientation() == ZTreeLayoutManager.Orientation_HORIZONTAL)
+
+                                ((GeneralPath) visLink).moveTo((float)xMiddle,
+                                                               (float)(lastBounds.getY() + lastBounds.getHeight() / 2.0));
+                                ((GeneralPath) visLink).lineTo((float)xMiddle,
+                                                               (float)(firstBounds.getY() + firstBounds.getHeight() / 2.0));
+
+                            }
+                        }
+                        else {
+                            if (ZTreeLayoutManager.this.getCurrentOrientation() == ZTreeLayoutManager.ORIENT_VERTICAL) {
+
+                                ((GeneralPath) visLink).moveTo((float)(lastBounds.getX() + lastBounds.getWidth() / 2.0),
+                                                               (float)yMiddle);
+
+                                ((GeneralPath) visLink).lineTo((float)(firstBounds.getX() + firstBounds.getWidth() / 2.0),
+                                                               (float)yMiddle);
+
+                            }
+                            else { //if (ZTreeLayoutManager.getCurrentOrientation() == ZTreeLayoutManager.Orientation_HORIZONTAL)
+
+                                ((GeneralPath) visLink).moveTo((float)xMiddle,
+                                                               (float)(lastBounds.getY() + lastBounds.getHeight() / 2.0));
+                                ((GeneralPath) visLink).lineTo((float)xMiddle,
+                                                               (float)(firstBounds.getY() + firstBounds.getHeight() /2.0));
+
+                            }
+                        }
+                    }
+
+                    break;
+                }
+
+            }
+
+            reshape();
+        }
     } // ZTreeLayoutManagerLink
-    
 }

@@ -1,15 +1,14 @@
 /**
- * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
-
 package edu.umd.cs.jazz.util;
 
 import java.awt.*;
 import java.awt.geom.*;
 import java.awt.event.*;
 import java.awt.MediaTracker;
-import java.awt.image.ImageObserver;
+import java.awt.image.*;
 import java.awt.image.renderable.RenderContext;
 import java.util.*;
 import java.io.*;
@@ -31,14 +30,20 @@ import edu.umd.cs.jazz.component.*;
  * Swing components within Jazz by forwarding mouse, repaint, and revalidate
  * events.
  * <P>
- * A ZCanvas also supports scrollBars when it is added to a JScrollPane. Note that
- * manipulating the scrollbars changes the camera view, not the canvas view.
- * The scrollbars adjust to accomodate the objects in the camera view,
- * incorporating the magnification. There can be weird effects when the camera is panned
- * manually, as the scrollBars are adjusted to include all the objects in the scenegraph,
- * plus the current camera view. Panning the camera in space that includes no
- * objects will cause the scrollBars to change size, as they adapt to the changing
- * space that is the union of the objects and the camera.
+ * To make a ZCanvas scrollable, you can add it to a ZScrollPane in the same
+ * way a normal JComponent is added to a JScrollPane.  Note that manipulating
+ * the scrollbars changes the camera view, not the canvas view.  By default,
+ * the scrollbars adjust to accomodate the objects in the camera view,
+ * incorporating the magnification. There can be weird effects when the camera
+ * is panned manually, as the scrollBars are adjusted to include all the
+ * objects in the scenegraph, plus the current camera view. Panning the camera
+ * in space that includes no objects will cause the scrollBars to change size,
+ * as they adapt to the changing space that is the union of the objects and
+ * the camera.
+ * <P>
+ * To get different scrolling behavior from the default, you can set the
+ * ZScrollDirector on the ZViewport.  See the ScrollingExample in the jazz
+ * examples package for an example of a modified ZScrollDirector.
  * <P>
  * ZCanvas defines basic event handlers for panning and zooming with the keyboard and mouse
  * which can be enabled and disabled with {@link #setNavEventHandlersActive}.
@@ -66,47 +71,35 @@ public class ZCanvas extends JComponent implements Serializable {
      * of the ToolTipText
      */
     final MouseEvent FAKE_MOUSE_EVENT = new MouseEvent(this,MouseEvent.MOUSE_ENTERED,0,0,0,0,0,false);
-    
-				// The root of the scenegraph
-    private ZRoot	    root;
-				// The camera in the scenegraph
+
+                                // The root of the scenegraph
+    private ZRoot           root;
+                                // The camera in the scenegraph
     private ZCamera         camera;
-				// The camera node in the scenegraph
+                                // The camera node in the scenegraph
     private ZNode           cameraNode;
-				// The surface associated with the component
+                                // The surface associated with the component
     private ZDrawingSurface surface;
-				// The single node that camera looks onto.  It is considered to
-				// be the "layer" because many applications will put content
-				// under this node which can then be hidden or revealed like a layer.
-    private ZLayerGroup            layer;
+                                // The single node that camera looks onto.  It is considered to
+                                // be the "layer" because many applications will put content
+                                // under this node which can then be hidden or revealed like a layer.
+    private ZLayerGroup     layer;
 
     private Cursor cursor = getCursor();
-				// A visible though not rendered JComponent to which Swing components are
-				// added to function properly in the Jazz Scenegraph
+                                // A visible though not rendered JComponent to which Swing components are
+                                // added to function properly in the Jazz Scenegraph
     private JComponent swingWrapper;
-				// True if node events are processed
-    private boolean enableNodeEvents = true;
-				// The current node under the pointer
-    private ZNode currentNode = null;
-				// The current path to the current node for the current event
-    private ZSceneGraphPath currentPath = null;
-				// The path grabbed for a press/drag/release sequence
-    private ZSceneGraphPath grabPath = null;
-				// Listeners used to be sure there is at least one listener of each type
-    private MouseAdapter emptyMouseListener = null;
-    private MouseMotionAdapter emptyMouseMotionListener = null;
-
 
     /**
      * Mouse Listener for ZNodes that have visual components.
      */
-    ZNodeEventHandler nodeListener;
+    protected ZNodeEventHandler nodeListener;
 
     /**
      * The event handler that supports events for Swing Visual Components.
      */
     protected ZSwingEventHandler          swingEventHandler;
-    
+
     /**
      * The event handler that supports panning.
      */
@@ -118,64 +111,19 @@ public class ZCanvas extends JComponent implements Serializable {
     protected ZoomEventHandler            zoomEventHandler;
 
     /**
-     * The event handler that supports key events.
+     * True if any ZMouseEvents are being sent to nodes on the canvas.
      */
-    protected ZEventHandler          keyEventHandler;
+    protected boolean enableNodeEvents = false;
 
     /**
-     * The horizontal and vertical scrollBars.
-     */    
-    private JScrollBar hbar, vbar;
-
-    /**
-     * Previous scrollBar values.
+     * True if ZMouseEvents of type ZMouseEvent.MOUSE_MOVED,
+     * ZMouseEvent.MOUSE_ENTERED, and ZMouseEvent.MOUSE_EXITED are being
+     * excluded and not sent to nodes on the canvas. If a Jazz application
+     * does not need these event types then enabling this flag can increase
+     * performance since Jazz will not need to call ZDrawingSurface.pick()
+     * on every mouse movement.
      */
-    private int prevScrollValueX, prevScrollValueY = 0;
-
-    /**
-     * Horizontal scrollBar adjustmentListener.
-     */
-    private AdjustmentListener hbarAdjustmentListener;
-
-    /**
-     * Vertical scrollBar adjustmentListener.
-     */
-    private AdjustmentListener vbarAdjustmentListener;
-
-    /**
-     * Listener for camera movement, so scrollBars can be updated.
-     */
-    private ZCameraListener cameraScrollListener;
-
-    /**
-     * A scrollPane may be an ancestor of this ZCanvas.
-     */
-    protected JScrollPane scrollParent;
-
-    /**
-     * Listener to detect if a scrollPane ancestor is added or removed.
-     */
-    private AncestorListener scrollPaneListener;
-
-    /**
-     * True if scrollBars are currently being used by this ZCanvas.
-     */
-    private boolean usingScrollBars = false;
-
-    /**
-     * Listener to detect root bounds changes, so scrollBars can be updated.
-     */
-    private ZNodeListener rootScrollListener;
-
-    /**
-     * True if vertical scrollBar is currently visible.
-     */
-    private boolean vbarVisible;
-
-    /**
-     * True if horizontal scrollBar is currently visible.
-     */
-    private boolean hbarVisible;
+    protected boolean excludeMouseMoveEvents = false;
 
     /**
      * The default constructor for a ZCanvas.  This creates a simple
@@ -189,16 +137,16 @@ public class ZCanvas extends JComponent implements Serializable {
      * @see #getLayer()
      */
     public ZCanvas() {
-	root = new ZRoot();
-	camera = new ZCamera();
-	cameraNode = new ZVisualLeaf(camera);
-	surface = new ZDrawingSurface(camera, cameraNode, this);
-	layer = new ZLayerGroup();
-	root.addChild(layer);
-	root.addChild(cameraNode);
-	camera.addLayer(layer);
+        root = new ZRoot();
+        camera = new ZCamera();
+        cameraNode = new ZVisualLeaf(camera);
+        surface = new ZDrawingSurface(camera, cameraNode, this);
+        layer = new ZLayerGroup();
+        root.addChild(layer);
+        root.addChild(cameraNode);
+        camera.addLayer(layer);
 
-	init();
+        init();
     }
 
     /**
@@ -217,253 +165,42 @@ public class ZCanvas extends JComponent implements Serializable {
      * @see #getLayer()
      */
     public ZCanvas(ZRoot aRoot, ZLayerGroup layer) {
-	root = aRoot;
-	camera = new ZCamera();
-	cameraNode = new ZVisualLeaf(camera);
-	surface = new ZDrawingSurface(camera, cameraNode, this);
-	this.layer = layer;
-	root.addChild(cameraNode);
-	camera.addLayer(layer);
+        root = aRoot;
+        camera = new ZCamera();
+        cameraNode = new ZVisualLeaf(camera);
+        surface = new ZDrawingSurface(camera, cameraNode, this);
+        this.layer = layer;
+        root.addChild(cameraNode);
+        camera.addLayer(layer);
 
-	init();
+        init();
     }
-
-    /**
-     * Search ancestors of this ZCanvas, return JScrollPane if one is found.
-     */
-    private JScrollPane getParentScrollPane() {
-	Component c = getParent();
-	while (c != null) {
-	    if (c instanceof JScrollPane) {
-		break;
-	    }
-	    c = c.getParent();
-	}
-	return (JScrollPane)c;
-    }
-
-    /**
-     * Remove scrollBars from this ZCanvas, plus all associated listeners.
-     */
-    private void removeScrollBars() {
-	camera.removeCameraListener(cameraScrollListener);
-	root.removeNodeListener(rootScrollListener);
-
-	hbar.removeAdjustmentListener(hbarAdjustmentListener);
-	hbarVisible = false;
-
-	vbar.removeAdjustmentListener(vbarAdjustmentListener);
-	vbarVisible = false;
-
-	scrollParent = null;
-	revalidate();
-    }
-
-    /**
-     * Add ancestor listener to detect if a JScrollPane has been added or removed.
-     */
-    private void addScrollParentListener() {
-	scrollPaneListener = new AncestorListener() {
-
-	    public void ancestorAdded(AncestorEvent event) {
-		if (! usingScrollBars) {
-		    scrollParent = getParentScrollPane();
-		    if (scrollParent != null) {
-			initScrollBars();
-			usingScrollBars = true;
-		    }
-		}
-	    }
-
-	    public void ancestorMoved(AncestorEvent event) {}
-
-	    public void ancestorRemoved(AncestorEvent event) {
-		if (usingScrollBars) {
-		    scrollParent = getParentScrollPane();
-		    if (scrollParent == null) {
-			removeScrollBars();
-			usingScrollBars = false;
-		    }
-		}
-	    }
-	};
-	addAncestorListener(scrollPaneListener);
-    }	
 
     /**
      * Internal method to support initialization of a ZCanvas.
      */
     protected void init() {
-				// Add support for Swing widgets
-	swingWrapper = new JComponent() {
-	    public boolean isValidateRoot() {
-		return true;
-	    }
-	};
-	swingWrapper.putClientProperty(SWING_WRAPPER_KEY, new Object());
-	swingWrapper.setSize(0, 0);
-	swingWrapper.setVisible(true);
-	add(swingWrapper);
+                                // Add support for Swing widgets
+        swingWrapper = new JComponent() {
+            public boolean isValidateRoot() {
+                return true;
+            }
+        };
+        swingWrapper.putClientProperty(SWING_WRAPPER_KEY, new Object());
+        swingWrapper.setSize(0, 0);
+        swingWrapper.setVisible(true);
+        add(swingWrapper);
 
-	nodeListener = new ZNodeEventHandler(this);
+        setEnableNodeEvents(true);
 
-	setEnableNodeEvents(true);
-	
-	if (!(RepaintManager.currentManager(this) instanceof ZBasicRepaintManager)) {
-	    RepaintManager.setCurrentManager(new ZBasicRepaintManager());
-	}
+        if (!(RepaintManager.currentManager(this) instanceof ZBasicRepaintManager)) {
+            RepaintManager.setCurrentManager(new ZBasicRepaintManager());
+        }
 
-	setNavEventHandlersActive(true);    // Create some basic event handlers for panning and zooming
-	setSwingEventHandlersActive(true);  // Create the event handler for swing events
-       	setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));   // Create the Swing event handler
+        setNavEventHandlersActive(true);    // Create some basic event handlers for panning and zooming
+        setSwingEventHandlersActive(true);  // Create the event handler for swing events
+        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));   // Create the Swing event handler
 
-	addScrollParentListener();
-    }
-
-    /**
-     * Add horizontal and vertical scrollBars to this ZCanvas. A listener is added
-     * to the camera so the scrollBars can be updated when the camera moves. Likewise,
-     * listeners are added to the scrollBars, so the camera can be updated.
-     */
-    protected void initScrollBars() {
-	scrollParent.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-	hbar = new JScrollBar(JScrollBar.HORIZONTAL);
-
-				// We control the scrollBars, not scrollParent
-	scrollParent.add(hbar, JScrollPane.HORIZONTAL_SCROLLBAR);
-	hbarVisible = true;
-
-	scrollParent.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-	vbar = new JScrollBar(JScrollBar.VERTICAL);
-	scrollParent.add(vbar, JScrollPane.VERTICAL_SCROLLBAR);
-	vbarVisible = true;
-	revalidate();
-
-				// Listen for when user moves horizontal scrollBar
-	hbarAdjustmentListener = new AdjustmentListener() {
-	    public void adjustmentValueChanged(AdjustmentEvent e) {
-				// translate camera by the amount the horizontal scrollbar moved
-		int X = hbar.getValue();
-		camera.translate((double)(prevScrollValueX - X), 0);
-		prevScrollValueX = X;
-	    }
-	};
-	hbar.addAdjustmentListener(hbarAdjustmentListener);
-
-				// Listen for when user moves vertical scrollBar
-	vbarAdjustmentListener = new AdjustmentListener() {
-	    public void adjustmentValueChanged(AdjustmentEvent e) {
-				// translate camera by the amount the vertical scrollbar moved
-		int Y = vbar.getValue();
-		camera.translate(0, (double)(prevScrollValueY - Y));
-		prevScrollValueY = Y;
-	    }
-	};
-	vbar.addAdjustmentListener(vbarAdjustmentListener);
-
-				// Listen for when user moves camera: update scrollBars
-	cameraScrollListener = new ZCameraListener() {
-	    public void viewChanged(ZCameraEvent e) {
-		updateScrollBars();
-	    }
-	};
-	camera.addCameraListener(cameraScrollListener);
-
-	rootScrollListener = new ZNodeListener() {
-	    public void boundsChanged(ZNodeEvent e) {
-		updateScrollBars();
-	    }
-
-	    public void globalBoundsChanged(ZNodeEvent e) {
-	    }
-	};
-	root.addNodeListener(rootScrollListener);
-	updateScrollBars();
-    }
-
-    /**
-     * Set the scrollbars to match the current camera view. The Scroll range
-     * is the union of the bounds of the scenegraph bounds and the current camera
-     * bounds. The scroll bar represents the camera width or height in that range. 
-     */
-    private void updateScrollBars() {
-	ZBounds cameraViewBounds = camera.getViewBounds();
-	ZBounds layerBounds = getLayer().getBounds();
-
-				// Update Horizontal scrollBar
-	int cameraX = (int)cameraViewBounds.getX();
-	int cameraWidth = (int)cameraViewBounds.getWidth();
-
-	int rootX = (int)layerBounds.getX();
-	int rootWidth = (int)layerBounds.getWidth();
-
-	int maxX = Math.max(cameraX + cameraWidth, rootX + rootWidth);
-	int minX = Math.min(cameraX, rootX);
-
-				// if H scrollBar is visible, and it shouldn't be, shrink it
-	if ((hbarVisible) && (cameraWidth >= (maxX - minX))) {
-	    hbar.removeAdjustmentListener(hbarAdjustmentListener);
-	    vbar.removeAdjustmentListener(vbarAdjustmentListener);
-	    scrollParent.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-	    hbar.addAdjustmentListener(hbarAdjustmentListener);
-	    vbar.addAdjustmentListener(vbarAdjustmentListener);
-	    hbarVisible = false;
-	    revalidate();
-
-				// else, if it is not visible, and should be, expand it.
-	} else if ((! hbarVisible) && (cameraWidth < (maxX - minX))) {
-	    hbar.removeAdjustmentListener(hbarAdjustmentListener);
-	    scrollParent.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-	    hbar.addAdjustmentListener(hbarAdjustmentListener);
-	    hbarVisible = true;
-	    revalidate();
-	}
-
-				// Set the Horizontal scrollBar:
-                                // don't generate a scrollBar adjustment event here
-	if (hbarVisible) {
-	    hbar.removeAdjustmentListener(hbarAdjustmentListener);
-	    hbar.setValues(cameraX, cameraWidth, minX, maxX);
-	    prevScrollValueX = cameraX;
-	    hbar.addAdjustmentListener(hbarAdjustmentListener);
-	}
-
-				// Update Vertical scrollBar
-	int cameraY = (int)cameraViewBounds.getY();
-	int cameraHeight = (int)cameraViewBounds.getHeight();
-
-	int rootY = (int)layerBounds.getY();
-	int rootHeight = (int)layerBounds.getHeight();
-
-	int maxY = Math.max(cameraY + cameraHeight, rootY + rootHeight);
-	int minY = Math.min(cameraY, rootY);
-
-				// if V scrollBar is visible, and it shouldn't be, shrink it
-	if ((vbarVisible) && (cameraHeight >= (maxY - minY))) {
-	    vbar.removeAdjustmentListener(vbarAdjustmentListener);
-
-	    scrollParent.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
-	    vbar.addAdjustmentListener(vbarAdjustmentListener);
-	    vbarVisible = false;
-	    revalidate();
-
-				// else, if it is not visible, and should be, expand it.
-	} else if ((! vbarVisible) && (cameraHeight < (maxY - minY))) {
-	    vbar.removeAdjustmentListener(vbarAdjustmentListener);
-	    scrollParent.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-	    vbar.addAdjustmentListener(vbarAdjustmentListener);
-	    vbarVisible = true;
-	    revalidate();
-	}
-
-				// Set the Vertical scrollBar:
-				// don't generate a scrollBar adjustment event here
-	if (vbarVisible) {
-	    vbar.removeAdjustmentListener(vbarAdjustmentListener);
-	    vbar.setValues(cameraY, cameraHeight, minY, maxY);
-	    prevScrollValueY = cameraY;
-	    vbar.addAdjustmentListener(vbarAdjustmentListener);
-	}
     }
 
     /**
@@ -472,7 +209,11 @@ public class ZCanvas extends JComponent implements Serializable {
      * @param g The graphics to be painted onto
      */
     public void paintComponent(Graphics g) {
-	surface.paint(g);
+        try {
+            surface.paint(g);
+        } catch (ZNoninvertibleTransformException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -484,9 +225,9 @@ public class ZCanvas extends JComponent implements Serializable {
      * @param height The Height of the component
      */
     public void setBounds(int x, int y, int w, int h) {
-	super.setBounds(x, y, w, h);
-	Rectangle bounds = getBounds();
-	camera.setBounds(0, 0, (int)bounds.getWidth(), (int)bounds.getHeight());
+        super.setBounds(x, y, w, h);
+        Rectangle bounds = getBounds();
+        camera.setBounds(0, 0, (int)bounds.getWidth(), (int)bounds.getHeight());
     }
 
     /**
@@ -497,8 +238,8 @@ public class ZCanvas extends JComponent implements Serializable {
      * @param background The new color to use for this component's background
      */
     public void setBackground(Color background) {
-	super.setBackground(background);
-	camera.setFillColor(background);
+        super.setBackground(background);
+        camera.setFillColor(background);
     }
 
     /**
@@ -506,11 +247,9 @@ public class ZCanvas extends JComponent implements Serializable {
      * @param surface the surface
      */
     public void setDrawingSurface(ZDrawingSurface aSurface) {
-	surface = aSurface;
-
-	surface.setCamera(camera,cameraNode);
-
-	camera.repaint();
+        surface = aSurface;
+        surface.setCamera(camera,cameraNode);
+        camera.repaint();
     }
 
     /**
@@ -518,7 +257,7 @@ public class ZCanvas extends JComponent implements Serializable {
      * @return the surface
      */
     public ZDrawingSurface getDrawingSurface() {
-	return surface;
+        return surface;
     }
 
     /**
@@ -526,39 +265,34 @@ public class ZCanvas extends JComponent implements Serializable {
      * @param camera the camera
      */
     public void setCamera(ZCamera aCamera) {
-				// move scrollBar listener to new camera
-	if (usingScrollBars) {
-	    camera.removeCameraListener(cameraScrollListener);
-	    aCamera.addCameraListener(cameraScrollListener);
-	}
-	camera = aCamera;
-	Rectangle bounds = getBounds();
-	camera.setBounds(0, 0, (int)bounds.getWidth(), (int)bounds.getHeight());
-	camera.addLayer(layer);
-	surface.setCamera(camera,cameraNode);
+        camera = aCamera;
+        Rectangle bounds = getBounds();
+        camera.setBounds(0, 0, (int)bounds.getWidth(), (int)bounds.getHeight());
+        camera.addLayer(layer);
+        surface.setCamera(camera,cameraNode);
 
-	boolean zoomActive = zoomEventHandler.isActive();
-	boolean panActive = panEventHandler.isActive();
-	boolean swingActive = swingEventHandler.isActive();
+        boolean zoomActive = zoomEventHandler.isActive();
+        boolean panActive = panEventHandler.isActive();
+        boolean swingActive = swingEventHandler.isActive();
 
-	zoomEventHandler = null;
-	panEventHandler = null;
-	swingEventHandler = null;
+        zoomEventHandler = null;
+        panEventHandler = null;
+        swingEventHandler = null;
 
-	if (zoomActive) {
-	    zoomEventHandler = new ZoomEventHandler(cameraNode);	    
-	    zoomEventHandler.setActive(true);
-	}
-	if (panActive) {
-	    panEventHandler = new ZPanEventHandler(cameraNode);
-	    panEventHandler.setActive(true);
-	}
-	if (swingActive) {
-	    swingEventHandler = new ZSwingEventHandler(this,cameraNode);
-	    swingEventHandler.setActive(true);
-	}	
-	
-	camera.repaint();
+        if (zoomActive) {
+            zoomEventHandler = new ZoomEventHandler(cameraNode);
+            zoomEventHandler.setActive(true);
+        }
+        if (panActive) {
+            panEventHandler = new ZPanEventHandler(cameraNode);
+            panEventHandler.setActive(true);
+        }
+        if (swingActive) {
+            swingEventHandler = new ZSwingEventHandler(this,cameraNode);
+            swingEventHandler.setActive(true);
+        }
+
+        camera.repaint();
     }
 
     /**
@@ -567,49 +301,44 @@ public class ZCanvas extends JComponent implements Serializable {
      * @param aCameraNode the camera node
      */
     public void setCamera(ZCamera aCamera, ZNode aCameraNode) {
-				// move scrollBar listener to new camera
-	if (usingScrollBars) {
-	    camera.removeCameraListener(cameraScrollListener);
-	    aCamera.addCameraListener(cameraScrollListener);
-	}
-	camera = aCamera;
-	cameraNode = aCameraNode;
-	Rectangle bounds = getBounds();
-	camera.setBounds(0, 0, (int)bounds.getWidth(), (int)bounds.getHeight());
-	camera.addLayer(layer);
-	surface.setCamera(camera,cameraNode);
-	root.addChild(cameraNode);
+        camera = aCamera;
+        cameraNode = aCameraNode;
+        Rectangle bounds = getBounds();
+        camera.setBounds(0, 0, (int)bounds.getWidth(), (int)bounds.getHeight());
+        camera.addLayer(layer);
+        surface.setCamera(camera,cameraNode);
+        root.addChild(cameraNode);
 
-	boolean zoomActive = zoomEventHandler.isActive();
-	boolean panActive = panEventHandler.isActive();
-	boolean swingActive = swingEventHandler.isActive();
+        boolean zoomActive = zoomEventHandler.isActive();
+        boolean panActive = panEventHandler.isActive();
+        boolean swingActive = swingEventHandler.isActive();
 
-	zoomEventHandler = null;
-	panEventHandler = null;
-	swingEventHandler = null;
+        zoomEventHandler = null;
+        panEventHandler = null;
+        swingEventHandler = null;
 
-	if (zoomActive) {
-	    zoomEventHandler = new ZoomEventHandler(cameraNode);	    
-	    zoomEventHandler.setActive(true);
-	}
-	if (panActive) {
-	    panEventHandler = new ZPanEventHandler(cameraNode);
-	    panEventHandler.setActive(true);
-	}
-	if (swingActive) {
-	    swingEventHandler = new ZSwingEventHandler(this,cameraNode);
-	    swingEventHandler.setActive(true);
-	}	
-	
-	camera.repaint();
-    }    
+        if (zoomActive) {
+            zoomEventHandler = new ZoomEventHandler(cameraNode);
+            zoomEventHandler.setActive(true);
+        }
+        if (panActive) {
+            panEventHandler = new ZPanEventHandler(cameraNode);
+            panEventHandler.setActive(true);
+        }
+        if (swingActive) {
+            swingEventHandler = new ZSwingEventHandler(this,cameraNode);
+            swingEventHandler.setActive(true);
+        }
+
+        camera.repaint();
+    }
 
     /**
      * Return the camera associated with the primary surface.
      * @return the camera
      */
     public ZCamera getCamera() {
-	return camera;
+        return camera;
     }
 
     /**
@@ -617,7 +346,7 @@ public class ZCanvas extends JComponent implements Serializable {
      * @return the camera's node
      */
     public ZNode getCameraNode() {
-	return cameraNode;
+        return cameraNode;
     }
 
     /**
@@ -625,15 +354,10 @@ public class ZCanvas extends JComponent implements Serializable {
      * @param root the root
      */
     public void setRoot(ZRoot aRoot) {
-				// move scrollBar listener to new root.
-	if (usingScrollBars) {
-	    root.removeNodeListener(rootScrollListener);
-	    aRoot.addNodeListener(rootScrollListener);
-	}
-	root = aRoot;
+        root = aRoot;
 
-	root.addChild(layer);
-	root.addChild(cameraNode);
+        root.addChild(layer);
+        root.addChild(cameraNode);
     }
 
     /**
@@ -641,7 +365,7 @@ public class ZCanvas extends JComponent implements Serializable {
      * @return the root
      */
     public ZRoot getRoot() {
-	return root;
+        return root;
     }
 
     /**
@@ -649,14 +373,15 @@ public class ZCanvas extends JComponent implements Serializable {
      * @param layer the layer
      */
     public void setLayer(ZLayerGroup aLayer) {
-	camera.removeLayer(layer);	
+        if (layer != aLayer) {
+            if (root.indexOf(aLayer) == -1) {
+                root.addChild(aLayer);
+            }
+            camera.replaceLayer(layer,aLayer);
 
-	layer = aLayer;
-
-	root.addChild(layer);	
-	camera.addLayer(layer);
-
-	camera.repaint();
+            layer = aLayer;
+            camera.repaint();
+        }
     }
 
     /**
@@ -665,7 +390,7 @@ public class ZCanvas extends JComponent implements Serializable {
      * @return the node
      */
     public ZLayerGroup getLayer() {
-	return layer;
+        return layer;
     }
 
     /**
@@ -673,8 +398,19 @@ public class ZCanvas extends JComponent implements Serializable {
      * @return true if this ZCanvas can receive the focus, otherwise false.
      */
     public boolean isFocusTraversable() {
-	return true;
+        return true;
     }
+
+    /**
+     * @see ZScrollPane
+     * @see ZViewport
+     * @see ZScrollDirector
+     * @see ZDefaultScrollDirector
+     * @see javax.swing.JScrollPane#setHorizontalScrollBarPolicy
+     * @see javax.swing.JScrollPane#setVerticalScrollBarPolicy
+     * @deprecated As of Jazz version 1.2
+     */
+    public void setAutoScrollingEnabled(boolean autoScroll) {}
 
     /**
      * Generate a copy of the view in the current camera scaled so that the aspect ratio
@@ -683,16 +419,16 @@ public class ZCanvas extends JComponent implements Serializable {
      * @return An image of the camera
      */
     public Image getScreenImage(int maxDim) {
-	int w, h;
+        int w, h;
 
-	if (getSize().getWidth() > getSize().getHeight()) {
-	    w = maxDim;
-	    h = (int)(maxDim * getSize().getHeight() / getSize().getWidth());
-	} else {
-	    h = maxDim;
-	    w = (int)(maxDim * getSize().getWidth() / getSize().getHeight());
-	}
-	return getScreenImage(w, h);
+        if (getSize().getWidth() > getSize().getHeight()) {
+            w = maxDim;
+            h = (int)(maxDim * getSize().getHeight() / getSize().getWidth());
+        } else {
+            h = maxDim;
+            w = (int)(maxDim * getSize().getWidth() / getSize().getHeight());
+        }
+        return getScreenImage(w, h);
     }
 
     /**
@@ -702,18 +438,60 @@ public class ZCanvas extends JComponent implements Serializable {
      * @return An image of the camera
      */
     public Image getScreenImage(int w, int h) {
-				// We create an image of the right size and get its graphics
-	Image screenImage = createImage(w, h);
-	Graphics2D g2 = (Graphics2D)screenImage.getGraphics();
-				// Then, we compute the transform that will map the component into the image
-	double dsx = (w / getSize().getWidth());
-	double dsy = (h / getSize().getHeight());
-	AffineTransform at = AffineTransform.getScaleInstance(dsx, dsy);
-	g2.setTransform(at);
-				// Finally, we paint onto the image
-	surface.paint(g2);
-				// And we're done
-	return screenImage;
+                                // We create an image of the right size and get its graphics
+        Image screenImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = (Graphics2D)screenImage.getGraphics();
+                                // Then, we compute the transform that will map the component into the image
+        double dsx = (w / getSize().getWidth());
+        double dsy = (h / getSize().getHeight());
+        AffineTransform at = AffineTransform.getScaleInstance(dsx, dsy);
+        g2.setTransform(at);
+                                // Finally, we paint onto the image
+        surface.paint(g2);
+                                // And we're done
+        return screenImage;
+    }
+
+    /**
+     * Converts the specified point from screen coordinates of this canvas to
+     * global coordinates. This method modifies the pt parameter.
+     *
+     * @param pt the point in screen coords that will be converted to global coords.
+     */
+    public void screenToGlobal(Point2D pt) {
+        try {
+            getCamera().getViewTransform().inverseTransform(pt, pt);
+        } catch (NoninvertibleTransformException e) {
+            throw new ZNoninvertibleTransformException(e);
+        }
+    }
+
+    /**
+     * Converts the specified dimension from screen coordinates of this canvas to
+     * global coordinates. This method modifies the dimension parameter.
+     *
+     * @param dimension the point in screen coords that will be converted to global coords.
+     */
+    public void screenToGlobal(Dimension2D dimension) {
+        try {
+            ZUtil.inverseTransformDimension(dimension, getCamera().getViewTransform());
+        } catch (NoninvertibleTransformException e) {
+            throw new ZNoninvertibleTransformException(e);
+        }
+    }
+
+    /**
+     * Converts the specified rectangle from screen coordinates of this canvas to
+     * global coordinates. This method modifies the rectangle parameter.
+     *
+     * @param rectangle the rectangle in screen coords that will be converted to global coords.
+     */
+    public void screenToGlobal(Rectangle2D rectangle) {
+        try {
+            ZUtil.inverseTransformRectangle(rectangle, getCamera().getViewTransform());
+        } catch (NoninvertibleTransformException e) {
+            throw new ZNoninvertibleTransformException(e);
+        }
     }
 
     /**
@@ -721,7 +499,7 @@ public class ZCanvas extends JComponent implements Serializable {
      * @return the pan event handler.
      */
     public ZEventHandler getPanEventHandler() {
-	return panEventHandler;
+        return panEventHandler;
     }
 
     /**
@@ -729,7 +507,7 @@ public class ZCanvas extends JComponent implements Serializable {
      * @return the zoom event handler.
      */
     public ZEventHandler getZoomEventHandler() {
-	return zoomEventHandler;
+        return zoomEventHandler;
     }
 
     /**
@@ -738,59 +516,59 @@ public class ZCanvas extends JComponent implements Serializable {
      * @param active - a boolean: true to enable the swing event handlers, false to disable them.
      */
     public void setSwingEventHandlersActive(boolean active) {
-	if (active) {
-	    if (swingEventHandler == null) {
-		swingEventHandler = new ZSwingEventHandler(this, cameraNode);
-	    }
-	    swingEventHandler.setActive(true);
-	}
-	else {
-	    if (swingEventHandler != null) {
-		swingEventHandler.setActive(false);
-	    }
-	}
+        if (active) {
+            if (swingEventHandler == null) {
+                swingEventHandler = new ZSwingEventHandler(this, cameraNode);
+            }
+            swingEventHandler.setActive(true);
+        }
+        else {
+            if (swingEventHandler != null) {
+                swingEventHandler.setActive(false);
+            }
+        }
     }
-    
+
     /**
      * Control whether event handlers are active or not for this ZCanvas.
      * This controls basic panning and zooming event handlers for the mouse,
      * so that the left button pans, and the right button zooms.
      */
     public void setNavEventHandlersActive(boolean active) {
-	if (active) {
-	    boolean swingActive = false;
+        if (active) {
+            boolean swingActive = false;
 
-	    // Activate event handlers
-	    if (panEventHandler == null) {
-		panEventHandler = new ZPanEventHandler(cameraNode);
-	    }
-	    if (zoomEventHandler == null) {
-		zoomEventHandler = new ZoomEventHandler(cameraNode);
-	    }
-	    
-	    if (swingEventHandler != null && swingEventHandler.isActive()) {
-		swingEventHandler.setActive(false);
-		swingActive = true;
-	    }
-	    
-	    panEventHandler.setActive(true);
-	    zoomEventHandler.setActive(true);
+            // Activate event handlers
+            if (panEventHandler == null) {
+                panEventHandler = new ZPanEventHandler(cameraNode);
+            }
+            if (zoomEventHandler == null) {
+                zoomEventHandler = new ZoomEventHandler(cameraNode);
+            }
 
-	    if (swingEventHandler != null && swingActive) {
-		swingEventHandler.setActive(true);
-	    }
-	    
-	} else {
-				// Deactivate event handlers
-	    if (panEventHandler != null) {
-		panEventHandler.setActive(false);
-	    }
-	    if (zoomEventHandler != null) {
-		zoomEventHandler.setActive(false);
-	    }
-	}
+            if (swingEventHandler != null && swingEventHandler.isActive()) {
+                swingEventHandler.setActive(false);
+                swingActive = true;
+            }
+
+            panEventHandler.setActive(true);
+           zoomEventHandler.setActive(true);
+
+            if (swingEventHandler != null && swingActive) {
+                swingEventHandler.setActive(true);
+            }
+
+        } else {
+                                // Deactivate event handlers
+            if (panEventHandler != null) {
+                panEventHandler.setActive(false);
+            }
+            if (zoomEventHandler != null) {
+                zoomEventHandler.setActive(false);
+            }
+        }
     }
-    
+
     /**
      * Returns the component to which Swing components are added to function
      * properly in Jazz.  This method is public only to allow access to ZSwing.
@@ -798,7 +576,15 @@ public class ZCanvas extends JComponent implements Serializable {
      * @return The component to which Swing components are added to function in Jazz
      */
     public JComponent getSwingWrapper() {
-	return swingWrapper;
+        return swingWrapper;
+    }
+
+    /**
+     * Returns the event handler that supports events for Swing Visual Components.
+     * @return the event handler that supports events for Swing Visual Components.
+     */
+    public ZSwingEventHandler getSwingEventHandler() {
+        return swingEventHandler;
     }
 
     /**
@@ -807,26 +593,19 @@ public class ZCanvas extends JComponent implements Serializable {
      * @param enable True if node event handlers should be invoked.
      */
     public void setEnableNodeEvents(boolean enable) {
-	enableNodeEvents = enable;
-				// Need to add empty listeners so that events get processed
-				// We define our event handlers by over-riding processMouseEvent 
-				// without actually adding listeners.  But, processMouseEvent
-				// doesn't get called unless there is at least one listener
-	if (enable) {
-	    if (emptyMouseListener == null) {
-		emptyMouseListener = new MouseAdapter() {};
-		emptyMouseMotionListener = new MouseMotionAdapter() {};
-		addMouseListener(emptyMouseListener);
-		addMouseMotionListener(emptyMouseMotionListener);
-	    }
-	} else {
-	    if (emptyMouseListener != null) {
-		removeMouseListener(emptyMouseListener);
-		removeMouseMotionListener(emptyMouseMotionListener);
-		emptyMouseListener = null;
-		emptyMouseMotionListener = null;
-	    }
-	}
+        if (enable && !enableNodeEvents) {
+            if (nodeListener == null) {
+                nodeListener = new ZNodeEventHandler();
+            }
+            addMouseListener(nodeListener);
+            addMouseMotionListener(nodeListener);
+            enableNodeEvents = true;
+        } else if (!enable && enableNodeEvents) {
+            removeMouseListener(nodeListener);
+            removeMouseMotionListener(nodeListener);
+            enableNodeEvents = false;
+            nodeListener = null;
+        }
     }
 
     /**
@@ -834,104 +613,31 @@ public class ZCanvas extends JComponent implements Serializable {
      * @return True if Node event handlers should be invoked.
      */
     public final boolean getEnableNodeEvents() {
-	return enableNodeEvents;
+        return enableNodeEvents;
     }
 
     /**
-     * Internal method that overrides java.awt.Component.processMouseEvent
-     * to pass the mouse events to our listeners first, and
-     * then on to the other listeners.  This allows Jazz to support consuming
-     * the events, and only passing the events on if they are not consumed.
-     * Mouse events get dispatched with the following priority (assuming
-     * swing and node events are enabled.)
-     * <ol>
-     * <li> If there is a Swing widget, then that gets the mouse event.
-     * <li> If the event is not consumed, and there is a node event listener, then that gets the event.
-     * <li> If the event is not consumed, then any other component event listeners are processed.
-     * </ol>
-     * @param e The MouseEvent to process
-     * @see #setEnableNodeEvents
+     * Returns true if ZMouseEvents of type ZMouseEvent.MOUSE_MOVED,
+     * ZMouseEvent.MOUSE_ENTERED, and ZMouseEvent.MOUSE_EXITED are being
+     * excluded and not sent to nodes on the canvas. If a Jazz application
+     * does not need these event types then enabling this flag can increase
+     * performance since Jazz will not need to call ZDrawingSurface.pick()
+     * on every mouse movement.
      */
-    public void processMouseEvent(MouseEvent e) {
-	int id = e.getID();
-				// Determine the node under the pointer
-	if (enableNodeEvents) {
-	    ZDrawingSurface surface = getDrawingSurface();
-	    ZCamera camera = surface.getCamera();
-	    ZRenderContext rc = camera.createRenderContext(camera);
-	    camera.getRoot().setCurrentRenderContext(rc);
-
-	    currentPath = getDrawingSurface().pick(e.getX(), e.getY());
-	    currentNode = currentPath.getNode();
-
-				// First, check to see if it should go to a specific node
-	    if (!e.isConsumed()) {
-		switch (id) {
-		case MouseEvent.MOUSE_PRESSED:
-		    nodeListener.mousePressed(e);
-		    break;
-		case MouseEvent.MOUSE_RELEASED:
-		    nodeListener.mouseReleased(e);
-		    break;
-		case MouseEvent.MOUSE_CLICKED:
-		    nodeListener.mouseClicked(e);
-		    break;
-		}
-	    }
-
-	    camera.getRoot().setCurrentRenderContext(rc);
-	}
-				// Else, pass it on to other event handlers
-	if (!e.isConsumed()) {
-	    super.processMouseEvent(e);
-	}
+    public boolean getExcludeMouseMoveEvents() {
+        return excludeMouseMoveEvents;
     }
 
     /**
-     * Internal method that overrides java.awt.Component.processMouseEvent
-     * to pass the mouse events to our listeners first, and
-     * then on to the other listeners.  This allows Jazz to support consuming
-     * the events, and only passing the events on if they are not consumed.
-     * Mouse events get dispatched with the following priority (assuming
-     * swing and node events are enabled.)
-     * <ol>
-     * <li> If there is a Swing widget, then that gets the mouse event.
-     * <li> If the event is not consumed, and there is a node event listener, then that gets the event.
-     * <li> If the event is not consumed, then any other component event listeners are processed.
-     * </ol>
-     * @param e The MouseEvent to process
-     * @see #setEnableNodeEvents
+     * If the parameter aBoolean is true then ZMouseEvents of type
+     * ZMouseEvent.MOUSE_MOVED, ZMouseEvent.MOUSE_ENTERED, and
+     * ZMouseEvent.MOUSE_EXITED are being excluded and not sent to nodes
+     * on the canvas. If a Jazz application does not need these event types
+     * then enabling this flag can increase performance since Jazz will not
+     * need to call ZDrawingSurface.pick() on every mouse movement.
      */
-    public void processMouseMotionEvent(MouseEvent e) {
-	int id = e.getID();
-
-	if (enableNodeEvents) {
-	    ZDrawingSurface surface = getDrawingSurface();
-	    ZCamera camera = surface.getCamera();
-	    ZRenderContext rc = camera.createRenderContext(camera);
-	    camera.getRoot().setCurrentRenderContext(rc);
-
-	    currentPath = getDrawingSurface().pick(e.getX(), e.getY());
-	    currentNode = currentPath.getNode();
-
-				// First, check to see if it should go to a specific node
-	    if (!e.isConsumed()) {
-		switch (id) {
-		case MouseEvent.MOUSE_MOVED:
-		    nodeListener.mouseMoved(e);
-		    break;
-		case MouseEvent.MOUSE_DRAGGED:
-		    nodeListener.mouseDragged(e);
-		    break;
-		}
-	    }
-
-	    camera.getRoot().setCurrentRenderContext(rc);
-	}
-				// Else, pass it on to other event handlers
-	if (!e.isConsumed()) {
-	    super.processMouseMotionEvent(e);
-	}
+    public void setExcludeMouseMoveEvents(boolean aBoolean) {
+        excludeMouseMoveEvents = aBoolean;
     }
 
     /**
@@ -939,7 +645,7 @@ public class ZCanvas extends JComponent implements Serializable {
      * @param c The new cursor
      */
     public void setCursor(Cursor c) {
-	setCursor(c,true);
+        setCursor(c,true);
     }
 
     /**
@@ -954,205 +660,181 @@ public class ZCanvas extends JComponent implements Serializable {
      *                false - Only the current cursor set
      */
     public void setCursor(Cursor c, boolean realSet) {
-	if (realSet) {
-	    cursor = c;
-	}
-	super.setCursor(c);
+        if (realSet) {
+            cursor = c;
+        }
+        super.setCursor(c);
     }
 
     /**
      * Sets the current cursor to the ZCanvas's cursor.
      */
     public void resetCursor() {
-	setCursor(cursor, false);
+        setCursor(cursor, false);
     }
 
     /**
      * Sets the ToolTip Text for this ZCanvas
      * LEG: HACK - this includes a workaround to update the ToolTip as
      *             as soon as it changes by forwarding fake mouse events
-     *             to the tooltip manager       
+     *             to the tooltip manager
      * @param s The new tooltip text
      */
     public void setToolTipText(String s) {
-	super.setToolTipText(s);
-	
-	if (s != null) {
-	    SwingUtilities.invokeLater(new Runnable() {
-		public void run() {
-		    ToolTipManager.sharedInstance().mouseEntered(FAKE_MOUSE_EVENT);
-		}
-	    });
-	}
-	else {
-	    SwingUtilities.invokeLater(new Runnable() {
-		public void run() {
-		    ToolTipManager.sharedInstance().mouseEntered(FAKE_MOUSE_EVENT);
-		    ToolTipManager.sharedInstance().mouseExited(FAKE_MOUSE_EVENT);
-		}
-	    });	    
-	}
+        super.setToolTipText(s);
+
+        if (s != null) {
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    ToolTipManager.sharedInstance().mouseEntered(FAKE_MOUSE_EVENT);
+                }
+            });
+        }
+        else {
+            SwingUtilities.invokeLater(new Runnable() {
+                public void run() {
+                    ToolTipManager.sharedInstance().mouseEntered(FAKE_MOUSE_EVENT);
+                    ToolTipManager.sharedInstance().mouseExited(FAKE_MOUSE_EVENT);
+                }
+            });
+        }
     }
 
     /**
-     * Event handler to capture MousePressed, MouseReleased, MouseMoved,
-     * MouseClicked, and MouseDragged events on Jazz nodes, and pass them
-     * on to the node.
+     * Internal class to distribute mouse events to our listeners first, and
+     * then on to the other listeners.  This allows Jazz to support consuming
+     * the events, and only passing the events on if they are not consumed.
+     * Mouse events get dispatched with the following priority (assuming
+     * swing and node events are enabled.)
+     * <ol>
+     * <li> If there is a Swing widget, then that gets the mouse event.
+     * <li> If the event is not consumed, and there is a node event listener, then that gets the event.
+     * <li> If the event is not consumed, then any other component event listeners are processed.
+     * </ol>
      */
-    class ZNodeEventHandler {
-	int grabIndex = 0;
-	ZNode grabNode = null;
-	ZNode prevNode = null;
-	AffineTransform tmpTransform = new AffineTransform();
+    class ZNodeEventHandler implements MouseListener, MouseMotionListener {
 
-	// Constructor that adds the mouse listeners to the ZCanvas
-	ZNodeEventHandler(ZCanvas zbc) {
-	}
+        protected ZSceneGraphPath targetPath = null;
+        protected ZSceneGraphPath mouseOverPath = null;
+        protected ZSceneGraphPath previousPath = null;
+        protected ZSceneGraphObject targetObject = null;
+        protected ZSceneGraphObject currentObject = null;
+        protected ZSceneGraphObject previousObject = null;
 
-	// Internal method to generate exit/enter events when the current node may have changed
-	protected void updateCurrentNode(MouseEvent e) {
-	    if (currentNode != prevNode) {
-		if (prevNode != null) {
-		    try {
-			prevNode.fireMouseEvent(new ZMouseEvent(MouseEvent.MOUSE_EXITED, prevNode, e, currentPath));
-		    } catch (ZNodeNotFoundException exc) {
-				// The current node was probably deleted in an event handler,
-				// so we won't give it any more events
-		    }
-		}
-		if (currentNode != null) {
-		    currentNode.fireMouseEvent(new ZMouseEvent(MouseEvent.MOUSE_ENTERED, currentNode, e, currentPath));
-		}
-		prevNode = currentNode;
-	    }
-	}
+        ZNodeEventHandler() {
+        }
 
-	// Send the event to the grabbed node, and percolate the event up the path
-	// as long as the event hasn't been consumed
-	private void fireEvent(int id, MouseEvent e, ZNode fireNode, int fireIndex, ZSceneGraphPath firePath) {
-	    ZNode node = fireNode;
-	    ZSceneGraphObject obj;
-	    int i = fireIndex - 1;
-	    boolean cameraNodeFired = false;
+        protected void updateMouseOverPath(MouseEvent e) {
+            // Needed for objects with volatile bounds over multiple cameras.
+            ZCamera camera = surface.getCamera();
+            ZRenderContext rc = camera.createRenderContext(camera);
+            camera.getRoot().setCurrentRenderContext(rc);
 
-	    do {
-				// If the node has a listener, then fire the event
-		ZMouseEvent zme;
-		if (id == MouseEvent.MOUSE_RELEASED) {
-		    zme = new ZMouseEvent(id, node, e, firePath, currentNode, currentPath);
-		}
-		else {
-		    zme = new ZMouseEvent(id, node, e, firePath);
-		}
-		
-		node.fireMouseEvent(zme);
-		if (zme.isConsumed()) {
-				// If the event is consumed, then we are done here
-		    e.consume();
-		    break;
-		}
-		if (node == firePath.getTopCameraNode()) {
-		    cameraNodeFired = true;
-		}
-				// Else, percolate up the path, looking for other nodes
-		node = null;
-		while (i >= 0) {
-		    obj = firePath.getParent(i);
-		    i--;
-		    if (obj instanceof ZNode) {
-			node = (ZNode)obj;
-		        if (node.hasMouseListener()) {
-			    break;
-			} else {
-			    node = null;
-			}
-		    }
-		}
-		if (!cameraNodeFired && (node == null)) {
-		    cameraNodeFired = true;
-		    if (firePath.getObject() != null) {
-			node = firePath.getTopCameraNode();
-		    }
-		}
-	    } while (node != null);
-	}
+            try {
+                mouseOverPath = getDrawingSurface().pick(e.getX(), e.getY());
+            } catch (ZNoninvertibleTransformException ex) {
+                ex.printStackTrace();
+            }
+            currentObject = mouseOverPath.getObject();
 
-	// Forwards mouseMoved events to nodes in Jazz,
-	// if any should receive the event
-	public void mouseMoved(MouseEvent e) {
-	    updateCurrentNode(e);
+            camera.getRoot().setCurrentRenderContext(null);
+        }
 
-	    if ((currentNode == null) || !currentNode.hasMouseListener()) {
-		currentNode = currentPath.getTopCameraNode();
-	    }
+        protected void updateTargetPath() {
+            targetPath = mouseOverPath;
+            if (targetPath == null) {
+                targetObject = null;
+            } else {
+                targetObject = targetPath.getObject();
+            }
+        }
 
-	    fireEvent(MouseEvent.MOUSE_MOVED, e, currentNode, currentPath.getNumParents()-1, currentPath);
-	}
+        protected void checkForMouseEnteredOrExited(MouseEvent e) {
+            if (getExcludeMouseMoveEvents())
+                return;
 
-	// Forwards mousePressed events to nodes in Jazz,
-	// if any should receive the event
-	public void mousePressed(MouseEvent e) {
-	    updateCurrentNode(e);   // Event handlers could have changed the scenegraph, so check for current node
-	    grabNode = currentNode;
-	    grabPath = currentPath;
-				// If the clicked on node doesn't have a mouse or mousemotion listener, then percolate
-				// the event up to its parent.
-            int i = grabPath.getNumParents() - 1;
-	    ZSceneGraphObject obj;
-	    while ((i >= 0) && (grabNode != null) && !grabNode.hasMouseListener()) {
-		obj = grabPath.getParent(i);
-		if (obj instanceof ZNode) {
-		    grabNode = (ZNode)obj;
-		}
-		i--;
-	    }
-	    grabIndex = i;
-	    if ((grabNode == null) || !grabNode.hasMouseListener()) {
-		grabNode = grabPath.getTopCameraNode();
-	    }
+            if (currentObject != previousObject) {
+                if (previousObject != null) {
+                    try {
+                        dispatchEventToPath(MouseEvent.MOUSE_EXITED, e, previousPath);
+                    } catch (ZNodeNotFoundException exc) {
+                                // The current node was probably deleted in an event handler,
+                                // so we won't give it any more events
+                    }
+                }
+                if (currentObject != null) {
+                    dispatchEventToPath(MouseEvent.MOUSE_ENTERED, e, mouseOverPath);
+                }
+            }
+            previousPath = mouseOverPath;
+            previousObject = currentObject;
+        }
 
-	    fireEvent(MouseEvent.MOUSE_PRESSED, e, grabNode, grabIndex, grabPath);
-	}
+        public void mouseMoved(MouseEvent e) {
+            if (getExcludeMouseMoveEvents())
+                return;
 
-	// Forwards mouseDragged events nodes in Jazz,
-	// if any should receive the event
-	public void mouseDragged(MouseEvent e) {
-				// We need to set the transform using the objects on the grab path.
-				// We can't use the current transform from the current path because the path may be different.
-				// So instead, we recompute the transform using the objects along the path.
-	    grabPath.updateTransform();
+            updateMouseOverPath(e);
+            updateTargetPath();
+            checkForMouseEnteredOrExited(e);
+            dispatchEventToPath(MouseEvent.MOUSE_MOVED, e, targetPath);
+        }
 
-	    fireEvent(MouseEvent.MOUSE_DRAGGED, e, grabNode, grabIndex, grabPath);
-	}
+        public void mousePressed(MouseEvent e) {
+            updateMouseOverPath(e);
+            updateTargetPath();
+            dispatchEventToPath(MouseEvent.MOUSE_PRESSED, e, targetPath);
+        }
 
-	// Forwards mouseReleased events to nodes in Jazz,
-	// if any should receive the event
-	public void mouseReleased(MouseEvent e) {
-	    updateCurrentNode(e);   // Event handlers could have changed scenegraph, check for current node
-	    grabPath.setTransform(currentPath.getTransform());
+        public void mouseDragged(MouseEvent e) {
+                                // We need to set the transform using the objects on the grab path.
+                                // We can't use the current transform from the current path because the path may be different.
+                                // So instead, we recompute the transform using the objects along the path.
+            updateMouseOverPath(e);
+            targetPath.updateTransform();
+            dispatchEventToPath(MouseEvent.MOUSE_DRAGGED, e, targetPath);
+        }
 
-	    fireEvent(MouseEvent.MOUSE_RELEASED, e, grabNode, grabIndex, grabPath);
-	}
+        public void mouseReleased(MouseEvent e) {
+            updateMouseOverPath(e);
+            targetPath.updateTransform();
+            dispatchEventToPath(MouseEvent.MOUSE_RELEASED, e, targetPath);
+        }
 
-	// Forwards mouseClicked events to nodes in Jazz,
-	// if any should receive the event
-	public void mouseClicked(MouseEvent e) {
-	    if (grabNode != null) {
-		ZMouseEvent zme = new ZMouseEvent(MouseEvent.MOUSE_CLICKED, grabNode, e, currentPath);
-		grabNode.fireMouseEvent(zme);
-		if (zme.isConsumed()) {
-		    e.consume();
-		}
-	    }
-	}
+        public void mouseClicked(MouseEvent e) {
+            updateMouseOverPath(e);
+            updateTargetPath();
+            dispatchEventToPath(MouseEvent.MOUSE_CLICKED, e, targetPath);
+        }
 
-	// Implemented within mouseMoved
-	public void mouseExited(MouseEvent e) {
-	}
+        public void mouseExited(MouseEvent e) {
+            //updateMouseOverPath(e);
+            mouseOverPath = null;
+            currentObject = null;
+            checkForMouseEnteredOrExited(e);
+            //mouseOverPath = null;
+            //dispatchEventToPath(MouseEvent.MOUSE_EXITED, e, targetPath);
+            //targetPath = null;
+            //previousObject = null;
+            //targetObject = null;
+        }
 
-	// Implemented within mouseMoved
-	public void mouseEntered(MouseEvent e) {
-	}
+        public void mouseEntered(MouseEvent e) {
+            updateMouseOverPath(e);
+            checkForMouseEnteredOrExited(e);
+        }
+
+        protected void dispatchEventToPath(int id, MouseEvent e, ZSceneGraphPath aPath) {
+            ZMouseEvent aNewEvent = ZMouseEvent.createMouseEvent(id,
+                                                                 e,
+                                                                 aPath,
+                                                                 mouseOverPath);
+            try {
+                aPath.processMouseEvent(aNewEvent);
+            } catch (ZNoninvertibleTransformException ex) {
+                ex.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -1181,126 +863,125 @@ public class ZCanvas extends JComponent implements Serializable {
      * repaints can be triggered by a call to paint.
      */
     public class ZBasicRepaintManager extends RepaintManager {
-	// The components that are currently painting
-	// This needs to be a vector for thread safety
-	Vector paintingComponents = new Vector();
+        // The components that are currently painting
+        // This needs to be a vector for thread safety
+        Vector paintingComponents = new Vector();
 
-	/**
-	 * Locks repaint for a particular (Swing) component displayed by
-	 * ZCanvas
-	 * @param c The component for which the repaint is to be locked
-	 */
-	public void lockRepaint(JComponent c) {
-	    paintingComponents.addElement(c);
-	}
+        /**
+         * Locks repaint for a particular (Swing) component displayed by
+         * ZCanvas
+         * @param c The component for which the repaint is to be locked
+         */
+        public void lockRepaint(JComponent c) {
+            paintingComponents.addElement(c);
+        }
 
-	/**
-	 * Unlocks repaint for a particular (Swing) component displayed by
-	 * ZCanvas
-	 * @param c The component for which the repaint is to be unlocked
-	 */
-	public void unlockRepaint(JComponent c) {
-	    synchronized (paintingComponents) {
-		paintingComponents.removeElementAt(paintingComponents.lastIndexOf(c));
-	    }
-	}
+        /**
+         * Unlocks repaint for a particular (Swing) component displayed by
+         * ZCanvas
+         * @param c The component for which the repaint is to be unlocked
+         */
+        public void unlockRepaint(JComponent c) {
+            synchronized (paintingComponents) {
+                paintingComponents.removeElementAt(paintingComponents.lastIndexOf(c));
+            }
+        }
 
-	/**
-	 * Returns true if repaint is currently locked for a component and
-	 * false otherwise
-	 * @param c The component for which the repaint status is desired
-	 * @return Whether the component is currently painting
-	 */
-	public boolean isPainting(JComponent c) {
-	    return paintingComponents.contains(c);
-	}
+        /**
+         * Returns true if repaint is currently locked for a component and
+         * false otherwise
+         * @param c The component for which the repaint status is desired
+         * @return Whether the component is currently painting
+         */
+        public boolean isPainting(JComponent c) {
+            return paintingComponents.contains(c);
+        }
 
-	/**
-	 * This is the method "repaint" now calls in the Swing components.
-	 * Overridden to capture repaint calls from those Swing components
-	 * which are being used as Jazz visual components and to call the Jazz
-	 * repaint mechanism rather than the traditional Component hierarchy
-	 * repaint mechanism.  Otherwise, behaves like the superclass.
-	 * @param c Component to be repainted
-	 * @param x X coordinate of the dirty region in the component
-	 * @param y Y coordinate of the dirty region in the component
-	 * @param w Width of the dirty region in the component
-	 * @param h Height of the dirty region in the component
-	 */
-	public synchronized void addDirtyRegion(JComponent c, int x, int y, int w, int h) {
-	    boolean captureRepaint = false;
-	    JComponent capturedComponent = null;
-	    int captureX = x, captureY = y;
+        /**
+         * This is the method "repaint" now calls in the Swing components.
+         * Overridden to capture repaint calls from those Swing components
+         * which are being used as Jazz visual components and to call the Jazz
+         * repaint mechanism rather than the traditional Component hierarchy
+         * repaint mechanism.  Otherwise, behaves like the superclass.
+         * @param c Component to be repainted
+         * @param x X coordinate of the dirty region in the component
+         * @param y Y coordinate of the dirty region in the component
+         * @param w Width of the dirty region in the component
+         * @param h Height of the dirty region in the component
+         */
+        public synchronized void addDirtyRegion(JComponent c, int x, int y, int w, int h) {
+            boolean captureRepaint = false;
+            JComponent capturedComponent = null;
+            int captureX = x, captureY = y;
 
-	    // We have to check to see if the ZCanvas
-	    // (ie. the SwingWrapper) is in the components ancestry.  If so,
-	    // we will want to capture that repaint.  However, we also will
-	    // need to translate the repaint request since the component may
-	    // be offset inside another component.
-	    for(Component comp = c; comp != null && comp.isLightweight() && !captureRepaint; comp = comp.getParent()) {
+            // We have to check to see if the ZCanvas
+            // (ie. the SwingWrapper) is in the components ancestry.  If so,
+            // we will want to capture that repaint.  However, we also will
+            // need to translate the repaint request since the component may
+            // be offset inside another component.
+            for(Component comp = c; comp != null && comp.isLightweight() && !captureRepaint; comp = comp.getParent()) {
 
-		if (comp.getParent() != null &&
-		    comp.getParent() instanceof JComponent &&
-		    ((JComponent)comp.getParent()).getClientProperty(SWING_WRAPPER_KEY) != null) {
-		    if (comp instanceof JComponent) {
-			captureRepaint = true;
-			capturedComponent = (JComponent)comp;
-		    }
-		}
-		else {
-		    // Adds to the offset since the component is nested
-		    captureX += comp.getLocation().getX();
-		    captureY += comp.getLocation().getY();
-		}
+                if (comp.getParent() != null &&
+                    comp.getParent() instanceof JComponent &&
+                    ((JComponent)comp.getParent()).getClientProperty(SWING_WRAPPER_KEY) != null) {
+                    if (comp instanceof JComponent) {
+                        captureRepaint = true;
+                        capturedComponent = (JComponent)comp;
+                    }
+                }
+                else {
+                    // Adds to the offset since the component is nested
+                    captureX += comp.getLocation().getX();
+                    captureY += comp.getLocation().getY();
+                }
 
-	    }
+            }
 
-	    // Now we check to see if we should capture the repaint and act
-	    // accordingly
-	    if (captureRepaint) {
-		if (!isPainting(capturedComponent)) {
+            // Now we check to see if we should capture the repaint and act
+            // accordingly
+            if (captureRepaint) {
+                if (!isPainting(capturedComponent)) {
 
-		    ZSwing vis = (ZSwing)capturedComponent.getClientProperty(ZSwing.VISUAL_COMPONENT_KEY);
+                    ZSwing vis = (ZSwing)capturedComponent.getClientProperty(ZSwing.VISUAL_COMPONENT_KEY);
 
-		    if (vis != null) {
-			vis.repaint(new ZBounds((double)captureX,(double)captureY,(double)w,(double)h));
-		    }
+                    if (vis != null) {
+                        vis.repaint(new ZBounds((double)captureX,(double)captureY,(double)w,(double)h));
+                    }
 
-		}
-	    }
-	    else {
-		super.addDirtyRegion(c,x,y,w,h);
-	    }
-	}
+                }
+            }
+            else {
+                super.addDirtyRegion(c,x,y,w,h);
+            }
+        }
 
-	/**
-	 * This is the method "revalidate" calls in the Swing components.
-	 * Overridden to capture revalidate calls from those Swing components
-	 * being used as Jazz visual components and to update Jazz's visual
-	 * component wrapper bounds (these are stored separately from the
-	 * Swing component). Otherwise, behaves like the superclass.
-	 * @param invalidComponent The Swing component that needs validation
-	 */
-	public synchronized void addInvalidComponent(JComponent invalidComponent) {
-	    final JComponent capturedComponent = invalidComponent;
+        /**
+         * This is the method "revalidate" calls in the Swing components.
+         * Overridden to capture revalidate calls from those Swing components
+         * being used as Jazz visual components and to update Jazz's visual
+         * component wrapper bounds (these are stored separately from the
+         * Swing component). Otherwise, behaves like the superclass.
+         * @param invalidComponent The Swing component that needs validation
+         */
+        public synchronized void addInvalidComponent(JComponent invalidComponent) {
+            final JComponent capturedComponent = invalidComponent;
 
-	    if (capturedComponent.getParent() != null &&
-		capturedComponent.getParent() instanceof JComponent &&
-		((JComponent)capturedComponent.getParent()).getClientProperty(SWING_WRAPPER_KEY) != null) {
+            if (capturedComponent.getParent() != null &&
+                capturedComponent.getParent() instanceof JComponent &&
+                ((JComponent)capturedComponent.getParent()).getClientProperty(SWING_WRAPPER_KEY) != null) {
 
-		Runnable validater = new Runnable() {
-		    public void run() {
-			capturedComponent.validate();
-			ZSwing swing = (ZSwing)capturedComponent.getClientProperty(ZSwing.VISUAL_COMPONENT_KEY);
-			swing.reshape();
-		    }
-		};
-		SwingUtilities.invokeLater(validater);
-	    }
-	    else {
-		super.addInvalidComponent(invalidComponent);
-	    }
-	}
+                Runnable validater = new Runnable() {
+                    public void run() {
+                        capturedComponent.validate();
+                        ZSwing swing = (ZSwing)capturedComponent.getClientProperty(ZSwing.VISUAL_COMPONENT_KEY);
+                        swing.reshape();
+                    }
+                };
+                SwingUtilities.invokeLater(validater);
+            }
+            else {
+                super.addInvalidComponent(invalidComponent);
+            }
+        }
     }
-
 }

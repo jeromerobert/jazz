@@ -80,8 +80,8 @@ public class ZLayout implements Serializable {
 	totalDim = 0.0;
 	numNodes = 0;
 	for(int i=0; i<nodes.length; i++) {
-	    node = (ZNode)nodes[i].editor().getNode();
-	    bounds = node.getGlobalBounds();
+	    node = (ZNode)nodes[i].editor().getTop();
+	    bounds = node.getBounds();
 	    totalDim = totalDim + ((bounds.getWidth()+bounds.getHeight())/2.0);
 	    numNodes++;
 	}
@@ -138,8 +138,8 @@ public class ZLayout implements Serializable {
 	totalDim = 0.0;
 	numNodes = 0;
 	for(int i=0; i<nodes.length; i++) {
-	    node = (ZNode)nodes[i].editor().getNode();
-	    bounds = node.getGlobalBounds();
+	    node = (ZNode)nodes[i].editor().getTop();
+	    bounds = node.getBounds();
 	    totalDim = totalDim + ((bounds.getWidth()+bounds.getHeight())/2.0);
 	    numNodes++;
 	}
@@ -237,8 +237,8 @@ public class ZLayout implements Serializable {
 	if (closedPath) {
 	    Point2D dir = new Point2D.Double(1.0,1.0);
 	    Point2D entranceP = (Point2D)((Point2D)coordinates.get(coordinates.size()-1)).clone();
-	    ZNode firstNode = (ZNode)nodes[0].editor().getNode();
-	    Rectangle2D bounds = firstNode.getGlobalBounds();
+	    ZNode firstNode = (ZNode)nodes[0].editor().getTop();
+	    Rectangle2D bounds = firstNode.getBounds();
 	    double halfWidth = (bounds.getWidth())/(2.0);
 	    double halfHeight = (bounds.getHeight())/(2.0);
 	    
@@ -289,8 +289,8 @@ public class ZLayout implements Serializable {
 
 	    // Perform this loop once for each of the nodes
 	    for (index=0; index < nodes.length; index++) {
-		ZNode node = nodes[index].editor().getNode();
-		Rectangle2D bounds = node.getGlobalBounds();
+		ZNode node = nodes[index].editor().getTop();
+		ZBounds bounds = node.getBounds();
 		Point2D curP;
 		Point2D remainderP;
 		
@@ -344,11 +344,16 @@ public class ZLayout implements Serializable {
 
 		ZTransformGroup transform = node.editor().getTransformGroup();
 		Point2D newLocalCenter = new Point2D.Double(centerX, centerY);
-		node.globalToLocal(newLocalCenter);
-		Point2D curLocalCenter = new Point2D.Double(bounds.getCenterX(),bounds.getCenterY());
-		node.globalToLocal(curLocalCenter);
+		Point2D curLocalCenter = bounds.getCenter2D();
+		AffineTransform tmpTransform = transform.getInverseTransform();
+		tmpTransform.setTransform(tmpTransform.getScaleX(),tmpTransform.getShearX(),tmpTransform.getShearY(),tmpTransform.getScaleY(),0.0,0.0);
+		tmpTransform.transform(newLocalCenter,newLocalCenter);
+		tmpTransform.transform(curLocalCenter,curLocalCenter);
 
-		transform.translate((newLocalCenter.getX()-curLocalCenter.getX()),(newLocalCenter.getY()-curLocalCenter.getY()));
+		Point2D translation = new Point2D.Double((newLocalCenter.getX()-curLocalCenter.getX()),(newLocalCenter.getY()-curLocalCenter.getY()));
+
+		transform.translate(translation.getX(),translation.getY());
+		
 
 		/******************************************/
 		/* Part 2 - Now that we have the center - */

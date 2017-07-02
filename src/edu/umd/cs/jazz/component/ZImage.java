@@ -7,10 +7,10 @@ package edu.umd.cs.jazz.component;
 import java.awt.*;
 import java.awt.image.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
 import java.awt.geom.*;
 import java.io.*;
 import java.net.*;
+import javax.swing.*;
 import com.sun.image.codec.jpeg.*;
 import com.sun.image.codec.jpeg.JPEGCodec.*;
 
@@ -32,7 +32,12 @@ import edu.umd.cs.jazz.util.*;
  */
 public class ZImage extends ZVisualComponent implements Serializable {
     public static final boolean writeEmbeddedImage_DEFAULT = true;
-    protected static final Component staticComponent = new Canvas();
+    protected static final Frame staticFrame;
+
+    static {
+        staticFrame = new Frame();
+        staticFrame.addNotify();
+    }
 
     /**
      * The dimensions of the image.  -1 if not known yet.
@@ -55,10 +60,12 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * URL of the image, if it came from a URL.
      */
     protected URL url = null;
-    
-    private static final Component sComponent = new Component() {};
-    private static final MediaTracker sTracker = new MediaTracker(sComponent);
+
+    private static JComponent sComponent = null;
+    private static MediaTracker sTracker = null;
+    private static AffineTransform identityTransform = new AffineTransform();
     private static int sID = 0;
+
     /**
      * Translation offset X.
      */
@@ -69,17 +76,15 @@ public class ZImage extends ZVisualComponent implements Serializable {
      */
     protected double translateY = 0.0;
 
-  
-    class ZImageObserver implements ImageObserver, Serializable {        	
+    class ZImageObserver implements ImageObserver, Serializable {
+        public boolean imageUpdate(Image i, int infoflags, int x, int y, int width, int height) {
+            if (((infoflags & WIDTH) != 0) || ((infoflags & HEIGHT) != 0)) {
+                ZImage.this.setDimension(width, height);
+                ZImage.this.setLoaded(true);
+            }
 
-	public boolean imageUpdate(Image i, int infoflags, int x, int y, int width, int height) {
-	    if (((infoflags & WIDTH) != 0) || ((infoflags & HEIGHT) != 0)) {
-		ZImage.this.setDimension(width, height);
-		ZImage.this.setLoaded(true);
-	    }
-
-	    return false;
-	}
+            return false;
+        }
     }
 
     /**
@@ -87,40 +92,52 @@ public class ZImage extends ZVisualComponent implements Serializable {
      */
     public ZImage() {
         observer = new ZImageObserver();
+
+	if (sComponent == null) {
+	    JWindow window = new JWindow();
+	    window.setBounds(0, 0, 1, 1);
+	    sComponent = new JPanel();
+	    sComponent.setBounds(0, 0, 1, 1);
+	    window.getContentPane().add(sComponent);
+	    window.setVisible(true);
+	    window.setVisible(false);
+
+	    sTracker = new MediaTracker(sComponent);
+	}
     }
-    
+
     /**
      * Constructs a new ZImage from an Image.
      */
     public ZImage(Image i) {
-	this();
-	loadImage(i);
-	setImage(i);
+        this();
+        loadImage(i);
+        setImage(i);
     }
 
     /**
      * Constructs a new ZImage from a file.
      */
     public ZImage(String aFileName) {
-	this();
-	setImage(aFileName);
+        this();
+        setImage(aFileName);
     }
 
     /**
      * Constructs a new ZImage from a URL.
      */
     public ZImage(URL aUrl) {
-	this();
-	url = aUrl;
-	setImage(aUrl);
+        this();
+        url = aUrl;
+        setImage(aUrl);
     }
 
     /**
      * Constructs a new ZImage from a byte array.
      */
     public ZImage(byte[] bytes) {
-	this();
-	setImage(bytes);
+        this();
+        setImage(bytes);
     }
 
     /**
@@ -129,13 +146,12 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @see ZSceneGraphObject#duplicateObject
      */
     protected Object duplicateObject() {
-	ZImage newImage = (ZImage)super.duplicateObject();
+        ZImage newImage = (ZImage)super.duplicateObject();
 
         newImage.observer = new ZImageObserver();
-	
-	return newImage;
-    }
 
+        return newImage;
+    }
 
     /**
      * Given a directory path plus some path relative to it,
@@ -144,76 +160,76 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @param<code>path</code> the direcory path to be simplified.
      */
     public String getAbsolutePath(String path) {
-	char ps = File.separatorChar;
-	// absolute path: "/.." is ileagal
-	if ((path.length() > 2) && path.substring(0,3).equals(ps+"..")) {
-	    System.out.println("illegal path: "+path);
-	    return null;
-	}
+        char ps = File.separatorChar;
+        // absolute path: "/.." is ileagal
+        if ((path.length() > 2) && path.substring(0,3).equals(ps+"..")) {
+            System.out.println("illegal path: "+path);
+            return null;
+        }
 
-	// remove substrings of "someDirectory/.." from the path
-	for (int c=0; c<path.length(); c++) {
-	    if ((path.length() > c+5) && (path.substring(c, c+3).equals(".."+ps))) {
-		// get position of previous separator
-		int pps = path.lastIndexOf(ps,c-2);
-		path = getAbsolutePath(path.substring(0, pps+1)+path.substring(c+3));
-		return path;
-	    }
-	}
-	return path;
+        // remove substrings of "someDirectory/.." from the path
+        for (int c=0; c<path.length(); c++) {
+            if ((path.length() > c+5) && (path.substring(c, c+3).equals(".."+ps))) {
+                // get position of previous separator
+                int pps = path.lastIndexOf(ps,c-2);
+                path = getAbsolutePath(path.substring(0, pps+1)+path.substring(c+3));
+                return path;
+            }
+        }
+        return path;
     }
 
     /**
-     * Returns the directory path of a file name, relative to 
+     * Returns the directory path of a file name, relative to
      * another absolute path basePath.
      * @param <code>fileName</code> absolute path of a file.
      * @param <code>baseName</code> absolute base path.
      */
     public String getRelativePath(String fileName, String basePath) {
-	// Make a relative path: count how many subdirectories are
-	// the same between fileName and basePath
-	// relativeFileName = this many "../.." or "..\.."
-	// Then tack on the tail part of fileName.
+        // Make a relative path: count how many subdirectories are
+        // the same between fileName and basePath
+        // relativeFileName = this many "../.." or "..\.."
+        // Then tack on the tail part of fileName.
 
         // If the files are on different disks, than just write out the absolute path
         // Make an assumption here that if the second character is ':', then it is
         // PC file name, and so the first letter is a disk name.
         if ((fileName.charAt(1) == ':') && (basePath.charAt(1) == ':')) {
-	    if (fileName.charAt(0) != basePath.charAt(0)) {
-				// Different PC disks
-		return fileName;
-	    }
-	}
-	boolean ignoreCase = File.separator.equals("/") ? false : true;
+            if (fileName.charAt(0) != basePath.charAt(0)) {
+                                // Different PC disks
+                return fileName;
+            }
+        }
+        boolean ignoreCase = File.separator.equals("/") ? false : true;
 
-	char sc = File.separatorChar;
-	while ((fileName.indexOf(sc) != fileName.lastIndexOf(sc)) &&
-	       (basePath.indexOf(sc) != basePath.lastIndexOf(sc))) {
-	    int subDir = basePath.indexOf(File.separator, 1);
-	    if (basePath.regionMatches(ignoreCase, 0, fileName, 0, subDir)) {
-		basePath = basePath.substring(subDir);
-		fileName = fileName.substring(subDir);
-	    } else {
-		break;
-	    }
-	}
-	int sepCnt = 0;
-	String upDirs1 = "";
-	for (int i=0; i<basePath.length(); i++) {
-	    if (basePath.charAt(i) == sc) {
-		sepCnt++;
-		if (sepCnt == 1) {
-		    continue;
-		}
-		upDirs1 += ".."+File.separator;
-	    }
-	}
-	// remove the first character of the filename if it is File.separator
-	if ((fileName.length() > 1) && (fileName.charAt(0) == sc)) {
-	    fileName = fileName.substring(1);
-	}
-	// append the ../ 's to the filename
-	return(upDirs1 + fileName);
+        char sc = File.separatorChar;
+        while ((fileName.indexOf(sc) != fileName.lastIndexOf(sc)) &&
+               (basePath.indexOf(sc) != basePath.lastIndexOf(sc))) {
+            int subDir = basePath.indexOf(File.separator, 1);
+            if (basePath.regionMatches(ignoreCase, 0, fileName, 0, subDir)) {
+                basePath = basePath.substring(subDir);
+                fileName = fileName.substring(subDir);
+            } else {
+                break;
+            }
+        }
+        int sepCnt = 0;
+        String upDirs1 = "";
+        for (int i=0; i<basePath.length(); i++) {
+            if (basePath.charAt(i) == sc) {
+                sepCnt++;
+                if (sepCnt == 1) {
+                    continue;
+                }
+                upDirs1 += ".."+File.separator;
+            }
+        }
+        // remove the first character of the filename if it is File.separator
+        if ((fileName.length() > 1) && (fileName.charAt(0) == sc)) {
+            fileName = fileName.substring(1);
+        }
+        // append the ../ 's to the filename
+        return(upDirs1 + fileName);
     }
 
     /**
@@ -221,8 +237,7 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @param x the X translation.
      */
     public void setTranslateX(double x) {
-	translateX = x;
-	reshape();
+        setTranslation(x, translateY);
     }
 
     /**
@@ -230,7 +245,7 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @return the X translation.
      */
     public double getTranslateX() {
-	return translateX;
+        return translateX;
     }
 
     /**
@@ -238,8 +253,7 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @param y the Y translation.
      */
     public void setTranslateY(double y) {
-	translateY = y;
-	reshape();
+        setTranslation(translateX, y);
     }
 
     /**
@@ -247,7 +261,7 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @return the Y translation.
      */
     public double getTranslateY() {
-	return translateY;
+        return translateY;
     }
 
     /**
@@ -256,9 +270,9 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @param y the Y-coord of translation
      */
     public void setTranslation(double x, double y) {
-	translateX = x;
-	translateY = y;
-	reshape();
+        translateX = x;
+        translateY = y;
+        reshape();
     }
 
     /**
@@ -266,9 +280,7 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @param p The translation offset.
      */
     public void setTranslation(Point2D p) {
-	translateX = p.getX();
-	translateY = p.getY();
-	reshape();
+        setTranslation(p.getX(), p.getY());
     }
 
     /**
@@ -276,8 +288,8 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @return The translation offset.
      */
     public Point2D getTranslation() {
-	Point2D p = new Point2D.Double(translateX, translateY);
-	return p;
+        Point2D p = new Point2D.Double(translateX, translateY);
+        return p;
     }
 
     /**
@@ -285,17 +297,20 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * Wait until the image is loaded before returning.
      * @param <code>i</code> the image.
      */
-    public boolean setImage(Image i) {
-	width = -1;
-	height = -1;
-	image = i;
-	if (image == null) {
-	    setDimension(0, 0);
-	} else {
-	    setDimension(getWidth(), getHeight());
-	}
+    public boolean setImage(Image im) {
+        width = -1;
+        height = -1;
 
-	return isLoaded();
+        image = im;
+
+        if (image == null) {
+            setDimension(0, 0);
+        } else {
+            setDimension(getWidth(), getHeight());
+	    createOptimizedImage();
+        }
+
+        return isLoaded();
     }
 
     /**
@@ -304,9 +319,11 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @param <code>bytes</code> the bytes of the image.
      */
     public boolean setImage(byte[] bytes) {
-	Image im = Toolkit.getDefaultToolkit().createImage(bytes);
-  	loadImage(im);
-	return setImage(im);
+        Image im = Toolkit.getDefaultToolkit().createImage(bytes);
+        loadImage(im);
+        boolean success = setImage(im);
+	im.flush();
+        return success;
     }
 
     /**
@@ -316,35 +333,62 @@ public class ZImage extends ZVisualComponent implements Serializable {
      */
     public boolean setImage(String aFileName) {
         fileName = aFileName;
-	Image im = Toolkit.getDefaultToolkit().getImage(fileName);
-	loadImage(im);
-	return setImage(im);
+        Image im = Toolkit.getDefaultToolkit().createImage(fileName);
+        loadImage(im);
+        boolean success = setImage(im);
+	im.flush();
+        return success;
     }
 
     /**
      * Set the image to the one at the specified URL.
      * Wait until the image is loaded before returning.
      * @param <code>aURL</code> the URL of the image.
-     */    
+     */
     public boolean setImage(URL aUrl) {
-	url = aUrl;
-	Image im = Toolkit.getDefaultToolkit().getImage(url);
-  	loadImage(im);
-	return setImage(im);
+        url = aUrl;
+        Image im = Toolkit.getDefaultToolkit().createImage(url);
+        loadImage(im);
+        boolean success = setImage(im);
+	im.flush();
+        return success;
+    }
+
+    /**
+     * Internal method to convert image to a type that Java can render fast.
+     * For JDK 1.3, Java rendered BufferedImages fastest, so this creates one
+     * of those.  For current the JDK1.4beta (as of 8/3/2001), createImage(w, h)
+     * is optimized.  However, for now, only opaque images are optimized, so
+     * this creates an opaque image.  If you need to use a bitmask or translucent
+     * image, you need to override this method and create the appropriate image
+     * with GraphicsConfiguration.createCompatibleImage(w, h, type).
+     */
+    protected void createOptimizedImage() {
+	Image i;
+
+	String version = System.getProperties().getProperty("java.version");
+	if (version.substring(0, 3).equals("1.3")) {
+	    i = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+	} else {
+	    i = sComponent.createImage(width, height);
+	    // i = ((Graphics2D)sComponent.getGraphics()).getDeviceConfiguration().createCompatibleImage(width, height, Transparency.BITMASK);
+	}
+	i.getGraphics().drawImage(image, 0, 0, sComponent);
+	image = i;
     }
 
     /**
      * Utility method to wait until the specified image is loaded, and then return.
-     */    
+     */
     protected void loadImage(Image im) {
-	MediaTracker tracker = new MediaTracker(staticComponent);
-  	tracker.addImage(im, 0);
-  	try {
-  	    tracker.waitForID(0);
-  	}
-  	catch (InterruptedException exception) {
-  	    System.out.println("Couldn't load image: " + fileName);
-  	}
+        MediaTracker tracker = new MediaTracker(staticFrame);
+        tracker.addImage(im, 0);
+        try {
+            tracker.waitForID(0);
+        }
+        catch (InterruptedException exception) {
+            System.out.println("Couldn't load image: " + fileName);
+        }
     }
 
     /**
@@ -352,7 +396,7 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @return the AWT image.
      */
     public Image getImage() {
-	return image;
+        return image;
     }
 
     /**
@@ -369,7 +413,7 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @return the filename.
      */
     public String getFileName() {
-	return fileName;
+        return fileName;
     }
 
     /**
@@ -378,7 +422,7 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @param <code>aURL</code> the file name.
      */
     public void setUrl(URL aUrl) {
-	url = aUrl;
+        url = aUrl;
     }
 
     /**
@@ -386,7 +430,7 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @return the URL.
      */
     public URL getUrl() {
-	return url;
+        return url;
     }
 
     /**
@@ -397,7 +441,7 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @param value true to embed image in file, and false to store a link
      */
     public void setWriteEmbeddedImage(boolean value) {
-	writeEmbeddedImage = value;
+        writeEmbeddedImage = value;
     }
 
 
@@ -408,19 +452,16 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @return true to embed image in file
      */
     public boolean getWriteEmbeddedImage() {
-	return writeEmbeddedImage;
+        return writeEmbeddedImage;
     }
 
     /**
-     * Notifies this object that it has changed and that it should update 
+     * Notifies this object that it has changed and that it should update
      * its notion of its bounding box.  Note that this should not be called
      * directly.  Instead, it is called by <code>updateBounds</code> when needed.
      */
     protected void computeBounds() {
-	Rectangle2D rect = new Rectangle2D.Double();
-	rect.setRect(translateX, translateY, getWidth(), getHeight());
-	
-	bounds.setRect(rect);
+        bounds.setRect(translateX, translateY, getWidth(), getHeight());
     }
 
     /**
@@ -435,22 +476,33 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @param <code>renderContext</code> The graphics context to paint into.
      */
     public void render(ZRenderContext renderContext) {
-	if (image != null) {
-	    Graphics2D g2 = renderContext.getGraphics2D();
-	    boolean translated = false;
-	    AffineTransform at = null;
-	    if ((translateX != 0.0) || (translateY != 0.0)) {
-		at = g2.getTransform();	// save transform
-		g2.translate(translateX, translateY);
-		translated = true;
-	    }
-	    g2.drawImage(image, null, observer);
-	    if (translated) {
-		g2.setTransform(at); // restore transform
-	    }
-	}
+        if (image != null) {
+            Graphics2D g2 = renderContext.getGraphics2D();
+
+            // Is the image translated?
+            boolean translated = false;
+
+            // Is the image being rendered transformed?
+            AffineTransform origat = g2.getTransform();
+
+            if ((translateX != 0.0) || (translateY != 0.0)) {
+                g2.translate(translateX, translateY);
+                translated = true;
+            }
+
+            AffineTransform at = g2.getTransform();
+	    g2.setTransform(identityTransform);
+            g2.drawImage(image, at, observer);
+
+	    /*
+            if (translated) {
+                g2.setTransform(origat); // restore transform
+            }
+	    */
+	    g2.setTransform(origat); // restore transform
+        }
     }
-    
+
     /**
      * Return width of image.
      * If the width is not yet available, this will return -1, and the
@@ -458,18 +510,18 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @return width.
      */
     public int getWidth() {
-	if ((width == -1) && (image != null)) {
-	    int w;
-				// Be careful here because Image.getWidth() can immediately call
-				// the observer which in this case will modify width - so don't
-				// set width unless we have a valid value.
-	    w = image.getWidth(observer);
-	    if (w != -1) {
-		width = w;
-	    }
-	}
+        if ((width == -1) && (image != null)) {
+            int w;
+                                // Be careful here because Image.getWidth() can immediately call
+                                // the observer which in this case will modify width - so don't
+                                // set width unless we have a valid value.
+            w = image.getWidth(observer);
+            if (w != -1) {
+                width = w;
+            }
+        }
 
-	return width;
+        return width;
     }
 
     /**
@@ -479,18 +531,18 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @return height.
      */
     public int getHeight() {
-	if ((height == -1) && (image != null)) {
-	    int h;
-				// Be careful here because Image.getHeight() can immediately call
-				// the observer which in this case will modify height - so don't
-				// set height unless we have a valid value.
-	    h = image.getHeight(observer);
-	    if (h != -1) {
-		height = h;
-	    }
-	}
+        if ((height == -1) && (image != null)) {
+            int h;
+                                // Be careful here because Image.getHeight() can immediately call
+                                // the observer which in this case will modify height - so don't
+                                // set height unless we have a valid value.
+            h = image.getHeight(observer);
+            if (h != -1) {
+                height = h;
+            }
+        }
 
-	return height;
+        return height;
     }
 
     /**
@@ -498,22 +550,22 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @return true if loaded
      */
     public boolean isLoaded() {
-	boolean loaded;
+        boolean loaded;
 
-	if ((width == -1) || (height == -1)) {
-	    loaded = false;
-	} else {
-	    loaded = true;
-	}
+        if ((width == -1) || (height == -1)) {
+            loaded = false;
+        } else {
+            loaded = true;
+        }
 
-	return loaded;
+        return loaded;
     }
 
     /**
      * Called when the image has been loaded.
      */
     protected void setLoaded(boolean l) {
-	repaint();
+        repaint();
     }
 
     /**
@@ -524,9 +576,9 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @param <code>h</code> New height of the image
      */
     void setDimension(int w, int h) {
-	width = w;
-	height = h;
-	reshape();
+        width = w;
+        height = h;
+        reshape();
     }
 
     /**
@@ -535,15 +587,15 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @see ZDebug#dump
      */
     public String dump() {
-	String str = super.dump();
-	if (fileName != null) {
-	    str += "\n FileName = '" + fileName + "'";
-	}
-	if (url != null) {
-	    str += "\n URL = '" + url + "'";
-	}
+        String str = super.dump();
+        if (fileName != null) {
+            str += "\n FileName = '" + fileName + "'";
+        }
+        if (url != null) {
+            str += "\n URL = '" + url + "'";
+        }
 
-	return str;
+        return str;
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -557,24 +609,24 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @param out The stream that this object writes into
      */
     public void writeObject(ZObjectOutputStream out) throws IOException {
-	super.writeObject(out); 
+        super.writeObject(out);
 
-	if (fileName != null) {
-				// Image filenames should be relative to the directory
-				// the .jazz file is being saved in. That should be
-				// the current value of the user.dir property.
-	    String cwd = System.getProperty("user.dir") + File.separator;
-	    String relFileName = getRelativePath(fileName, cwd);
-	    out.writeState("String", "fileName", relFileName);
-	} else if (url != null) {
-	    out.writeState("URL", "url", url);
-	}
-	if (writeEmbeddedImage != writeEmbeddedImage_DEFAULT) {
-	    out.writeState("boolean", "writeEmbeddedImage", writeEmbeddedImage);
-	}
-	if ((image != null) && writeEmbeddedImage) {
-	    out.writeState("BINARYDATAFOLLOWS", "image", image);
-	}
+        if (fileName != null) {
+                                // Image filenames should be relative to the directory
+                                // the .jazz file is being saved in. That should be
+                                // the current value of the user.dir property.
+            String cwd = System.getProperty("user.dir") + File.separator;
+            String relFileName = getRelativePath(fileName, cwd);
+            out.writeState("String", "fileName", relFileName);
+        } else if (url != null) {
+            out.writeState("URL", "url", url);
+        }
+        if (writeEmbeddedImage != writeEmbeddedImage_DEFAULT) {
+            out.writeState("boolean", "writeEmbeddedImage", writeEmbeddedImage);
+        }
+        if ((image != null) && writeEmbeddedImage) {
+            out.writeState("BINARYDATAFOLLOWS", "image", image);
+        }
     }
 
     /**
@@ -588,72 +640,72 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @param fieldValue The value of the field
      */
     public void setState(String fieldType, String fieldName, Object fieldValue) {
-	super.setState(fieldType, fieldName, fieldValue);
+        super.setState(fieldType, fieldName, fieldValue);
 
-	if (fieldName.compareTo("image") == 0) {
-	    byte[] data = (byte[])fieldValue;
-	    setImage(data);
-	} else if (fieldName.compareTo("fileName") == 0) {
-	  String fn = (String)fieldValue;
+        if (fieldName.compareTo("image") == 0) {
+            byte[] data = (byte[])fieldValue;
+            setImage(data);
+        } else if (fieldName.compareTo("fileName") == 0) {
+          String fn = (String)fieldValue;
 
-				// image to be loaded as a jar resource:
-	  if ((fn.length() > 3) && (fn.substring(0,4).equals("jar:"))) {
-	      String jarFileName = fn.substring(4, fn.indexOf('/'));
-	      String entryName = fn.substring(fn.indexOf('/')+1);
-	      String resourceFileName = "resources/" + jarFileName;
-	      URL resourceURL = this.getClass().getClassLoader().getResource(resourceFileName);
-	      if (resourceURL == null) {
-		  System.out.println("ZImage resource " + resourceFileName + " not found.");
-		  return;
-	      }
-				// turn URL into JarURL
-	      String jarResourceName = resourceURL.toString();
-	      if ((jarResourceName.length() > 3) && 
-		  (!jarResourceName.substring(0,4).equals("jar:"))) {
-		  jarResourceName = "jar:" + jarResourceName + "!/";
-	      }
-	      jarResourceName += entryName;
-	      System.out.println("jarResourceName: "+jarResourceName);
-	      URL jarResourceURL = null;
-	      try {
-		  jarResourceURL = new URL(jarResourceName);
-	      } catch (java.net.MalformedURLException e) {
-		  System.out.println("MalformedURLException: " + jarResourceName);
-		  return;
-	      }
-	      setImage(jarResourceURL);
-	  } else {      
-	  
-	      // Convert name-separator character to the one appropriate
-	      // for current system.
-	      if (File.separator.equals("/")) {
-		  fn = fn.replace('\\','/');
-	      } else {
-		  fn = fn.replace('/','\\');
-	      }
+                                // image to be loaded as a jar resource:
+          if ((fn.length() > 3) && (fn.substring(0,4).equals("jar:"))) {
+              String jarFileName = fn.substring(4, fn.indexOf('/'));
+              String entryName = fn.substring(fn.indexOf('/')+1);
+              String resourceFileName = "resources/" + jarFileName;
+              URL resourceURL = this.getClass().getClassLoader().getResource(resourceFileName);
+              if (resourceURL == null) {
+                  System.out.println("ZImage resource " + resourceFileName + " not found.");
+                  return;
+              }
+                                // turn URL into JarURL
+              String jarResourceName = resourceURL.toString();
+              if ((jarResourceName.length() > 3) &&
+                  (!jarResourceName.substring(0,4).equals("jar:"))) {
+                  jarResourceName = "jar:" + jarResourceName + "!/";
+              }
+              jarResourceName += entryName;
+              System.out.println("jarResourceName: "+jarResourceName);
+              URL jarResourceURL = null;
+              try {
+                  jarResourceURL = new URL(jarResourceName);
+              } catch (java.net.MalformedURLException e) {
+                  System.out.println("MalformedURLException: " + jarResourceName);
+                  return;
+              }
+              setImage(jarResourceURL);
+          } else {
 
-				// Image filenames are saved as relative to the directory
-				// the .jazz file is in. That directory should be
-				// the current value of the user.dir property.
-				// However, if the image is on a different disk, then it
-				// is specified as an absolute pathname - so we will check
-				// for absolute paths by assuming that if the second character
-				// is a ':', then it is a PC disk.
-	      if (fn.charAt(1) != ':') {
-				// Not absolute, so convert relative pathname
-		  String cwd = System.getProperty("user.dir");
-		  fileName = getAbsolutePath(cwd+File.separator+fn);
-	      } else {
-				// Absolute, so don't convert
-		  fileName = fn;
-	      }
-	      setImage(fileName);
-	  }
-	} else if (fieldName.compareTo("url") == 0) {
-	    setImage((URL)fieldValue);
-	} else if (fieldName.compareTo("writeEmbeddedImage") == 0) {
-	    writeEmbeddedImage = ((Boolean)fieldValue).booleanValue();
-	}
+              // Convert name-separator character to the one appropriate
+              // for current system.
+              if (File.separator.equals("/")) {
+                  fn = fn.replace('\\','/');
+              } else {
+                  fn = fn.replace('/','\\');
+              }
+
+                                // Image filenames are saved as relative to the directory
+                                // the .jazz file is in. That directory should be
+                                // the current value of the user.dir property.
+                                // However, if the image is on a different disk, then it
+                                // is specified as an absolute pathname - so we will check
+                                // for absolute paths by assuming that if the second character
+                                // is a ':', then it is a PC disk.
+              if (fn.charAt(1) != ':') {
+                                // Not absolute, so convert relative pathname
+                  String cwd = System.getProperty("user.dir");
+                  fileName = getAbsolutePath(cwd+File.separator+fn);
+              } else {
+                                // Absolute, so don't convert
+                  fileName = fn;
+              }
+              setImage(fileName);
+          }
+        } else if (fieldName.compareTo("url") == 0) {
+            setImage((URL)fieldValue);
+        } else if (fieldName.compareTo("writeEmbeddedImage") == 0) {
+            writeEmbeddedImage = ((Boolean)fieldValue).booleanValue();
+        }
     }
 
     /**
@@ -661,103 +713,118 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * @param image The image.
     */
     public static boolean waitForImage(Image image) {
-	int id;
-	synchronized(sComponent) { id = sID++; }
-	sTracker.addImage(image, id);
-	try { sTracker.waitForID(id); }
-	catch (InterruptedException ie) { return false; }
-	if (sTracker.isErrorID(id)) return false;
-	return true;
-    }    
+        int id;
+        synchronized(sComponent) { id = sID++; }
+        sTracker.addImage(image, id);
+        try { sTracker.waitForID(id); }
+        catch (InterruptedException ie) { return false; }
+        if (sTracker.isErrorID(id)) return false;
+        return true;
+    }
 
     /**
      * Creates a BufferedImage from an Image.
      * @param image The image.
     */
     public static BufferedImage makeBufferedImage(Image image) {
-	if (waitForImage(image) == false) return null;
-	BufferedImage bufferedImage = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_RGB);
-	Graphics2D g2 = bufferedImage.createGraphics();
-	g2.drawImage(image, null, null);
-	return bufferedImage;
+        if (waitForImage(image) == false) return null;
+
+        BufferedImage bufferedImage = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2 = (Graphics2D)bufferedImage.getGraphics();
+        g2.drawImage(image, null, null);
+
+        return bufferedImage;
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
-	out.defaultWriteObject();
+        out.defaultWriteObject();
 
-	// if fileName exists then write boolean(true), else write boolean(false)
-	if (fileName == null) {
-	    out.writeBoolean(false);
-	} else {
-	    out.writeBoolean(true);
-				// write String(fileName):
-				// Image filenames should be relative to the directory
-				// the .jazz file is being saved in. That should be
-				// the current value of the user.dir property.
-	    String cwd = System.getProperty("user.dir") + File.separator;
-	    String relFileName = getRelativePath(fileName, cwd);
-	    out.writeObject(relFileName);
+        // if fileName exists then write boolean(true), else write boolean(false)
+        if (fileName == null) {
+            out.writeBoolean(false);
+        } else {
+            out.writeBoolean(true);
+                                // write String(fileName):
+                                // Image filenames should be relative to the directory
+                                // the .jazz file is being saved in. That should be
+                                // the current value of the user.dir property.
+            String cwd = System.getProperty("user.dir") + File.separator;
+            String relFileName = getRelativePath(fileName, cwd);
+            out.writeObject(relFileName);
 
-				// if writeEmbeddedImage is true 
-				// then write boolean(true) and write object(JPEG)
-				// else write boolean(false)
-	    if (writeEmbeddedImage) {
-		out.writeBoolean(true);
-		JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(out);
-		encoder.encode(makeBufferedImage(image));
-	    } else {
-		out.writeBoolean(false);
-	    }
-	}
-    }	
+                                // if writeEmbeddedImage is true
+                                // then write boolean(true) and write object(JPEG)
+                                // else write boolean(false)
+            if (writeEmbeddedImage) {
+                out.writeBoolean(true);
+                JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(out);
+                encoder.encode(makeBufferedImage(image));
+            } else {
+                out.writeBoolean(false);
+            }
+        }
+    }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-	in.defaultReadObject();
+        in.defaultReadObject();
 
-	if (in.readBoolean()) {	// read boolean(); image file exists?
-	    fileName = (String)in.readObject();	// read String(fileName)
-	    if (in.readBoolean()) { // read boolean(); image file is embedded?
-				// read image as JPEG object
-		JPEGImageDecoder decoder = JPEGCodec.createJPEGDecoder(in);
-		image = (Image)decoder.decodeAsBufferedImage();
-	    } else {		// image is fileName
-				// read image file from disk
-				// Convert name-separator character to the one appropriate
-				// for current system.
-		if (File.separator.equals("/")) {
-		    fileName = fileName.replace('\\','/');
-		} else {
-		    fileName = fileName.replace('/','\\');
-		}
-	
-				// Image filenames are usually saved as relative to the directory
-				// the .jazz file is in. That directory should be
-				// the current value of the user.dir property.
-				// However, if the image is on a different disk, then it
-				// is specified as an absolute pathname - so we will check
-				// for absolute paths by assuming that if the second character
-				// is a ':', then it is a PC disk.
-		if (fileName.charAt(1) != ':') {
-				// Not absolute, so convert relative pathname
-		    String cwd = System.getProperty("user.dir");
-		    fileName = getAbsolutePath(cwd+File.separator+fileName);
-		}
+        if (in.readBoolean()) { // read boolean(); image file exists?
+            fileName = (String)in.readObject(); // read String(fileName)
+            if (in.readBoolean()) { // read boolean(); image file is embedded?
+                                // read image as JPEG object
+                JPEGImageDecoder decoder = JPEGCodec.createJPEGDecoder(in);
+                image = (Image)decoder.decodeAsBufferedImage();
 
-		image = Toolkit.getDefaultToolkit().getImage(fileName);
-		MediaTracker tracker = new MediaTracker(staticComponent);
-		tracker.addImage(image, 0);
-		try {
-		    tracker.waitForID(0);
-		}
-		catch (InterruptedException exception) {
-		    System.out.println("Couldn't load image: " + fileName);
-		}
-	    }
-	    width = getWidth();
-	    height = getHeight();
-	}
+                // The image isn't an instance of the correct type of
+                // buffered image - turn it into one
+                BufferedImage bi = new BufferedImage(width,height,BufferedImage.TYPE_INT_ARGB);
+                bi.getGraphics().drawImage(image,0,0,sComponent);
+                image.flush();
+                image = bi;
+            } else {            // image is fileName
+                                // read image file from disk
+                                // Convert name-separator character to the one appropriate
+                                // for current system.
+                if (File.separator.equals("/")) {
+                    fileName = fileName.replace('\\','/');
+                } else {
+                    fileName = fileName.replace('/','\\');
+                }
 
-				// BBB: Should deal with jar files and resources
-				// BBB: Should read in binary if writeEmbeddedImage is true
+                                // Image filenames are usually saved as relative to the directory
+                                // the .jazz file is in. That directory should be
+                                // the current value of the user.dir property.
+                                // However, if the image is on a different disk, then it
+                                // is specified as an absolute pathname - so we will check
+                                // for absolute paths by assuming that if the second character
+                                // is a ':', then it is a PC disk.
+                if (fileName.charAt(1) != ':') {
+                                // Not absolute, so convert relative pathname
+                    String cwd = System.getProperty("user.dir");
+                    fileName = getAbsolutePath(cwd+File.separator+fileName);
+                }
+
+                image = Toolkit.getDefaultToolkit().createImage(fileName);
+                MediaTracker tracker = new MediaTracker(staticFrame);
+                tracker.addImage(image, 0);
+                try {
+                    tracker.waitForID(0);
+                }
+                catch (InterruptedException exception) {
+                    System.out.println("Couldn't load image: " + fileName);
+                }
+                if (!(image instanceof BufferedImage) || (((BufferedImage)image).getType() != BufferedImage.TYPE_INT_ARGB)) {
+                    BufferedImage bi = new BufferedImage(width,height,BufferedImage.TYPE_INT_ARGB);
+                    bi.getGraphics().drawImage(image,0,0,sComponent);
+                    image.flush();
+                    image = bi;
+                }
+            }
+            width = getWidth();
+            height = getHeight();
+        }
+
+                                // BBB: Should deal with jar files and resources
+                                // BBB: Should read in binary if writeEmbeddedImage is true
     }
 }

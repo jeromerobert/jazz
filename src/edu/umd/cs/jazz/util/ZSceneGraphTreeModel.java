@@ -54,8 +54,9 @@ public class ZSceneGraphTreeModel implements TreeModel {
 	    }
 	    
 	    if (obj instanceof ZVisualLeaf) {
-		if (index == 0) {
-		    return getTreePart(((ZVisualLeaf)obj).getFirstVisualComponent());
+		ZVisualLeaf vl = (ZVisualLeaf)obj;
+		if (index < vl.getNumVisualComponents()) {
+		    return getTreePart(vl.getVisualComponent(index));
 		}
 	    }
 	    
@@ -65,7 +66,7 @@ public class ZSceneGraphTreeModel implements TreeModel {
 	int getChildCount() {
 	    int count = 0;
 	    if (obj instanceof ZGroup) count = ((ZGroup)obj).getNumChildren();
-	    if (obj instanceof ZVisualLeaf) count += 1;
+	    if (obj instanceof ZVisualLeaf) count += ((ZVisualLeaf)obj).getNumVisualComponents();
 	    if (obj instanceof ZVisualGroup) {
 		ZVisualGroup vg = (ZVisualGroup)obj;
 		if (vg.getBackVisualComponent() != null) count++;
@@ -122,9 +123,15 @@ public class ZSceneGraphTreeModel implements TreeModel {
 		return "Empty";
 	    } else {
 		if (obj instanceof ZVisualLeaf) {
+		    ZVisualLeaf lf = (ZVisualLeaf)obj;
 		    String name = "ZVisualLeaf [";
-		    TreePart tp = getTreePart(((ZVisualLeaf)obj).getFirstVisualComponent());
-		    name += tp.toString();
+		    for (int i=0; i<lf.getNumVisualComponents(); i++) {
+			if (i > 0) {
+			    name += ", ";
+			}
+			TreePart tp = getTreePart(((ZVisualLeaf)obj).getVisualComponent(i));
+			name += tp.toString();
+		    }
 		    name += "]";
 		    return name;
 		} else if (obj instanceof ZNameGroup) {

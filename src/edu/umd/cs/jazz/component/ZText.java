@@ -31,7 +31,7 @@ import edu.umd.cs.jazz.util.*;
  * same version of Jazz. A future release of Jazz will provide support for long
  * term persistence.
  */
-public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
+public class ZText extends ZVisualComponent implements ZPenColor, ZPenPaint, Serializable {
 
     /**
      * The low quality graphic2D render context: not antiAliased, and
@@ -88,7 +88,7 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
     /**
      * Default caret color for text.
      */
-    
+
     static protected final Color   DEFAULT_CARET_COLOR = Color.red;
 
     /**
@@ -156,7 +156,7 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * Current text font.
      */
     protected Font               font = DEFAULT_FONT;
-    
+
     /**
      * Each vector element is one line of text.
      */
@@ -165,7 +165,7 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
     /**
      * Specifies if text is editable.
      */
-    protected boolean	        editable = DEFAULT_EDITABLE;
+    protected boolean           editable = DEFAULT_EDITABLE;
 
     /**
      * The previously used font render context (i.e., from the last render).
@@ -192,7 +192,7 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * Default constructor for ZText.
      */
     public ZText() {
-	this("", DEFAULT_FONT);
+        this("", DEFAULT_FONT);
     }
 
     /**
@@ -200,44 +200,44 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * @param <code>str</code> The initial text.
      */
     public ZText(String str) {
-	this(str, DEFAULT_FONT);
+        this(str, DEFAULT_FONT);
     }
-    
+
     /**
      * ZText constructor with initial text and font.
      * @param <code>str</code> The initial text.
      * @param <code>font</code> The font for this ZText component.
      */
     public ZText(String str, Font font) {
-	if ((System.getProperty("java.version").equals("1.2")) ||
-	    (System.getProperty("java.version").equals("1.2.1"))) {
-	    boundsBug = true;
-	}
+        if ((System.getProperty("java.version").equals("1.2")) ||
+            (System.getProperty("java.version").equals("1.2.1"))) {
+            boundsBug = true;
+        }
 
-	setText(str);
-	this.font = font;
-	
-	reshape();
+        setText(str);
+        this.font = font;
+
+        reshape();
     }
-    
+
     /**
      * Returns a clone of this object.
      *
      * @see ZSceneGraphObject#duplicateObject
      */
     protected Object duplicateObject() {
-	ZText newText = (ZText)super.duplicateObject();
+        ZText newText = (ZText)super.duplicateObject();
 
-				// Copy the lines vector.
-	newText.lines = (ArrayList)lines.clone();
-	
-	return newText;
+                                // Copy the lines vector.
+        newText.lines = (ArrayList)lines.clone();
+
+        return newText;
     }
 
 
     //****************************************************************************
     //
-    //			Get/Set and pairs
+    //                  Get/Set and pairs
     //
     //***************************************************************************
 
@@ -251,9 +251,24 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * @param <code>color</code> use this color.
      */
     public void setPenColor(Color color) {
-	penColor = color;
-	repaint();
-    }   
+        penColor = color;
+        repaint();
+    }
+
+    /**
+     * Returns the current pen paint.
+     */
+    public Paint getPenPaint() {
+        return penColor;
+    }
+
+    /**
+     * Sets the current pen paint.
+     * @param <code>aPaint</code> use this paint.
+     */
+    public void setPenPaint(Paint aPaint) {
+        penColor = (Color)aPaint;
+    }
 
     /**
      * Returns the current background color.
@@ -265,9 +280,9 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * @param <code>color</code> use this color.
      */
     public void setBackgroundColor(Color color) {
-	backgroundColor = color;
-	repaint();
-    }   
+        backgroundColor = color;
+        repaint();
+    }
 
     /**
      * Returns the current caret color.
@@ -279,9 +294,9 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * @param <code>color</code> use this color.
      */
     public void setCaretColor(Color color) {
-	caretColor = color;
-	repaint();
-    }   
+        caretColor = color;
+        repaint();
+    }
 
     /**
      * Returns the current greek threshold. Below this magnification
@@ -295,9 +310,9 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * @param <code>threshold</code> compared to renderContext magnification.
      */
     public void setGreekThreshold(double threshold) {
-	greekThreshold = threshold;
-	repaint();
-    }   
+        greekThreshold = threshold;
+        repaint();
+    }
 
     /**
      * Determines if this text is editable.
@@ -309,15 +324,15 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * @param <code>editable</code> true or false.
      */
     public void setEditable(boolean editable) {
-	this.editable = editable;
-	repaint();
-    }   
+        this.editable = editable;
+        repaint();
+    }
 
     /**
      * Returns the current font.
      */
     public Font getFont() {return font;}
-    
+
     /**
      * Return the text within this text component.
      * Multline text is returned as a single string
@@ -325,50 +340,50 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * Single line text does not have any newline characters.
      */
     public String getText() {
-	String line;
-	String result = new String();
-	int lineNum = 0;
+        String line;
+        String result = new String();
+        int lineNum = 0;
 
-	for (Iterator i = lines.iterator() ; i.hasNext() ; ) {
-	    if (lineNum > 0) {
-		result += '\n';
-	    }
-	    line = (String)i.next();
-	    result += line;
-	    lineNum++;
-	}
+        for (Iterator i = lines.iterator() ; i.hasNext() ; ) {
+            if (lineNum > 0) {
+                result += '\n';
+            }
+            line = (String)i.next();
+            result += line;
+            lineNum++;
+        }
 
-	return result;
+        return result;
     }
 
     /**
        Returns the character position of the caret, within the current line.
     */
     public int getCaretPos() {
-	return caretPos;
+        return caretPos;
     }
 
     /**
      * Returns the current line.
      */
     public int getCaretLine() {
-	return caretLine;
+        return caretLine;
     }
 
     /**
      * Sets the font for the text.
      * <p>
-     * <b>Warning:</b> Java has a serious bug in that it does not support very small 
+     * <b>Warning:</b> Java has a serious bug in that it does not support very small
      * fonts.  In particular, fonts that are less than about a pixel high just don't work.
      * Since in Jazz, it is common to create objects of arbitrary sizes, and then scale them,
      * an application can easily create a text object with a very small font by accident.
-     * The workaround for this bug is to create a larger font for the text object, and 
+     * The workaround for this bug is to create a larger font for the text object, and
      * then scale the node down correspondingly.
      * @param <code>aFont</code> use this font.
      */
     public void setFont(Font aFont) {
-	font = aFont;
-	reshape();
+        font = aFont;
+        reshape();
     }
 
     /**
@@ -377,22 +392,22 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * @param <code>str</code> use this string.
      */
     public void setText(String str) {
-	int pos = 0;
-	int index;
-	boolean done = false;
-	lines = new ArrayList();
-	do {
-	    index = str.indexOf('\n', pos);
-	    if (index == -1) {
-		lines.add(str);
-		done = true;
-	    } else {
-		lines.add(str.substring(0, index));
-		str = str.substring(index + 1);
-	    }
-	} while (!done);
+        int pos = 0;
+        int index;
+        boolean done = false;
+        lines = new ArrayList();
+        do {
+            index = str.indexOf('\n', pos);
+            if (index == -1) {
+                lines.add(str);
+                done = true;
+            } else {
+                lines.add(str.substring(0, index));
+                str = str.substring(index + 1);
+            }
+        } while (!done);
 
-	reshape();
+        reshape();
     }
 
     /**
@@ -400,12 +415,12 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * @param <code>c</code>Character to add.
      */
     public void addChar(char c) {
-	String frontHalf = ((String)lines.get(caretLine)).substring(0, caretPos);
-	String backHalf = ((String)lines.get(caretLine)).substring(caretPos);
+        String frontHalf = ((String)lines.get(caretLine)).substring(0, caretPos);
+        String backHalf = ((String)lines.get(caretLine)).substring(caretPos);
 
-	lines.set(caretLine, frontHalf + c + backHalf);
-	caretPos++;
-	reshape();
+        lines.set(caretLine, frontHalf + c + backHalf);
+        caretPos++;
+        reshape();
     }
 
     /**
@@ -413,44 +428,44 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * position.
      */
     public void addEnterChar() {
-	String frontHalf = ((String)lines.get(caretLine)).substring(0, caretPos);
-	String backHalf = ((String)lines.get(caretLine)).substring(caretPos);
+        String frontHalf = ((String)lines.get(caretLine)).substring(0, caretPos);
+        String backHalf = ((String)lines.get(caretLine)).substring(caretPos);
 
-	lines.set(caretLine, frontHalf);
-	caretLine++;
-	lines.add(caretLine, backHalf);
-	caretPos = 0;
-	reshape();
+        lines.set(caretLine, frontHalf);
+        caretLine++;
+        lines.add(caretLine, backHalf);
+        caretPos = 0;
+        reshape();
     }
 
     /**
      * Deletes the character after the caret position.
      */
     public void deleteChar() {
-	String currentLine = (String)lines.get(caretLine);
-	if (caretPos == currentLine.length()) {
-				// At end of line, so merge with next line
-	    if (caretLine < (lines.size() - 1)) {
-		lines.set(caretLine, currentLine + (String)lines.get(caretLine + 1));
-		lines.remove(caretLine + 1);
-	    }
-	} else {
-	    String frontHalf = currentLine.substring(0, caretPos);
-	    String backHalf = currentLine.substring(caretPos + 1);
-	    
-	    lines.set(caretLine, frontHalf + backHalf);
-	}
-	reshape();
+        String currentLine = (String)lines.get(caretLine);
+        if (caretPos == currentLine.length()) {
+                                // At end of line, so merge with next line
+            if (caretLine < (lines.size() - 1)) {
+                lines.set(caretLine, currentLine + (String)lines.get(caretLine + 1));
+                lines.remove(caretLine + 1);
+            }
+        } else {
+            String frontHalf = currentLine.substring(0, caretPos);
+            String backHalf = currentLine.substring(caretPos + 1);
+
+            lines.set(caretLine, frontHalf + backHalf);
+        }
+        reshape();
     }
 
     /**
      * Deletes the character before the caret position.
      */
     public void deleteCharBeforeCaret() {
-	if ((caretPos > 0) || (caretLine > 0)) {
-	    setCaretPos(getCaretPos() - 1);
-	    deleteChar();
-	}
+        if ((caretPos > 0) || (caretLine > 0)) {
+            setCaretPos(getCaretPos() - 1);
+            deleteChar();
+        }
     }
 
     /**
@@ -458,15 +473,15 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * If caret is at the end of the line, joins current line to the next.
      */
     public void deleteToEndOfLine() {
-	if (caretPos == ((String)lines.get(caretLine)).length()) {
-				// Delete carriage return at end of line
-	    deleteChar();
-	} else {
-				// Else, Delete to end of line
-	    String frontHalf = ((String)lines.get(caretLine)).substring(0, caretPos);
-	    lines.set(caretLine, frontHalf);
-	    reshape();
-	}
+        if (caretPos == ((String)lines.get(caretLine)).length()) {
+                                // Delete carriage return at end of line
+            deleteChar();
+        } else {
+                                // Else, Delete to end of line
+            String frontHalf = ((String)lines.get(caretLine)).substring(0, caretPos);
+            lines.set(caretLine, frontHalf);
+            reshape();
+        }
     }
 
     /**
@@ -475,17 +490,17 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * with zero.
      */
     public void setCaretLine(int line) {
-	if (line < 0) {
-	    caretLine = 0;
-	} else if (line >= lines.size()) {
-	    caretLine = lines.size()-1;
-	} else {
-	    caretLine = line;
-	}
+        if (line < 0) {
+            caretLine = 0;
+        } else if (line >= lines.size()) {
+            caretLine = lines.size()-1;
+        } else {
+            caretLine = line;
+        }
 
-	// new line may be too short for current caret position
-	setCaretPos(getCaretPos());
-	repaint();
+        // new line may be too short for current caret position
+        setCaretPos(getCaretPos());
+        repaint();
     }
 
 
@@ -494,72 +509,72 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      *  @param <code>cp</code>Character position to use, starts with zero.
      */
     public void setCaretPos(int cp) {
-	if (cp < 0) {
-	    if (caretLine > 0) {
-		caretLine--;
-		caretPos = ((String)lines.get(caretLine)).length();
-	    } else {
-		caretPos = 0;
-	    }
-	} else if (cp > ((String)lines.get(caretLine)).length()) {
-	    if (caretLine < (lines.size() - 1)) {
-		caretLine++;
-		caretPos = 0;
-	    } else {
-		caretPos = ((String)lines.get(caretLine)).length();
-	    }
-	} else {
-	    caretPos = cp;
-	}
-	repaint();
+        if (cp < 0) {
+            if (caretLine > 0) {
+                caretLine--;
+                caretPos = ((String)lines.get(caretLine)).length();
+            } else {
+                caretPos = 0;
+            }
+        } else if (cp > ((String)lines.get(caretLine)).length()) {
+            if (caretLine < (lines.size() - 1)) {
+                caretLine++;
+                caretPos = 0;
+            } else {
+                caretPos = ((String)lines.get(caretLine)).length();
+            }
+        } else {
+            caretPos = cp;
+        }
+        repaint();
     }
-    
+
     /**
      * Set caret position to character closest to specified point (in object coords)
      *  @param <code>pt</code> object coordinates of a mouse click.
      */
     public void setCaretPos(Point2D pt) {
-	LineMetrics lm = font.getLineMetrics((String)lines.get(0), prevFRC);
-	double height = lm.getHeight();
-	double desc = lm.getDescent();
-	caretLine = (int)((pt.getY()-desc)/height);
-	if (pt.getY() < desc) caretLine = 0;
-	if (caretLine >= lines.size()) caretLine = lines.size() - 1;
+        LineMetrics lm = font.getLineMetrics((String)lines.get(0), prevFRC);
+        double height = lm.getHeight();
+        double desc = lm.getDescent();
+        caretLine = (int)((pt.getY()-desc)/height);
+        if (pt.getY() < desc) caretLine = 0;
+        if (caretLine >= lines.size()) caretLine = lines.size() - 1;
 
- 	Rectangle2D bounds = null;
-	double strWid, charWid;
-	String textLine = (String)lines.get(caretLine);
-	String substr;
-	caretPos = textLine.length();
-	for (int ch=0; ch < textLine.length(); ch++) {
-	    substr = textLine.substring(0,ch);
-	    bounds = font.getStringBounds(substr, prevFRC);
-	    strWid = bounds.getWidth();
-	    charWid = font.getStringBounds(textLine.substring(ch, ch+1), prevFRC).getWidth();
-	    // jkd version <= 1.2.1 bug:
-	    // bounds of a space " " returned as zero
-	    if (boundsBug) {
-		if ((substr != null) && (substr.length() > 0) &&
-		    (substr.charAt(substr.length()-1) == ' ')) {
-		    strWid += font.getStringBounds("t", prevFRC).getWidth();
-		    charWid = font.getStringBounds("t", prevFRC).getWidth();
-		}
-	    }
+        Rectangle2D bounds = null;
+        double strWid, charWid;
+        String textLine = (String)lines.get(caretLine);
+        String substr;
+        caretPos = textLine.length();
+        for (int ch=0; ch < textLine.length(); ch++) {
+            substr = textLine.substring(0,ch);
+            bounds = font.getStringBounds(substr, prevFRC);
+            strWid = bounds.getWidth();
+            charWid = font.getStringBounds(textLine.substring(ch, ch+1), prevFRC).getWidth();
+            // jkd version <= 1.2.1 bug:
+            // bounds of a space " " returned as zero
+            if (boundsBug) {
+                if ((substr != null) && (substr.length() > 0) &&
+                    (substr.charAt(substr.length()-1) == ' ')) {
+                    strWid += font.getStringBounds("t", prevFRC).getWidth();
+                    charWid = font.getStringBounds("t", prevFRC).getWidth();
+                }
+            }
 
-				// position cursor before or after character clicked on
-	    if (strWid > pt.getX()) {
-		if (pt.getX() > strWid - (charWid / 2)) {
-		    caretPos = ch;
-		} else {
-		    caretPos = ch - 1;
-		    if (caretPos < 0) {
-			caretPos = 0;
-		    }
-		}
-		break;
-	    }
-	}
-	repaint();
+                                // position cursor before or after character clicked on
+            if (strWid > pt.getX()) {
+                if (pt.getX() > strWid - (charWid / 2)) {
+                    caretPos = ch;
+                } else {
+                    caretPos = ch - 1;
+                    if (caretPos < 0) {
+                        caretPos = 0;
+                    }
+                }
+                break;
+            }
+        }
+        repaint();
     }
 
     /**
@@ -567,8 +582,7 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * @param x the X translation.
      */
     public void setTranslateX(double x) {
-	translateX = x;
-	reshape();
+        setTranslation(x, translateY);
     }
 
     /**
@@ -576,7 +590,7 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * @return the X translation.
      */
     public double getTranslateX() {
-	return translateX;
+        return translateX;
     }
 
     /**
@@ -584,8 +598,7 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * @param y the Y translation.
      */
     public void setTranslateY(double y) {
-	translateY = y;
-	reshape();
+        setTranslation(translateX, y);
     }
 
     /**
@@ -593,7 +606,7 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * @return the Y translation.
      */
     public double getTranslateY() {
-	return translateY;
+        return translateY;
     }
 
     /**
@@ -602,9 +615,9 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * @param y the Y-coord of translation
      */
     public void setTranslation(double x, double y) {
-	translateX = x;
-	translateY = y;
-	reshape();
+        translateX = x;
+        translateY = y;
+        reshape();
     }
 
     /**
@@ -612,9 +625,7 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * @param p The translation offset.
      */
     public void setTranslation(Point2D p) {
-	translateX = p.getX();
-	translateY = p.getY();
-	reshape();
+        setTranslation(p.getX(), p.getY());
     }
 
     /**
@@ -622,13 +633,13 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * @return The translation offset.
      */
     public Point2D getTranslation() {
-	Point2D p = new Point2D.Double(translateX, translateY);
-	return p;
+        Point2D p = new Point2D.Double(translateX, translateY);
+        return p;
     }
 
     //****************************************************************************
     //
-    //	Keyboard event handler
+    //  Keyboard event handler
     //
     //***************************************************************************
 
@@ -637,104 +648,104 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * @param <code>e</code> keyboard event object.
      */
     public void keyPressed(KeyEvent e) {
-	int keyCode = e.getKeyCode();
-	char keyChar = e.getKeyChar();
+        int keyCode = e.getKeyCode();
+        char keyChar = e.getKeyChar();
 
-				// Skip modifier key movement
-	if ((keyCode == KeyEvent.VK_SHIFT) ||
-	    (keyCode == KeyEvent.VK_CONTROL) ||
-	    (keyCode == KeyEvent.VK_ALT) ||
-	    (keyCode == KeyEvent.VK_META)) {
-	    return;
-	}
+                                // Skip modifier key movement
+        if ((keyCode == KeyEvent.VK_SHIFT) ||
+            (keyCode == KeyEvent.VK_CONTROL) ||
+            (keyCode == KeyEvent.VK_ALT) ||
+            (keyCode == KeyEvent.VK_META)) {
+            return;
+        }
 
-	if (e.isControlDown()) {
-				// Control key down
-	    if (keyCode == KeyEvent.VK_LEFT) {
-				// LEFT (back one word)
-				// left skip over any blank spaces before skipping word
-		if (getCaretPos() > 0) {
-		    int startPos = getCaretPos() - 1;
-		    char c = ((String)lines.get(caretLine)).charAt(startPos);
-		    while ((c == ' ') && (startPos > 0)) {
-			c = ((String)lines.get(caretLine)).charAt(startPos);
-			startPos--;
-		    }
+        if (e.isControlDown()) {
+                                // Control key down
+            if (keyCode == KeyEvent.VK_LEFT) {
+                                // LEFT (back one word)
+                                // left skip over any blank spaces before skipping word
+                if (getCaretPos() > 0) {
+                    int startPos = getCaretPos() - 1;
+                    char c = ((String)lines.get(caretLine)).charAt(startPos);
+                    while ((c == ' ') && (startPos > 0)) {
+                        c = ((String)lines.get(caretLine)).charAt(startPos);
+                        startPos--;
+                    }
 
-		    int nextPos = 0;
-		    boolean foundSpace = false;
-		    for (int i = startPos; i >= 0; i--) {
-			c = ((String)lines.get(caretLine)).charAt(i);
-			if (c == ' ') {
-			    nextPos = i+1;
-			    break;
-			}
-		    }
-		    setCaretPos(nextPos);
-		}
-	    } else if (keyCode == KeyEvent.VK_RIGHT) {
-				// RIGHT (forward one word)
-		int strLen = ((String)lines.get(caretLine)).length();
-		if (getCaretPos() < strLen) {
-		    int nextPos = strLen;
-		    boolean foundSpace = false;
-				// if next character is a space, then
-				//   skip any spaces to beginning of next word
-				// else skip current word then any spaces.
-		    for (int i = getCaretPos(); i < strLen; i++) {
-			char c = ((String)lines.get(caretLine)).charAt(i);
-			if (c == ' ') {
-			    foundSpace = true;
-			}
-			if ((foundSpace == true) && (c != ' ')) {
-			    nextPos = i;
-			    break;
-			}
-		    }
-		    setCaretPos(nextPos);
-		}
-	    } else if (keyCode == KeyEvent.VK_UP) {
-				// UP (up one line)
-		setCaretLine(getCaretLine() - 1);
-	    } else if (keyCode == KeyEvent.VK_DOWN) {
-				// DOWN (down one line)
-		setCaretLine(getCaretLine() + 1);
-	    }
-	} else if (e.isAltDown()) {
-				// Alt key down
-	} else {
-				// no modifiers down
-	    if (keyCode == KeyEvent.VK_LEFT) {
-				// LEFT (back one character)
-		setCaretPos(getCaretPos() - 1);
-	    } else if (keyCode == KeyEvent.VK_RIGHT) {
-				// RIGHT (forward one character)
-		setCaretPos(getCaretPos() + 1);
-	    } else if (keyCode == KeyEvent.VK_UP) {
-				// UP (up one line)
-		setCaretLine(getCaretLine() - 1);
-	    } else if (keyCode == KeyEvent.VK_DOWN) {
-				// DOWN (down one line)
-		setCaretLine(getCaretLine() + 1);
-	    } else if (keyCode == KeyEvent.VK_HOME) {
-				// HOME (beginning of line)
-		setCaretPos(0);
-	    } else if (keyCode == KeyEvent.VK_END) {
-				// END (beginning of line)
-		setCaretPos(((String)lines.get(caretLine)).length());
-	    } else if (keyCode == KeyEvent.VK_BACK_SPACE) {
-				// BACKSPACE (delete character before caret)
-		deleteCharBeforeCaret();
-	    } else if (keyCode == KeyEvent.VK_DELETE) {
-				// DELETE (delete character after caret)
-		deleteChar();
-	    } else if (keyCode == KeyEvent.VK_ENTER) {
-		addEnterChar();      // ENTER (add a line to text array)
-	    } else {
-				// Else, add a character
-		addChar(keyChar);
-	    }
-	}
+                    int nextPos = 0;
+                    boolean foundSpace = false;
+                    for (int i = startPos; i >= 0; i--) {
+                        c = ((String)lines.get(caretLine)).charAt(i);
+                        if (c == ' ') {
+                            nextPos = i+1;
+                            break;
+                        }
+                    }
+                    setCaretPos(nextPos);
+                }
+            } else if (keyCode == KeyEvent.VK_RIGHT) {
+                                // RIGHT (forward one word)
+                int strLen = ((String)lines.get(caretLine)).length();
+                if (getCaretPos() < strLen) {
+                    int nextPos = strLen;
+                    boolean foundSpace = false;
+                                // if next character is a space, then
+                                //   skip any spaces to beginning of next word
+                                // else skip current word then any spaces.
+                    for (int i = getCaretPos(); i < strLen; i++) {
+                        char c = ((String)lines.get(caretLine)).charAt(i);
+                        if (c == ' ') {
+                            foundSpace = true;
+                        }
+                        if ((foundSpace == true) && (c != ' ')) {
+                            nextPos = i;
+                            break;
+                        }
+                    }
+                    setCaretPos(nextPos);
+                }
+            } else if (keyCode == KeyEvent.VK_UP) {
+                                // UP (up one line)
+                setCaretLine(getCaretLine() - 1);
+            } else if (keyCode == KeyEvent.VK_DOWN) {
+                                // DOWN (down one line)
+                setCaretLine(getCaretLine() + 1);
+            }
+        } else if (e.isAltDown()) {
+                                // Alt key down
+        } else {
+                                // no modifiers down
+            if (keyCode == KeyEvent.VK_LEFT) {
+                                // LEFT (back one character)
+                setCaretPos(getCaretPos() - 1);
+            } else if (keyCode == KeyEvent.VK_RIGHT) {
+                                // RIGHT (forward one character)
+                setCaretPos(getCaretPos() + 1);
+            } else if (keyCode == KeyEvent.VK_UP) {
+                                // UP (up one line)
+                setCaretLine(getCaretLine() - 1);
+            } else if (keyCode == KeyEvent.VK_DOWN) {
+                                // DOWN (down one line)
+                setCaretLine(getCaretLine() + 1);
+            } else if (keyCode == KeyEvent.VK_HOME) {
+                                // HOME (beginning of line)
+                setCaretPos(0);
+            } else if (keyCode == KeyEvent.VK_END) {
+                                // END (beginning of line)
+                setCaretPos(((String)lines.get(caretLine)).length());
+            } else if (keyCode == KeyEvent.VK_BACK_SPACE) {
+                                // BACKSPACE (delete character before caret)
+                deleteCharBeforeCaret();
+            } else if (keyCode == KeyEvent.VK_DELETE) {
+                                // DELETE (delete character after caret)
+                deleteChar();
+            } else if (keyCode == KeyEvent.VK_ENTER) {
+                addEnterChar();      // ENTER (add a line to text array)
+            } else {
+                                // Else, add a character
+                addChar(keyChar);
+            }
+        }
     }
 
     /**
@@ -749,51 +760,50 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * @param <code>renderContext</code> Contains information about current render.
      */
     public void render(ZRenderContext renderContext) {
-	Graphics2D g2 = renderContext.getGraphics2D();
-	AffineTransform at = null;
-	boolean translated = false;
-	if (!lines.isEmpty()) {
+        Graphics2D g2 = renderContext.getGraphics2D();
+        AffineTransform at = null;
+        boolean translated = false;
+        if (!lines.isEmpty()) {
 
-	    if ((translateX != 0.0) || (translateY != 0.0)) {
-		at = g2.getTransform();	// save transform
-		g2.translate(translateX, translateY);
-		translated = true;
-	    }
+            if ((translateX != 0.0) || (translateY != 0.0)) {
+                at = g2.getTransform(); // save transform
+                g2.translate(translateX, translateY);
+                translated = true;
+            }
 
-				// If font too small and not antialiased, then greek
-	    double renderedFontSize = font.getSize() * renderContext.getCompositeMagnification();
-				// BBB: HACK ALERT - July 30, 1999
-				// This is a workaround for a bug in Sun JDK 1.2.2 where
-				// fonts that are rendered at very small magnifications show up big!
-				// So, we render as greek if requested (that's normal)
-				// OR if the font is very small (that's the workaround)
-	    if ((renderedFontSize < 0.5) ||
-		(renderedFontSize < greekThreshold) && (renderContext.getGreekText())) {
-		paintAsGreek(renderContext);
-	    } else {
-		paintAsText(renderContext);
-	    }
-	    if (translated) {
-		g2.setTransform(at); // restore transform
-	    }
-	}
+                                // If font too small and not antialiased, then greek
+            double renderedFontSize = font.getSize() * renderContext.getCompositeMagnification();
+                                // BBB: HACK ALERT - July 30, 1999
+                                // This is a workaround for a bug in Sun JDK 1.2.2 where
+                                // fonts that are rendered at very small magnifications show up big!
+                                // So, we render as greek if requested (that's normal)
+                                // OR if the font is very small (that's the workaround)
+            if ((renderedFontSize < 0.5) ||
+                (renderedFontSize < greekThreshold) && (renderContext.getGreekText())) {
+                paintAsGreek(renderContext);
+            } else {
+                paintAsText(renderContext);
+            }
+            if (translated) {
+                g2.setTransform(at); // restore transform
+            }
+        }
 
-	prevFRC = g2.getFontRenderContext();
+        prevFRC = g2.getFontRenderContext();
     }
-    
+
     /**
      * Paints this object as greek.
      * @param <code>renderContext</code> The graphics context to paint into.
      */
     public void paintAsGreek(ZRenderContext renderContext) {
-	    Graphics2D g2 = renderContext.getGraphics2D();
-	    	    
-	    if (greekColor != null) {
-		g2.setColor(greekColor);
-		Rectangle2D rect = new Rectangle2D.Double(bounds.getX(), bounds.getY(),
-							 bounds.getWidth(), bounds.getHeight());
-		g2.fill(rect);
-	    }
+            Graphics2D g2 = renderContext.getGraphics2D();
+
+            if (greekColor != null) {
+                g2.setColor(greekColor);
+                Rectangle2D rect = new Rectangle2D.Double(0.0, 0.0, bounds.getWidth(), bounds.getHeight());
+                g2.fill(rect);
+            }
     }
 
     /**
@@ -803,66 +813,65 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * @param <code>renderContext</code> The graphics context to paint into.
      */
     public void paintAsText(ZRenderContext renderContext) {
-	Graphics2D g2 = renderContext.getGraphics2D();
-	if (backgroundColor != null) {
-	    g2.setColor(backgroundColor);
-	    Rectangle2D rect = new Rectangle2D.Double(bounds.getX(), bounds.getY(),
-						     bounds.getWidth(), bounds.getHeight());
-	    g2.fill(rect);
-	}
+        Graphics2D g2 = renderContext.getGraphics2D();
+        if (backgroundColor != null) {
+            g2.setColor(backgroundColor);
+            Rectangle2D rect = new Rectangle2D.Double(0.0, 0.0, bounds.getWidth(), bounds.getHeight());
+            g2.fill(rect);
+        }
 
-				// Get current font metrics information for multi-line and caret layout
-	FontRenderContext frc = g2.getFontRenderContext();
+                                // Get current font metrics information for multi-line and caret layout
+        FontRenderContext frc = g2.getFontRenderContext();
 
-				// Render each line of text
-				// Note that the entire text gets rendered so that it's upper left corner
-				// appears at the origin of this local object.
-	g2.setColor(penColor);
-	g2.setFont(font);
-						 
-	int lineNum = 0;
-	String line;
-	LineMetrics lm;
-	GlyphVector gv;
-	GlyphMetrics gm;
-	double x, y;
-	long startTime=0, endTime=0;
-	int gLength;
+                                // Render each line of text
+                                // Note that the entire text gets rendered so that it's upper left corner
+                                // appears at the origin of this local object.
+        g2.setColor(penColor);
+        g2.setFont(font);
 
-	String character;
-	Rectangle2D charBounds, lineSoFarBounds;
+        int lineNum = 0;
+        String line;
+        LineMetrics lm;
+        GlyphVector gv;
+        GlyphMetrics gm;
+        double x, y;
+        long startTime=0, endTime=0;
+        int gLength;
 
-	for (Iterator i = lines.iterator() ; i.hasNext() ; ) {
-	    line = (String)i.next();
-	    lm = font.getLineMetrics(line, frc);
-	    y = lm.getAscent() + (lineNum * lm.getHeight());
+        String character;
+        Rectangle2D charBounds, lineSoFarBounds;
 
-	    g2.drawString(line, 0, (float)y);
+        for (Iterator i = lines.iterator() ; i.hasNext() ; ) {
+            line = (String)i.next();
+            lm = font.getLineMetrics(line, frc);
+            y = lm.getAscent() + (lineNum * lm.getHeight());
 
-	    lineNum++;
- 	}
-				// Draw the caret
-	if (editable) {
+            g2.drawString(line, 0, (float)y);
+
+            lineNum++;
+        }
+                                // Draw the caret
+        if (editable) {
 
 
-	    caretX = 0;
-	    String textLine = (String)lines.get(caretLine);
-	    lm = font.getLineMetrics(textLine, frc);
-	    if (caretPos > 0) {
-		if ((boundsBug) && (textLine.substring(0,caretPos).endsWith(" "))) {
-		    caretX = font.getStringBounds((textLine.substring(0, caretPos-1))+'t', frc).getWidth();
-		} else {
-		    caretX = font.getStringBounds(textLine, 0, caretPos, frc).getWidth();
-		}
-	    }
-	    caretY = lm.getAscent() + (caretLine * lm.getHeight());
+            caretX = 0;
+            String textLine = (String)lines.get(caretLine);
+            lm = font.getLineMetrics(textLine, frc);
+            if (caretPos > 0) {
+                if ((boundsBug) && (textLine.substring(0,caretPos).endsWith(" "))) {
+                    caretX = font.getStringBounds((textLine.substring(0, caretPos-1))+'t', frc).getWidth();
+                } else {
+                    caretX = font.getStringBounds(textLine, 0, caretPos, frc).getWidth();
+                }
+            }
+            caretY = lm.getAscent() + (caretLine * lm.getHeight());
 
-	    g2.setColor(caretColor);
-	    g2.setStroke(new BasicStroke((float)(2.0 / renderContext.getCompositeMagnification()),
-					 BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
-	    caretShape.setLine(caretX, caretY, caretX, (caretY - lm.getAscent()));
-	    g2.draw(caretShape);
-	}
+            g2.setColor(caretColor);
+            g2.setStroke(new BasicStroke((float)(2.0 / renderContext.getCompositeMagnification()),
+                                         BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
+            caretShape.setLine(caretX, caretY, caretX, (caretY - lm.getAscent()));
+            g2.draw(caretShape);
+        }
 
     }
 
@@ -871,72 +880,72 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * should update its notion of its bounding box.
      */
     protected void computeBounds() {
- 	Rectangle2D rect = null;
- 	Rectangle2D bugBounds = null;
-	double lineWidth;
-	double maxWidth = 0.0;
-	double maxHeight = 0.0;
-	double height;
-	FontRenderContext frc = LOW_QUALITY_FONT_CONTEXT;
+        Rectangle2D rect = null;
+        Rectangle2D bugBounds = null;
+        double lineWidth;
+        double maxWidth = 0.0;
+        double maxHeight = 0.0;
+        double height;
+        FontRenderContext frc = LOW_QUALITY_FONT_CONTEXT;
 
-				// We want to find the greatest bounds of the text in
-				// low and high quality, so we get the max width and height
-				// of a line checking both quality levels.
-	for (int loop=0; loop<2; loop++) {
-	    height = 0.0;
-				// First, check width
-				// If the only text is "" then it still needs a width
-	    boolean hasText = true;
-	    if ((lines.size() == 1) && (((String)lines.get(0)).equals(""))) {
-		hasText = false;
-	    }
-	    if (!lines.isEmpty() && hasText) {
-		String line;
-		LineMetrics lm;
-		int lineNum = 0;
-		for (Iterator i = lines.iterator() ; i.hasNext() ; ) {
-		    line = (String)i.next();
-		    lm = font.getLineMetrics(line, frc);
-		    
-				// Find the longest line in the text
-		    rect = font.getStringBounds(line, frc);
-		    lineWidth = rect.getWidth();
+                                // We want to find the greatest bounds of the text in
+                                // low and high quality, so we get the max width and height
+                                // of a line checking both quality levels.
+        for (int loop=0; loop<2; loop++) {
+            height = 0.0;
+                                // First, check width
+                                // If the only text is "" then it still needs a width
+            boolean hasText = true;
+            if ((lines.size() == 1) && (((String)lines.get(0)).equals(""))) {
+                hasText = false;
+            }
+            if (!lines.isEmpty() && hasText) {
+                String line;
+                LineMetrics lm;
+                int lineNum = 0;
+                for (Iterator i = lines.iterator() ; i.hasNext() ; ) {
+                    line = (String)i.next();
+                    lm = font.getLineMetrics(line, frc);
 
-		    if ((boundsBug) && (line.endsWith(" ")))
-			lineWidth = font.getStringBounds((line.substring(0, line.length()-1))+'t', frc).getWidth();
-		    
-		    if (lineWidth > maxWidth) {
-			maxWidth = lineWidth;
-		    }
-				// Find the heighest line in the text
-		    if (lineNum == 0) {
-			height += lm.getAscent() + lm.getDescent();
-		    } else {
-			height += lm.getHeight();
-		    }
+                                // Find the longest line in the text
+                    rect = font.getStringBounds(line, frc);
+                    lineWidth = rect.getWidth();
 
-		    lineNum++;
-		}
-	    } else {
-				// If no text, then we want to have the bounds of a space character, 
-				// so get those bounds here
-		if (boundsBug) {
-		    rect = font.getStringBounds("t", frc);
-		} else {
-		    rect = font.getStringBounds(" ", frc);
-		}
-		maxWidth = rect.getWidth();
-		height = rect.getHeight();
-	    }
+                    if ((boundsBug) && (line.endsWith(" ")))
+                        lineWidth = font.getStringBounds((line.substring(0, line.length()-1))+'t', frc).getWidth();
 
-	    if (maxHeight < height) {
-		maxHeight = height;
-	    }
+                    if (lineWidth > maxWidth) {
+                        maxWidth = lineWidth;
+                    }
+                                // Find the heighest line in the text
+                    if (lineNum == 0) {
+                        height += lm.getAscent() + lm.getDescent();
+                    } else {
+                        height += lm.getHeight();
+                    }
 
-	    frc = HIGH_QUALITY_FONT_CONTEXT;
-	}
-				// Finally, set the bounds of this text
-	bounds.setRect(translateX, translateY, maxWidth, maxHeight);
+                    lineNum++;
+                }
+            } else {
+                                // If no text, then we want to have the bounds of a space character,
+                                // so get those bounds here
+                if (boundsBug) {
+                    rect = font.getStringBounds("t", frc);
+                } else {
+                    rect = font.getStringBounds(" ", frc);
+                }
+                maxWidth = rect.getWidth();
+                height = rect.getHeight();
+            }
+
+            if (maxHeight < height) {
+                maxHeight = height;
+            }
+
+            frc = HIGH_QUALITY_FONT_CONTEXT;
+        }
+                                // Finally, set the bounds of this text
+        bounds.setRect(translateX, translateY, maxWidth, maxHeight);
     }
 
 
@@ -957,21 +966,25 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * @param fieldValue The value of the field
      */
     public void setState(String fieldType, String fieldName, Object fieldValue) {
-	super.setState(fieldType, fieldName, fieldValue);
+        super.setState(fieldType, fieldName, fieldValue);
 
-	if (fieldName.compareTo("penColor") == 0) {
-	    setPenColor((Color)fieldValue);
-	} else if (fieldName.compareTo("backgroundColor") == 0) {
-	    setBackgroundColor((Color)fieldValue);
-	} else if (fieldName.compareTo("caretColor") == 0) {
-	    setCaretColor((Color)fieldValue);
-	} else if (fieldName.compareTo("font") == 0) {
-	    setFont((Font)fieldValue);
-	} else if (fieldName.compareTo("editable") == 0) {
-	    setEditable(((Boolean)fieldValue).booleanValue());
-	} else if (fieldName.compareTo("text") == 0) {
-	    setText((String)fieldValue);
-	}
+        if (fieldName.compareTo("penColor") == 0) {
+            setPenColor((Color)fieldValue);
+        } else if (fieldName.compareTo("backgroundColor") == 0) {
+            setBackgroundColor((Color)fieldValue);
+        } else if (fieldName.compareTo("caretColor") == 0) {
+            setCaretColor((Color)fieldValue);
+        } else if (fieldName.compareTo("font") == 0) {
+            setFont((Font)fieldValue);
+        } else if (fieldName.compareTo("editable") == 0) {
+            setEditable(((Boolean)fieldValue).booleanValue());
+        } else if (fieldName.compareTo("translateX") == 0) {
+            setTranslateX(((Double)fieldValue).doubleValue());
+        } else if (fieldName.compareTo("translateY") == 0) {
+            setTranslateY(((Double)fieldValue).doubleValue());
+        } else if (fieldName.compareTo("text") == 0) {
+            setText((String)fieldValue);
+        }
     }
 
     /**
@@ -979,32 +992,38 @@ public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
      * @param out The stream that this object writes into
      */
     public void writeObject(ZObjectOutputStream out) throws IOException {
-	super.writeObject(out); 
+        super.writeObject(out);
 
-	if ((penColor != null) && (penColor != DEFAULT_PEN_COLOR)) {
-	    out.writeState("java.awt.Color", "penColor", penColor);
-	}
-	if ((backgroundColor != null) && (backgroundColor != DEFAULT_BACKGROUND_COLOR)) {
-	    out.writeState("java.awt.Color", "backgroundColor", backgroundColor);
-	}
-	if ((caretColor != null) && (caretColor != DEFAULT_CARET_COLOR)) {
-	    out.writeState("java.awt.Color", "caretColor", caretColor);
-	}
-	if (getFont() != DEFAULT_FONT) {
-	    out.writeState("java.awt.Font", "font", getFont());
-	}
-	if (getEditable() != DEFAULT_EDITABLE) {
-	    out.writeState("boolean", "editable", getEditable());
-	}
-	if (getText() != DEFAULT_TEXT) {
-	    out.writeState("String", "text", getText());
-	}
+        if ((penColor != null) && (penColor != DEFAULT_PEN_COLOR)) {
+            out.writeState("java.awt.Color", "penColor", penColor);
+        }
+        if ((backgroundColor != null) && (backgroundColor != DEFAULT_BACKGROUND_COLOR)) {
+            out.writeState("java.awt.Color", "backgroundColor", backgroundColor);
+        }
+        if ((caretColor != null) && (caretColor != DEFAULT_CARET_COLOR)) {
+            out.writeState("java.awt.Color", "caretColor", caretColor);
+        }
+        if (getFont() != DEFAULT_FONT) {
+            out.writeState("java.awt.Font", "font", getFont());
+        }
+        if (getEditable() != DEFAULT_EDITABLE) {
+            out.writeState("boolean", "editable", getEditable());
+        }
+        if (translateX != 0.0d) {
+            out.writeState("Double", "translateX", new Double(translateX));
+        }
+        if (translateY != 0.0d) {
+            out.writeState("Double", "translateY", new Double(translateY));
+        }
+        if (getText() != DEFAULT_TEXT) {
+            out.writeState("String", "text", getText());
+        }
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-	in.defaultReadObject();
-	caretShape = new Line2D.Double();
-	prevFRC = new FontRenderContext(null, true, true);
+        in.defaultReadObject();
+        caretShape = new Line2D.Double();
+        prevFRC = new FontRenderContext(null, true, true);
     }
 
 }

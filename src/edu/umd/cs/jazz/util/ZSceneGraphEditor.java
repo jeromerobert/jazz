@@ -4,18 +4,16 @@
  */
 package edu.umd.cs.jazz.util;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.io.*;
-
 import edu.umd.cs.jazz.*;
+import java.util.*;
 
 /**
  * <b>ZSceneGraphEditor</b> provides a convenience mechanism used to locate
  * and create instances of the following types of group nodes:
  * <p>
  * <ul>
- * <li>Custom (i.e., any other group that has hasOneChild set)
+ * <li>Custom (i.e., any group that the editor does not have ordering information, see below)
  * <li>ZNameGroup
  * <li>ZInvisibleGroup
  * <li>ZLayoutGroup
@@ -23,7 +21,9 @@ import edu.umd.cs.jazz.*;
  * <li>ZTransformGroup
  * <li>ZStickyGroup
  * <li>ZSelectionGroup
+ * <li>ZClipGroup
  * <li>ZFadeGroup
+ * <li>ZHandleGroup
  * <li>ZSpatialIndexGroup
  * </ul>
  *
@@ -59,6 +59,30 @@ import edu.umd.cs.jazz.*;
  * groups that it has created in the scene graph, to avoid creating the
  * same group nodes twice.<p>
  *
+ * Customization:
+ *
+ * You can also use the scene graph editor to manage your own custom edit
+ * groups. This is done with the following methods;<p>
+ *
+ * <pre>
+ *      getEditGroup(ZMyCustomGroup.class);
+ *      hasEditGroup(ZMyCustomGroup.class);
+ *      removeEditGroup(ZMyCustomGroup.class);
+ * </pre>
+ *
+ * If ZMyCustomGroup.class is a class that the scene graph editor does not
+ * have ordering information for then the edit group will be inserted at
+ * the top of the edit groups.<p>
+ *
+ * If you need to have your edit group inserted somewhere else (for example
+ * below the ZTransformGroup editor) then you need to give the
+ * ZSceneGraphEditor ordering information for this that type. This is done
+ * by calling<p>
+ *
+ * <pre>
+ *      ZSceneGraphEditor.setEditorOrder(ZMyCustomGroup.class, ZSceneGraphEditor.TRANSFORM_GROUP_ORDER - 1);
+ * </pre>
+ *
  * <P>
  * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
  * compatible with future Jazz releases. The current serialization support is
@@ -69,221 +93,87 @@ import edu.umd.cs.jazz.*;
  * @see edu.umd.cs.jazz.ZNode#editor
  * @author Jonathan Meyer, 25 Aug 99
  * @author Ben Bederson
+ * @author Jesse Grosjean
  */
-
 public class ZSceneGraphEditor implements Serializable {
-    // The ordering of edit groups is defined here
+    // Stores Class->Order associations.
+    private static HashMap editorOrderingMap;
 
     /**
-     * A bit representing an application-defined custom node type and order.  Bigger numbers appear
-     * higher in the editor chain.  This is the value returned by #editGroupType.
+     * Defines the ordering of the edit goups above the edit node.
      */
-    static protected final int CUSTOM = 512;
+    public static final int NAME_GROUP_ORDER = 90;
+    public static final int INVISIBLE_GROUP_ORDER = 80;
+    public static final int LAYOUT_GROUP_ORDER = 70;
+    public static final int ANCHOR_GROUP_ORDER = 60;
+    public static final int TRANSFORM_GROUP_ORDER = 50;
+    public static final int STICKY_GROUP_ORDER = 40;
+    public static final int SELECTION_GROUP_ORDER = 30;
+    public static final int CLIP_GROUP_ORDER = 20;
+    public static final int FADE_GROUP_ORDER = 10;
+    public static final int HANDLE_GROUP_ORDER = 9;
+    public static final int SPATIAL_INDEX_GROUP_ORDER = 0;
 
     /**
-     * A bit representing an name node type (ZNameGroup) and order.  Bigger numbers appear
-     * higher in the editor chain.  This is the value returned by #editGroupType.
+     * The edit node. This node is found in the ZSceneGraphEditor constructor.
      */
-    static protected final int NAME = 256;
+    protected ZNode editNode;
 
-    /**
-     * A bit representing an invisible node type (ZInvisibleGroup) and order.  Bigger numbers appear
-     * higher in the editor chain.  This is the value returned by #editGroupType.
-     */
-    static protected final int INVISIBLE = 128;
+    // Iterates up from the first edit group above the edit node. The last
+    // object returned by the iterator will be the "top" edit group.
+    protected class ZEditGroupIterator implements Iterator {
+        protected ZNode currentEditor = editNode;
 
-    /**
-     * A bit representing a layout node type (ZLayoutGroup) and order.  Bigger numbers appear
-     * higher in the editor chain.  This is the value returned by #editGroupType.
-     */
-    static protected final int LAYOUT = 64;
-
-    /**
-     * A bit representing an anchor node type (ZAnchorGroup) and order.  Bigger numbers appear
-     * higher in the editor chain.  This is the value returned by #editGroupType.
-     */
-    static protected final int ANCHOR = 32;
-
-    /**
-     * A bit representing a transform node type (ZTransformGroup) and order.  Bigger numbers appear
-     * higher in the editor chain.  This is the value returned by #editGroupType.
-     */
-    static protected final int TRANSFORM = 16;
-
-    /**
-     * A bit representing a sticky node type (ZStickyGroup) and order.  Bigger numbers appear
-     * higher in the editor chain.  This is the value returned by #editGroupType.
-     */
-    static protected final int STICKY = 8;
-
-    /**
-     * A bit representing a selection node type (ZSelectionGroup) and order.  Bigger numbers appear
-     * higher in the editor chain.  This is the value returned by #editGroupType.
-     */
-    static protected final int SELECTION = 4;
-
-    /**
-     * A bit representing a fade node type (ZFadeGroup) and order.  Bigger numbers appear
-     * higher in the editor chain.  This is the value returned by #editGroupType.
-     */
-    static protected final int FADE = 2;
-
-    /**
-     * A bit representing an index node type (ZSpatialIndexGroup) and order.  Bigger numbers appear
-     * higher in the editor chain.  This is the value returned by #editGroupType.
-     */
-    static protected final int INDEX = 1;
-
-    /**
-     * A value representing an unknown node type.
-     * This is the value returned by #editGroupType.
-     */
-    static protected final int UNKNOWN = -1;
-
-    protected ArrayList   editGroups;     // List of edit groups above node (in bottom-top order)
-    protected ZNode       editNode;       // Node being edited
-    protected int         groupTypes;     // What types of edit groups this node has
-
-    /**
-     * Returns the type number for a given instance.
-     * @param node The node being checked
-     * @return The node type 
-     */
-    static protected int editGroupType(ZNode node) {
-        if (node instanceof ZSelectionGroup) return SELECTION;
-        else if (node instanceof ZFadeGroup) return FADE;
-        else if (node instanceof ZStickyGroup) return STICKY; // Check sticky before transform since sticky *is* a transform
-        else if (node instanceof ZAnchorGroup) return ANCHOR;
-        else if (node instanceof ZLayoutGroup) return LAYOUT;
-        else if (node instanceof ZSpatialIndexGroup) return INDEX;
-        else if (node instanceof ZNameGroup) return NAME;
-        else if (node instanceof ZInvisibleGroup) return INVISIBLE;
-        else if (node instanceof ZTransformGroup) return TRANSFORM;
-        else if (node instanceof ZGroup && ((ZGroup)node).hasOneChild()) return CUSTOM;
-        return UNKNOWN;
-    }
-
-    /**
-     * Determines if node is an edit group node.
-     * @return true if node is an edit group node, false otherwise.
-     */
-    static protected boolean isEditGroup(ZNode node) {
-        return ((node != null) && (editGroupType(node) > 0) && ((ZGroup)node).hasOneChild());
-    }
-
-    /**
-     * Adds a ZGroup as an "editGroup", preserving the
-     * order listed by the numbering for the various editGroup types.
-     * If group already in list, then do nothing.
-     * @param type The type of the new group
-     * @param editGroup The new group
-     */
-    protected void setEditGroup(int type, ZGroup editGroup) {
-	if (hasEditGroup(type)) {
-	    return;
-	}
-
-        groupTypes |= type;
-
-        boolean done = false;
-	ZNode child = null;
-	ZGroup g = null;
-	int size = editGroups.size();
-	int i = 0;
-        for (i = 0; i < size; i++) {
-	    g = (ZGroup)editGroups.get(i);
-	    if (editGroupType(g) > type) {
-		break;
-	    }
-	    child = g;
-	}
-	if (child == null) {
-	    child = editNode;
-	}
-	editGroups.add(i, editGroup);
-	editGroup.insertAbove(child);
-	editGroup.setHasOneChild(true);
-    }
-
-    /**
-     * Determines if this editor has an edit group of the specified type.
-     * @return True if this editor has the specified edit group.
-     */
-    protected boolean hasEditGroup(int type) {
-        return (groupTypes & type) != 0;
-    }
-
-    /**
-     * Returns the specified edit group type for this editor, if there is one, 
-     * or null otherwise.
-     * @param type The type of edit group to return
-     * @return The edit group
-     */
-    protected ZGroup getEditGroup(int type) {
-        if (hasEditGroup(type)) {
-            for (int i = 0; i < editGroups.size(); i++) {
-           	ZGroup d = (ZGroup)editGroups.get(i);
-                if (editGroupType(d) == type) {
-                    return d;
-                }
-            }
+        public boolean hasNext() {
+            return isEditGroup(currentEditor.getParent());
         }
-        return null;
+        public Object next() {
+            currentEditor = currentEditor.getParent();
+            return currentEditor;
+        }
+        public void remove() {
+            currentEditor.extract();
+        }
+        public ZNode last() {
+            return currentEditor;
+        }
+    }
+
+    // Initialize editor orderings.
+    static {
+        ZSceneGraphEditor.setEditorOrder(ZSpatialIndexGroup.class, SPATIAL_INDEX_GROUP_ORDER);
+        ZSceneGraphEditor.setEditorOrder(ZHandleGroup.class, HANDLE_GROUP_ORDER);
+        ZSceneGraphEditor.setEditorOrder(ZFadeGroup.class, FADE_GROUP_ORDER);
+        ZSceneGraphEditor.setEditorOrder(ZClipGroup.class, CLIP_GROUP_ORDER);
+        ZSceneGraphEditor.setEditorOrder(ZSelectionGroup.class, SELECTION_GROUP_ORDER);
+        ZSceneGraphEditor.setEditorOrder(ZStickyGroup.class, STICKY_GROUP_ORDER);
+        ZSceneGraphEditor.setEditorOrder(ZTransformGroup.class, TRANSFORM_GROUP_ORDER);
+        ZSceneGraphEditor.setEditorOrder(ZAnchorGroup.class, ANCHOR_GROUP_ORDER);
+        ZSceneGraphEditor.setEditorOrder(ZLayoutGroup.class, LAYOUT_GROUP_ORDER);
+        ZSceneGraphEditor.setEditorOrder(ZInvisibleGroup.class, INVISIBLE_GROUP_ORDER);
+        ZSceneGraphEditor.setEditorOrder(ZNameGroup.class, NAME_GROUP_ORDER);
     }
 
     /**
-     * Removes the specified edit group from this editor if there is one,
-     * or does nothing otherwise.
-     * @param type The type of edit group to return
-     * @return True if the edit group existed and was removed
+     * Create a new editor for aNode.
      */
-    protected boolean removeEditGroup(int type) {
-        if (hasEditGroup(type)) {
-	    ZGroup g = null;
-            for (Iterator i = editGroups.iterator(); i.hasNext(); ) {
-                g = (ZGroup)i.next();
-                if (editGroupType(g) == type) {
-                    i.remove();
-                    g.extract();
-                    groupTypes &= ~type;
-                    return true;
-                }
-            }
-            // should not get here
-            throw new RuntimeException("ZSceneGraphEditor: Attempt to remove an edit group " +
-                                       "that doesn't exist (two editors in use at once?)");
+    public ZSceneGraphEditor(ZNode aNode) {
+        super();
+
+        while (isEditGroup(aNode)) {
+            aNode = ((ZGroup)aNode).getChild(0);
         }
-        return false;
+        editNode = aNode;
     }
 
-    //
-    // PUBLIC API
-    //
-
     /**
-    * Given a node, constructs an "editor" for the node.
-    * Editors are used to locate and create parent groups
-    * above the node.
-    */
-    public ZSceneGraphEditor(ZNode node) {
-        // Search downwards, skipping over edit groups to identify the
-        // lowest "editNode"
-        //
-        while (isEditGroup(node)) {
-            node = ((ZGroup)node).getChild(0);
+     * Set the ordering information for aType of edit group.
+     */
+    public static void setEditorOrder(Class aType, int aOrder) {
+        if (editorOrderingMap == null) {
+            editorOrderingMap = new HashMap();
         }
-
-        // Now search upwards to identify edit groups
-        ArrayList groups = new ArrayList();
-        ZNode parent = node.getParent();
-        while (parent != null && isEditGroup(parent)) {
-            groups.add(parent);
-            groupTypes |= editGroupType(parent);
-            parent = parent.getParent();
-        }
-
-        editNode = node;
-        editGroups = groups;
+        editorOrderingMap.put(aType, new Integer(aOrder));
     }
 
     /**
@@ -293,20 +183,21 @@ public class ZSceneGraphEditor implements Serializable {
      * this returns the node itself. This method is useful if you want
      * to remove a node and also its associated edit groups
      * from a scene graph.
+     *
+     * @return The top edit group, or the edit node of there are no edit groups.
      */
     public ZNode getTop() {
-	int size = editGroups.size();
-	if (size == 0) {
-	    return editNode;
-	} else {
-	    return (ZNode)editGroups.get(size - 1);
-	}
+        ZEditGroupIterator i = new ZEditGroupIterator();
+        while (i.hasNext()) { i.next(); }
+        return i.last();
     }
 
     /**
      * Returns the node being edited.  This is the node that is the bottom-most
      * node of an edit group.  It is defined as being this node, or the first
      * descendant that does not have 'hasOneChild' set.
+     *
+     * @return The node being edited.
      */
     public ZNode getNode() {
         return editNode;
@@ -316,234 +207,456 @@ public class ZSceneGraphEditor implements Serializable {
      * Returns an array representing the list of "edit" groups
      * above the node - groups above the node whose hasOneChild
      * flag is set to true.  The groups are listed in bottom-top order.
+     *
+     * @deprecated as of Jazz 1.1 editorIterator() instead.
      */
-    public ArrayList getGroups() { return editGroups; }
+    public ArrayList getGroups() {
+        ArrayList result = new ArrayList();
+        ZEditGroupIterator i = new ZEditGroupIterator();
+        while (i.hasNext()) {
+            result.add(i.next());
+        }
+        return result;
+    }
 
+    /**
+     * Returns an iterator over the list of "edit" groups
+     * above the node - groups above the node whose hasOneChild
+     * flag is set to true. The groups are listed in bottom-top order.
+     *
+     * @return An iterator over the edit groups being managed.
+     */
+    public Iterator editorIterator() {
+        return new ZEditGroupIterator();
+    }
+
+    /**
+     * Checks to see if an editor of this type already exists, if so it returns that editor
+     * if not it creates a new editor, inserts that editor above the edit node, and then
+     * returns that new editor.
+     *
+     * @param type The type of edit group to return
+     * @return The edit group
+     */
+    public ZGroup getEditGroup(Class aType) {
+        ZEditGroupIterator i = new ZEditGroupIterator();
+        while (i.hasNext()) {
+            ZGroup each = (ZGroup) i.next();
+            if (each.getClass() == aType) {
+                return each;
+            }
+        }
+
+        ZGroup result = createEditGroupInstance(aType);
+        insertEditGroup(result);
+        return result;
+    }
 
     /**
      * Returns a ZTransformGroup to use for a node,
      * inserting one above the edited node if none exists.
      */
     public ZTransformGroup getTransformGroup() {
-        ZTransformGroup tg = (ZTransformGroup)getEditGroup(TRANSFORM);
-        if (tg == null) {
-	    setEditGroup(TRANSFORM, tg = new ZTransformGroup());
+        // XXX this is ugly because ZIndexGroups need so much maintanence... should fix.
+        ZTransformGroup result = null;
 
-				// If the node getting this transformGroup is spatial-indexed,
-				// add a node listener so it will be re-indexed when it's
-				// bounds change.
-	    ZNode top = tg.editor().getTop().getParent();
-	    if ((top != null) && (top.editor().hasSpatialIndexGroup())) {
-		ZSpatialIndexGroup indexGroup = top.editor().getSpatialIndexGroup();
-		indexGroup.addListener(tg);
-	    }
-	}
-        return tg;
+        ZEditGroupIterator i = new ZEditGroupIterator();
+        while (i.hasNext()) {
+            ZGroup each = (ZGroup) i.next();
+            if (each.getClass() == ZTransformGroup.class) {
+                result = (ZTransformGroup) each;
+                break;
+            }
+        }
+
+        if (result == null) {
+            result = (ZTransformGroup) createEditGroupInstance(ZTransformGroup.class);
+            insertEditGroup(result);
+                                // If the node getting this transformGroup is spatial-indexed,
+                                // add a node listener so it will be re-indexed when it's
+                                // bounds change.
+            ZNode top = getTop().getParent();
+            if ((top != null) && (top.editor().hasSpatialIndexGroup())) {
+                ZSpatialIndexGroup indexGroup = top.editor().getSpatialIndexGroup();
+                indexGroup.addListener(result);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns a ZHandleGroup to use for a node,
+     * inserting one above the edited node if none exists.
+     */
+    public ZHandleGroup getHandleGroup() {
+        return (ZHandleGroup) getEditGroup(ZHandleGroup.class);
+    }
+
+    /**
+     * Returns a ZFadeGroup to use for a node,
+     * inserting one above the edited node if none exists.
+     */
+    public ZFadeGroup getFadeGroup() {
+        return (ZFadeGroup) getEditGroup(ZFadeGroup.class);
+    }
+
+    /**
+     * Returns a ZStickyGroup to use for a node,
+     * inserting one above the edited node if none exists.
+     */
+    public ZStickyGroup getStickyGroup() {
+        return (ZStickyGroup) getEditGroup(ZStickyGroup.class);
+    }
+
+    /**
+     * Returns a ZSelectionGroup to use for a node,
+     * inserting one above the edited node if none exists.
+     */
+    public ZSelectionGroup getSelectionGroup() {
+        return (ZSelectionGroup) getEditGroup(ZSelectionGroup.class);
+    }
+
+    /**
+     * Returns a ZAnchorGroup to use for a node,
+     * inserting one above the edited node if none exists.
+     */
+    public ZAnchorGroup getAnchorGroup() {
+        return (ZAnchorGroup) getEditGroup(ZAnchorGroup.class);
+    }
+
+    /**
+     * Returns a ZLayoutGroup to use for a node,
+     * inserting one above the edited node if none exists.
+     */
+    public ZLayoutGroup getLayoutGroup() {
+        return (ZLayoutGroup) getEditGroup(ZLayoutGroup.class);
+    }
+
+    /**
+     * Returns a ZNameGroup to use for a node,
+     * inserting one above the edited node if none exists.
+     */
+    public ZNameGroup getNameGroup() {
+        return (ZNameGroup) getEditGroup(ZNameGroup.class);
+    }
+
+    /**
+     * Returns a ZInvisibleGroup to use for a node,
+     * inserting one above the edited node if none exists.
+     */
+    public ZInvisibleGroup getInvisibleGroup() {
+        return (ZInvisibleGroup) getEditGroup(ZInvisibleGroup.class);
+    }
+
+    /**
+     * Returns a ZSpatialIndexGroup to use for a node,
+     * inserting one above the edited node if none exists.
+     */
+    public ZSpatialIndexGroup getSpatialIndexGroup() {
+        return (ZSpatialIndexGroup) getEditGroup(ZSpatialIndexGroup.class);
+    }
+
+    /**
+     * Returns a ZClipGroup to use for a node,
+     * inserting one above the edited node if none exists.
+     */
+    public ZClipGroup getClipGroup() {
+        return (ZClipGroup) getEditGroup(ZClipGroup.class);
+    }
+
+    /**
+     * Searches to see if the edit node has an edit group of a matching type.
+     *
+     * @param type The type of edit group to search for.
+     * @return True if such an edit group was found.
+     */
+    public boolean hasEditGroup(Class aType) {
+        ZEditGroupIterator i = new ZEditGroupIterator();
+        while (i.hasNext()) {
+            ZGroup each = (ZGroup) i.next();
+            if (each.getClass() == aType) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
      * Returns true if this node has a ZTransformGroup above it as
      * an edit group, false otherwise.
      */
-    public boolean hasTransformGroup() { return hasEditGroup(TRANSFORM); }
+    public boolean hasTransformGroup() {
+        return hasEditGroup(ZTransformGroup.class);
+    }
+
+    /**
+     * Returns true if this node has a ZHandleGroup above it as
+     * an edit group, false otherwise.
+     */
+    public boolean hasHandleGroup() {
+        return hasEditGroup(ZHandleGroup.class);
+    }
+
+    /**
+     * Returns true if this node has a ZFadeGroup above it as
+     * an edit group, false otherwise.
+     */
+    public boolean hasFadeGroup() {
+        return hasEditGroup(ZFadeGroup.class);
+    }
+
+    /**
+     * Returns true if this node has a ZStickyGroup above it as
+     * an edit group, false otherwise.
+     */
+    public boolean hasStickyGroup() {
+        return hasEditGroup(ZStickyGroup.class);
+    }
+
+    /**
+     * Returns true if this node has a ZSelectionGroup above it as
+     * an edit group, false otherwise.
+     */
+    public boolean hasSelectionGroup() {
+        return hasEditGroup(ZSelectionGroup.class);
+    }
+
+    /**
+     * Returns true if this node has a ZAnchorGroup above it as
+     * an edit group, false otherwise.
+     */
+    public boolean hasAnchorGroup() {
+        return hasEditGroup(ZAnchorGroup.class);
+    }
+
+    /**
+     * Returns true if this node has a ZLayoutGroup above it as
+     * an edit group, false otherwise.
+     */
+    public boolean hasLayoutGroup() {
+        return hasEditGroup(ZLayoutGroup.class);
+    }
+
+    /**
+     * Returns true if this node has a ZNameGroup above it as
+     * an edit group, false otherwise.
+     */
+    public boolean hasNameGroup() {
+        return hasEditGroup(ZNameGroup.class);
+    }
+
+    /**
+     * Returns true if this node has a ZInvisibleGroup above it as
+     * an edit group, false otherwise.
+     */
+    public boolean hasInvisibleGroup() {
+        return hasEditGroup(ZInvisibleGroup.class);
+    }
+
+    /**
+     * Returns true if this node has a ZSpatialIndexGroup above it as
+     * an edit group, false otherwise.
+     */
+    public boolean hasSpatialIndexGroup() {
+        return hasEditGroup(ZSpatialIndexGroup.class);
+    }
+
+    /**
+     * Returns true if this node has a ZClipGroup above it as
+     * an edit group, false otherwise.
+     */
+    public boolean hasClipGroup() {
+        return hasEditGroup(ZClipGroup.class);
+    }
+
+    /**
+     * Looks for an edit group of matching type, and if found removes that edit group.
+     *
+     * @param type The type of edit group to remove
+     * @return True if the edit group was found and removed.
+     */
+    public boolean removeEditGroup(Class aType) {
+        ZEditGroupIterator i = new ZEditGroupIterator();
+        while (i.hasNext()) {
+            ZGroup each = (ZGroup) i.next();
+            if (each.getClass() == aType) {
+                i.remove();
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * Removes a TransformGroup edit group from above a node. Returns true
      * if the ZTransformGroup could be removed, false otherwise.
      */
-    public boolean removeTransformGroup() { return removeEditGroup(TRANSFORM); }
-
-
-    /**
-     * Returns a ZFadeGroup to use for a node, or
-     * inserts one above the node if none exists.
-     */
-    public ZFadeGroup getFadeGroup() {
-        ZFadeGroup fg = (ZFadeGroup)getEditGroup(FADE);
-        if (fg == null) { setEditGroup(FADE, fg = new ZFadeGroup()); }
-        return fg;
+    public boolean removeTransformGroup() {
+        return removeEditGroup(ZTransformGroup.class);
     }
+
     /**
-     * Returns true if this node has a ZFadeGroup above it as an edit group,
-     * false otherwise.
+     * Removes a ZHandleGroup edit group from above a node. Returns true
+     * if the ZHandleGroup could be removed, false otherwise.
      */
-    public boolean hasFadeGroup() { return hasEditGroup(FADE); }
+    public boolean removeHandleGroup() {
+        return removeEditGroup(ZHandleGroup.class);
+    }
+
     /**
-     * Removes a ZFadeGroup edit group for above a node. Returns true
+     * Removes a ZFadeGroup edit group from above a node. Returns true
      * if the ZFadeGroup could be removed, false otherwise.
      */
-    public boolean removeFadeGroup() { return removeEditGroup(FADE); }
+    public boolean removeFadeGroup() {
+        return removeEditGroup(ZFadeGroup.class);
+    }
 
     /**
-     * Returns a ZStickyGroup to use for a node, or
-     * inserts one above the node if none exists.
-     */
-    public ZStickyGroup getStickyGroup() {
-        ZStickyGroup g = (ZStickyGroup)getEditGroup(STICKY);
-        if (g == null) { setEditGroup(STICKY, g = new ZStickyGroup()); }
-        return g;
-    }
-    /**
-     * Returns true if this node has a ZStickyGroup above it as an edit group,
-     * false otherwise.
-     */
-    public boolean hasStickyGroup() { return hasEditGroup(STICKY); }
-    /**
-     * Removes a ZStickyGroup edit group for above a node. Returns true
+     * Removes a ZStickyGroup edit group from above a node. Returns true
      * if the ZStickyGroup could be removed, false otherwise.
      */
-    public boolean removeStickyGroup() { return removeEditGroup(STICKY); }
+    public boolean removeStickyGroup() {
+        return removeEditGroup(ZStickyGroup.class);
+    }
 
     /**
-     * Returns a ZSelectionGroup to use for a node, or
-     * inserts one above the node if none exists.
-     */
-    public ZSelectionGroup getSelectionGroup() {
-        ZSelectionGroup g = (ZSelectionGroup)getEditGroup(SELECTION);
-        if (g == null) { setEditGroup(SELECTION, g = new ZSelectionGroup()); }
-        return g;
-    }
-    /**
-     * Returns true if this node has a ZSelectionGroup above it as an edit group,
-     * false otherwise.
-     */
-    public boolean hasSelectionGroup() { return hasEditGroup(SELECTION); }
-    /**
-     * Removes a ZSelectionGroup edit group for above a node. Returns true
+     * Removes a ZSelectionGroup edit group from above a node. Returns true
      * if the ZSelectionGroup could be removed, false otherwise.
      */
-    public boolean removeSelectionGroup() { return removeEditGroup(SELECTION); }
-
-
-    /**
-     * Returns a ZAnchorGroup to use for a node, or
-     * inserts one above the node if none exists.
-     */
-    public ZAnchorGroup getAnchorGroup() {
-        ZAnchorGroup g = (ZAnchorGroup)getEditGroup(ANCHOR);
-        if (g == null) { setEditGroup(ANCHOR, g = new ZAnchorGroup()); }
-        return g;
+    public boolean removeSelectionGroup() {
+        return removeEditGroup(ZSelectionGroup.class);
     }
+
     /**
-     * Returns true if this node has a ZAnchorGroup above it as an edit group,
-     * false otherwise.
-     */
-    public boolean hasAnchorGroup() { return hasEditGroup(ANCHOR); }
-    /**
-     * Removes a ZAnchorGroup edit group for above a node. Returns true
+     * Removes a ZAnchorGroup edit group from above a node. Returns true
      * if the ZAnchorGroup could be removed, false otherwise.
      */
-    public boolean removeAnchorGroup() { return removeEditGroup(ANCHOR); }
-
-
-    /**
-     * Returns a ZLayoutGroup to use for a node, or
-     * inserts one above the node if none exists.
-     */
-    public ZLayoutGroup getLayoutGroup() {
-        ZLayoutGroup g = (ZLayoutGroup)getEditGroup(LAYOUT);
-        if (g == null) { setEditGroup(LAYOUT, g = new ZLayoutGroup()); }
-        return g;
+    public boolean removeAnchorGroup() {
+        return removeEditGroup(ZAnchorGroup.class);
     }
+
     /**
-     * Returns true if this node has a ZLayoutGroup above it as an edit group,
-     * false otherwise.
-     */
-    public boolean hasLayoutGroup() { return hasEditGroup(LAYOUT); }
-    /**
-     * Removes a ZLayoutGroup edit group for above a node. Returns true
+     * Removes a ZLayoutGroup edit group from above a node. Returns true
      * if the ZLayoutGroup could be removed, false otherwise.
      */
-    public boolean removeLayoutGroup() { return removeEditGroup(LAYOUT); }
-
-    /**
-     * Returns a ZNameGroup to use for a node, or
-     * inserts one above the node if none exists.
-     */
-    public ZNameGroup getNameGroup() {
-        ZNameGroup g = (ZNameGroup)getEditGroup(NAME);
-        if (g == null) { setEditGroup(NAME, g = new ZNameGroup()); }
-        return g;
+    public boolean removeLayoutGroup() {
+        return removeEditGroup(ZLayoutGroup.class);
     }
-    /**
-     * Returns true if this node has a ZNameGroup above it as an edit group,
-     * false otherwise.
-     */
-    public boolean hasNameGroup() { return hasEditGroup(NAME); }
 
     /**
-     * Removes a ZNameGroup edit group for above a node. Returns true
+     * Removes a ZNameGroup edit group from above a node. Returns true
      * if the ZNameGroup could be removed, false otherwise.
      */
-    public boolean removeNameGroup() { return removeEditGroup(NAME); }
+    public boolean removeNameGroup() {
+        return removeEditGroup(ZNameGroup.class);
+    }
 
     /**
-     * Returns a ZInvisibleGroup to use for a node, or
-     * inserts one above the node if none exists.
-     */
-    public ZInvisibleGroup getInvisibleGroup() {
-        ZInvisibleGroup g = (ZInvisibleGroup)getEditGroup(INVISIBLE);
-        if (g == null) { setEditGroup(INVISIBLE, g = new ZInvisibleGroup()); }
-        return g;
-    }
-    /**
-     * Returns true if this node has a ZInvisibleGroup above it as an edit group,
-     * false otherwise.
-     */
-    public boolean hasInvisibleGroup() { return hasEditGroup(INVISIBLE); }
-    /**
-     * Removes a ZInvisibleGroup edit group for above a node. Returns true
+     * Removes a ZInvisibleGroup edit group from above a node. Returns true
      * if the ZInvisibleGroup could be removed, false otherwise.
      */
-    public boolean removeInvisibleGroup() { return removeEditGroup(INVISIBLE); }
-
-    /**
-     * Returns a ZSpatialIndexGroup to use for a node, or
-     * inserts one above the node if none exists.
-     */
-    public ZSpatialIndexGroup getSpatialIndexGroup() {
-        ZSpatialIndexGroup g = (ZSpatialIndexGroup)getEditGroup(INDEX);
-        if (g == null) { setEditGroup(INDEX, g = new ZSpatialIndexGroup()); }
-        return g;
+    public boolean removeInvisibleGroup() {
+        return removeEditGroup(ZInvisibleGroup.class);
     }
 
     /**
-     * Returns true if this node has a ZSpatialIndexGroup above it as an edit group,
-     * false otherwise.
+     * Removes a ZClipGroup edit group from above a node. Returns true
+     * if the ZClipGroup could be removed, false otherwise.
      */
-    public boolean hasSpatialIndexGroup() { return hasEditGroup(INDEX); }
-
-    /**
-     * Removes a ZSpatialIndexGroup edit group for above a node. Returns true
-     * if the ZSpatialIndexGroup could be removed, false otherwise. Removes all
-     * nodeListers registered on the indexed nodes.
-     */
-    public boolean removeSpatialIndexGroup() { 
-	if (hasEditGroup(INDEX)) {
-	    ZGroup g = null;
-            for (Iterator i = editGroups.iterator(); i.hasNext(); ) {
-                g = (ZGroup)i.next();
-                if (editGroupType(g) == INDEX) {
-		    ZSpatialIndexGroup spatialIndexGroup = (ZSpatialIndexGroup)g;
-		    spatialIndexGroup.unregisterAllListeners();
-		}
-	    }
- 	}
-	return removeEditGroup(INDEX);
+    public boolean removeClipGroup() {
+        return removeEditGroup(ZClipGroup.class);
     }
 
     /**
-     * Generate a string that represents this object for debugging.
-     * @return the string that represents this object for debugging
+     * Removes a ZSpatialIndexGroup edit group from above a node. Returns true
+     * if the ZSpatialIndexGroup could be removed, false otherwise.
      */
-    public String toString() {
-	String str = "Editor(" + editNode + ") = [";
-        for (int i = 0; i < editGroups.size(); i++) {
-	    ZGroup g = (ZGroup)editGroups.get(i);
-	    str += editGroupType(g) + ":" + g + ", ";
-	}
-	str += "]";
+    public boolean removeSpatialIndexGroup() {
+        // XXX this is ulgy, need to do something about index groups to make them easier
+        // to work with.
+        ZSpatialIndexGroup indexGroup = null;
 
-	return str;
+        ZEditGroupIterator i = new ZEditGroupIterator();
+        while (i.hasNext()) {
+            ZGroup each = (ZGroup) i.next();
+            if (each.getClass() == ZSpatialIndexGroup.class) {
+                indexGroup = (ZSpatialIndexGroup) each;
+                break;
+            }
+        }
+
+        if (indexGroup == null) {
+            return false;
+        } else {
+            ZGroup g = null;
+            for (Iterator iter = editorIterator(); iter.hasNext();) {
+                g = (ZGroup)iter.next();
+                if (g.getClass() == ZSpatialIndexGroup.class) {
+                    ZSpatialIndexGroup spatialIndexGroup = (ZSpatialIndexGroup)g;
+                    spatialIndexGroup.unregisterAllListeners();
+                }
+            }
+            return removeEditGroup(ZSpatialIndexGroup.class);
+        }
+    }
+
+    /**
+     * Returns true if aNode is an edit group;
+     */
+    protected boolean isEditGroup(ZNode aNode) {
+        if (aNode == null) return false;
+        return (aNode instanceof ZGroup && ((ZGroup)aNode).hasOneChild() && ((ZGroup)aNode).getNumChildren() == 1);
+    }
+
+    /**
+     * Insert aGroup above the edit node.
+     */
+    protected void insertEditGroup(ZGroup aGroup) {
+        if (hasEditGroup(aGroup.getClass())) return;
+
+        ZNode aChild = null;
+        int order = getOrderFor(aGroup.getClass());
+        ZEditGroupIterator i = new ZEditGroupIterator();
+        while (i.hasNext()) {
+            ZGroup each = (ZGroup) i.next();
+            if (getOrderFor(each.getClass()) >= order) {
+                break;
+            }
+            aChild = each;
+        }
+
+        if (aChild == null) {
+            aChild = editNode;
+        }
+
+        aGroup.insertAbove(aChild);
+    }
+
+    /**
+     * Returns the order where aType of editor group should be inserted above the
+     * edit node. If no order is specified then it returns MAX_VALUE, meaning that the
+     * edit group will be inserted at the top of the edit groups.
+     */
+    protected int getOrderFor(Class aType) {
+        Integer anInteger = (Integer) editorOrderingMap.get(aType);
+        if (anInteger == null) {
+            return Integer.MAX_VALUE;
+        }
+        return anInteger.intValue();
+    }
+
+    private ZGroup createEditGroupInstance(Class aType) {
+        ZGroup result = null;
+
+        try {
+            result = (ZGroup) aType.newInstance();
+            result.setHasOneChild(true);
+        } catch (InstantiationException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+
+        return result;
     }
 }

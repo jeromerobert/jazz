@@ -17,13 +17,13 @@ import edu.umd.cs.jazz.component.*;
  * <b>ZAnchorGroup</b> holds the information for a spatial hyperlink. An anchor
  * represents a hyperlink from its children to an internally specified destination.
  * Anchors can link to either another node, or to a bounds. There is an associated
- * event handler ZLinkEventHandler that provides interaction for specifying these links. 
+ * event handler ZLinkEventHandler that provides interaction for specifying these links.
  * <p>
  * ZAnchorGroup indicates the link with a visual component that can be defined by extending
  * this class and overriding createLinkComponent.  By default, it creates an arrow pointing
  * to the destination of the link.
  * <P>
- * {@link edu.umd.cs.jazz.util.ZSceneGraphEditor} provides a convenience mechanism to locate, create 
+ * {@link edu.umd.cs.jazz.util.ZSceneGraphEditor} provides a convenience mechanism to locate, create
  * and manage nodes of this type.
  * <P>
  * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
@@ -36,12 +36,12 @@ import edu.umd.cs.jazz.component.*;
  * @author  Benjamin B. Bederson
  */
 public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Serializable {
-				// Default values
+                                // Default values
     static private final int  LINK_ANIMATION_TIME = 750;
     static private final int  DEFAULT_CONNECTOR_WIDTH = 5;
     static private Color      nodeColor = new Color(150, 150, 0);
     static private Color      boundsColor = new Color(150, 150, 150);
-    
+
     /**
      * The destination node of this link (for link traversal), if there is one.
      */
@@ -95,7 +95,7 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @param child Child of the new group node.
      */
     public ZAnchorGroup(ZNode child) {
-	super(child);
+        super(child);
     }
 
     /**
@@ -104,50 +104,49 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @see ZSceneGraphObject#duplicateObject
      */
     protected Object duplicateObject() {
-	ZAnchorGroup newObject = (ZAnchorGroup)super.duplicateObject();
+        ZAnchorGroup newObject = (ZAnchorGroup)super.duplicateObject();
 
-	if (destBounds != null) {
-	    newObject.destBounds = (Rectangle2D)destBounds.clone();
-	}
+        if (destBounds != null) {
+            newObject.destBounds = (Rectangle2D)destBounds.clone();
+        }
 
-	newObject.destNodeTransformListener = null;
-	newObject.destNodeGlobalBoundsListener = null;
+        newObject.destNodeTransformListener = null;
+        newObject.destNodeGlobalBoundsListener = null;
 
-	return newObject;
+        return newObject;
     }
 
     /**
-     * Called to update internal object references after a clone operation 
+     * Called to update internal object references after a clone operation
      * by {@link ZSceneGraphObject#clone}.
      *
      * @see ZSceneGraphObject#updateObjectReferences
      */
     protected void updateObjectReferences(ZObjectReferenceTable objRefTable) {
-	super.updateObjectReferences(objRefTable);
+        super.updateObjectReferences(objRefTable);
 
-	if (destNode != null) {    
-	    ZNode clonedNode = (ZNode)objRefTable.getNewObjectReference(destNode);
-	    
-	    if (clonedNode == null) {
-		// Cloned a ZAnchorGroup, but did not clone the destNode being linked to.
-		// Just leave destNode linked to the old node.
-	    } else {
-		// Cloned a ZAnchorGroup and also the node it links to. Update destNode
-		// to point to the cloned version rather than the original version.
-		destNode = clonedNode;
-	    } 
+        if (destNode != null) {
+            ZNode clonedNode = (ZNode)objRefTable.getNewObjectReference(destNode);
 
-	    // Listen for chages in transform on the dest node.
-	    registerDestNodeListeners();
-	}
+            if (clonedNode == null) {
+                // Cloned a ZAnchorGroup, but did not clone the destNode being linked to.
+                // Just leave destNode linked to the old node.
+            } else {
+                // Cloned a ZAnchorGroup and also the node it links to. Update destNode
+                // to point to the cloned version rather than the original version.
+                destNode = clonedNode;
+            }
+
+            // Listen for chages in transform on the dest node.
+            registerDestNodeListeners();
+        }
     }
 
     /**
      * Disposes of this anchor group when it is no longer used.
      */
     public void finalize() {
-				// Remove the destination transform listener if there is one
-	removeDestinationNodeListeners();
+        removeDestinationNodeListeners();
     }
 
     //****************************************************************************
@@ -161,7 +160,7 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @return The destination node, or null if none.
      */
     public ZNode getDestNode() {
-	return destNode;
+        return destNode;
     }
 
     /**
@@ -172,60 +171,59 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @see #setDestBounds
      */
     public void setDestNode(ZNode node, ZCamera camera) {
-	removeDestinationNodeListeners();
+        removeDestinationNodeListeners();
 
-				// Set up the new destination node
-	destNode = node;
-	destBounds = null;
-	updateLinkComponent(camera);
+                                // Set up the new destination node
+        destNode = node;
+        destBounds = null;
+        updateLinkComponent(camera);
 
-	if (node != null) {
-	}
+        if (node != null) {
+        }
 
-				// Finally, register a transform listener on destNode
-	registerDestNodeListeners();
+                                // Finally, register a transform listener on destNode
+        registerDestNodeListeners();
     }
-
 
     /**
      * Remove transform and global bounds listeners from destination node.
      */
     private void removeDestinationNodeListeners() {
-	if (destNode != null) {
-	    if (destNodeTransformListener != null) {
-		destNode.editor().getTransformGroup().removeTransformListener(destNodeTransformListener);
-		destNodeTransformListener = null;
-	    }
-	    if (destNodeGlobalBoundsListener != null) {
-		destNode.removeNodeListener(destNodeGlobalBoundsListener);
-		destNodeGlobalBoundsListener = null;
-	    }
-	}
+        if (destNode != null) {
+            if (destNodeTransformListener != null) {
+                destNode.editor().getTransformGroup().removeTransformListener(destNodeTransformListener);
+                destNodeTransformListener = null;
+            }
+            if (destNodeGlobalBoundsListener != null) {
+                destNode.removeNodeListener(destNodeGlobalBoundsListener);
+                destNodeGlobalBoundsListener = null;
+            }
+        }
     }
 
     private void registerDestNodeListeners() {
-				// Create a new transform listener so we get
-				// notified whenever the destination node transform changes
-	if (destNode != null) {
-	    destNodeTransformListener = new ZTransformListener() {
-		public void transformChanged(ZTransformEvent e) {
-		    destPt = null;
-		    updateLinkComponent(null);
-		}
-	    };
-	    destNode.editor().getTransformGroup().addTransformListener(destNodeTransformListener);
+                                // Create a new transform listener so we get
+                                // notified whenever the destination node transform changes
+        if (destNode != null) {
+            destNodeTransformListener = new ZTransformListener() {
+                public void transformChanged(ZTransformEvent e) {
+                    destPt = null;
+                    updateLinkComponent(null);
+                }
+            };
+            destNode.editor().getTransformGroup().addTransformListener(destNodeTransformListener);
 
-				// Also listen for global bounds changes on destination node
-	    destNodeGlobalBoundsListener = new ZNodeListener() {
-		public void boundsChanged(ZNodeEvent e) {
-		}
-		public void globalBoundsChanged(ZNodeEvent e) {
-		    destPt = null;
-		    updateLinkComponent(null);
-		}
-	    };
-	    destNode.addNodeListener(destNodeGlobalBoundsListener);
-	}
+                                // Also listen for global bounds changes on destination node
+            destNodeGlobalBoundsListener = new ZNodeListener() {
+                public void boundsChanged(ZNodeEvent e) {
+                }
+                public void globalBoundsChanged(ZNodeEvent e) {
+                    destPt = null;
+                    updateLinkComponent(null);
+                }
+            };
+            destNode.addNodeListener(destNodeGlobalBoundsListener);
+        }
     }
 
     /**
@@ -233,7 +231,7 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @return The destination bounds, or null if none.
      */
     public Rectangle2D getDestBounds() {
-	return destBounds;
+        return destBounds;
     }
 
     /**
@@ -244,19 +242,19 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @see #setDestNode
      */
     public void setDestBounds(Rectangle2D bounds, ZCamera camera) {
-	removeDestinationNodeListeners();
+        removeDestinationNodeListeners();
 
-	destNode = null;
-	destBounds = bounds;
-	destPt = null;
-	updateLinkComponent(camera);
+        destNode = null;
+        destBounds = bounds;
+        destPt = null;
+        updateLinkComponent(camera);
 
-	if (linkNode != null) {
-	    ZVisualComponent linkComponent = linkNode.getFirstVisualComponent();
-	    if (linkComponent instanceof ZPenColor) {
-		((ZPenColor)linkComponent).setPenColor(boundsColor);
-	    }
-	}
+        if (linkNode != null) {
+            ZVisualComponent linkComponent = linkNode.getFirstVisualComponent();
+            if (linkComponent instanceof ZPenPaint) {
+                ((ZPenPaint)linkComponent).setPenPaint(boundsColor);
+            }
+        }
     }
 
     //****************************************************************************
@@ -270,10 +268,10 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * and the visual link needs to be updated.
      */
     public void computeBounds() {
-	super.computeBounds();
+        super.computeBounds();
 
-	srcPt = null;
-	updateLinkComponent(null);
+        srcPt = null;
+        updateLinkComponent(null);
     }
 
     /**
@@ -284,12 +282,12 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @return the visual component that represents the selection.
      */
     protected ZVisualComponent createLinkComponent() {
-	ZPolyline linkComponent;
+        ZPolyline linkComponent;
 
-	linkComponent = new ZPolyline();
-	linkComponent.setArrowHead(ZPolyline.ARROW_LAST);
+        linkComponent = new ZPolyline();
+        linkComponent.setArrowHead(ZPolyline.ARROW_LAST);
 
-	return linkComponent;
+        return linkComponent;
     }
 
     /**
@@ -297,17 +295,17 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @param pt The source point in global coordinates
      */
     public void setSrcPt(Point2D pt) {
-	if (srcPt == null) {
-	    srcPt = new Point2D.Double();
-	}
-	srcPt.setLocation(pt);
+        if (srcPt == null) {
+            srcPt = new Point2D.Double();
+        }
+        srcPt.setLocation(pt);
 
-	if ((destPt != null) && (linkNode != null)) {
-	    ZVisualComponent linkComponent = linkNode.getFirstVisualComponent();
-	    if (linkComponent instanceof ZPolyline) {
-		((ZPolyline)linkComponent).setCoords(srcPt, destPt);
-	    }
-	}
+        if ((destPt != null) && (linkNode != null)) {
+            ZVisualComponent linkComponent = linkNode.getFirstVisualComponent();
+            if (linkComponent instanceof ZPolyline) {
+                ((ZPolyline)linkComponent).setCoords(srcPt, destPt);
+            }
+        }
     }
 
     /**
@@ -315,17 +313,17 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @param pt The destination point in global coordinates
      */
     public void setDestPt(Point2D pt) {
-	if (destPt == null) {
-	    destPt = new Point2D.Double();
-	}
-	destPt.setLocation(pt);
+        if (destPt == null) {
+            destPt = new Point2D.Double();
+        }
+        destPt.setLocation(pt);
 
-	if ((srcPt != null) && (linkNode != null)) {
-	    ZVisualComponent linkComponent = linkNode.getFirstVisualComponent();
-	    if (linkComponent instanceof ZPolyline) {
-		((ZPolyline)linkComponent).setCoords(srcPt, destPt);
-	    }
-	}
+        if ((srcPt != null) && (linkNode != null)) {
+            ZVisualComponent linkComponent = linkNode.getFirstVisualComponent();
+            if (linkComponent instanceof ZPolyline) {
+                ((ZPolyline)linkComponent).setCoords(srcPt, destPt);
+            }
+        }
     }
 
     /**
@@ -335,65 +333,66 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @param camera The camera the link is going to be primarily viewed within.  This is used to determine the appropriate visual display of the link.
      */
     public void updateLinkComponent(ZCamera camera) {
-	ZBounds bounds;
-	Point2D pt;
+        ZBounds bounds;
+        Point2D pt;
 
-				// Nothing to do if no visual link
-	if (linkNode == null) {
-	    return;
-	}
+                                // Nothing to do if no visual link
+        if (linkNode == null) {
+            return;
+        }
 
-				// First set the pen width and color
-	ZVisualComponent linkComponent = linkNode.getFirstVisualComponent();
-	if (linkComponent instanceof ZPenColor) {
-	    if (destBounds != null) {
-		((ZPenColor)linkComponent).setPenColor(boundsColor);
-	    } else {
-		((ZPenColor)linkComponent).setPenColor(nodeColor);
-	    }
-	}
-	if (camera != null) {
-	    if (linkComponent instanceof ZStroke) {
-		((ZStroke)linkComponent).setPenWidth(DEFAULT_CONNECTOR_WIDTH / camera.getMagnification());
-	    }
-	}
+                                // First set the pen width and color
+        ZVisualComponent linkComponent = linkNode.getFirstVisualComponent();
+        if (linkComponent instanceof ZPenPaint) {
+            if (destBounds != null) {
+                ((ZPenPaint)linkComponent).setPenPaint(boundsColor);
+            } else {
+                ((ZPenPaint)linkComponent).setPenPaint(nodeColor);
+            }
+        }
+        if (camera != null) {
+            if (linkComponent instanceof ZStroke) {
+                ((ZStroke)linkComponent).setPenWidth(DEFAULT_CONNECTOR_WIDTH / camera.getMagnification());
+            }
+        }
 
-				// Then set the source bounds
-	pt = srcPt;
-	if (pt == null) {
-	    bounds = new ZBounds();
-	    for (int i=0; i<numChildren; i++) {
-		bounds.add(children[i].getBounds());
-	    }
-	    if (!bounds.isEmpty()) {
-		pt = new Point2D.Double((bounds.getX() + 0.5*bounds.getWidth()), (bounds.getY() + 0.5*bounds.getHeight()));
-		localToGlobal(pt);
-	    }
-	}
-	if (pt != null) {
-	    setSrcPt(pt);
-	}
+                                // Then set the source bounds
+        pt = srcPt;
+        if (pt == null) {
+            bounds = new ZBounds();
+            ZNode[] childrenRef = getChildrenReference();
+            for (int i=0; i<children.size(); i++) {
+                bounds.add(childrenRef[i].getBounds());
+            }
+            if (!bounds.isEmpty()) {
+                pt = new Point2D.Double((bounds.getX() + 0.5*bounds.getWidth()), (bounds.getY() + 0.5*bounds.getHeight()));
+                localToGlobal(pt);
+            }
+        }
+        if (pt != null) {
+            setSrcPt(pt);
+        }
 
-				// Finally set the destination bounds
-	pt = destPt;
-	if (pt == null) {
-	    bounds = null;
-	    if (destNode != null) {
-				// Set destination point to center of destination object
-		bounds = destNode.getGlobalBounds();
-	    } else if (destBounds != null) {
-				// Set destination point to center of destination bounds
-		bounds = new ZBounds(destBounds);
-	    }
-	    if ((bounds != null) && !bounds.isEmpty()) {
-		globalToLocal(bounds);
-		pt = new Point2D.Double((bounds.getX() + 0.5*bounds.getWidth()), (bounds.getY() + 0.5*bounds.getHeight()));
-		localToGlobal(pt);
-	    }
-	}
-	if (pt != null) {
-	    setDestPt(pt);
-	}
+                                // Finally set the destination bounds
+        pt = destPt;
+        if (pt == null) {
+            bounds = null;
+            if (destNode != null) {
+                                // Set destination point to center of destination object
+                bounds = destNode.getGlobalBounds();
+            } else if (destBounds != null) {
+                                // Set destination point to center of destination bounds
+                bounds = new ZBounds(destBounds);
+            }
+            if ((bounds != null) && !bounds.isEmpty()) {
+                globalToLocal(bounds);
+                pt = new Point2D.Double((bounds.getX() + 0.5*bounds.getWidth()), (bounds.getY() + 0.5*bounds.getHeight()));
+                localToGlobal(pt);
+            }
+        }
+        if (pt != null) {
+            setDestPt(pt);
+        }
     }
 
     /**
@@ -402,26 +401,26 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @param camera The camera the link is going to be primarily viewed within.  This is used to determine the appropriate visual display of the link.
      */
     public void setVisible(boolean visible, ZCamera camera) {
-	if (visible) {
-				// Make link visible, so create a new one if there isn't one already (and this has a parent & camera)
-	    ZGroup parent = getParent();
-	    if ((linkNode == null) && (parent != null) && (camera != null)) {
-		ZVisualComponent linkComponent = createLinkComponent();
-		linkNode = new ZVisualLeaf(linkComponent);
-		linkNode.setPickable(false);
-		linkNode.setFindable(false);
-				// Add the link above other things visible from the camera
-		ZLayerGroup[] layers = camera.getLayersReference();
-		layers[camera.getNumLayers() - 1].addChild(linkNode);
-	    }
-	    updateLinkComponent(camera);    // And, then update the visual link
-	} else {
-				// Make link invisible, so remove it
-	    if (linkNode != null) {
-		linkNode.getParent().removeChild(linkNode);
-		linkNode = null;
-	    }
-	}
+        if (visible) {
+                                // Make link visible, so create a new one if there isn't one already (and this has a parent & camera)
+            ZGroup parent = getParent();
+            if ((linkNode == null) && (parent != null) && (camera != null)) {
+                ZVisualComponent linkComponent = createLinkComponent();
+                linkNode = new ZVisualLeaf(linkComponent);
+                linkNode.setPickable(false);
+                linkNode.setFindable(false);
+                                // Add the link above other things visible from the camera
+                ZLayerGroup[] layers = camera.getLayersReference();
+                layers[camera.getNumLayers() - 1].addChild(linkNode);
+            }
+            updateLinkComponent(camera);    // And, then update the visual link
+        } else {
+                                // Make link invisible, so remove it
+            if (linkNode != null) {
+                linkNode.getParent().removeChild(linkNode);
+                linkNode = null;
+            }
+        }
     }
 
     /**
@@ -429,11 +428,11 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @return True if the link is visible.
      */
     public boolean isVisible() {
-	if (linkNode != null) {
-	    return true;
-	} else {
-	    return false;
-	}
+        if (linkNode != null) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -441,26 +440,26 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @param camera The camera to animate
      */
     public void follow(ZCamera camera) {
-	Rectangle2D bounds = null;
+        Rectangle2D bounds = null;
 
-				// First determine the endpoint bounds
-	if (destNode != null) {
-	    bounds = destNode.getGlobalBounds();
-	} else if (destBounds != null) {
-	    bounds = destBounds;
-	}
+                                // First determine the endpoint bounds
+        if (destNode != null) {
+            bounds = destNode.getGlobalBounds();
+        } else if (destBounds != null) {
+            bounds = destBounds;
+        }
 
-				// Then animate to the destination
-	if (bounds != null) {
-	    ZDrawingSurface surface = camera.getDrawingSurface();
-	    if (surface != null) {
-		surface.setInteracting(true);
-	    }
-	    camera.center(bounds, LINK_ANIMATION_TIME, surface);
-	    if (surface != null) {
-		surface.setInteracting(false);
-	    }
-	}
+                                // Then animate to the destination
+        if (bounds != null) {
+            ZDrawingSurface surface = camera.getDrawingSurface();
+            if (surface != null) {
+                surface.setInteracting(true);
+            }
+            camera.center(bounds, LINK_ANIMATION_TIME, surface);
+            if (surface != null) {
+                surface.setInteracting(false);
+            }
+        }
     }
 
     /**
@@ -469,16 +468,16 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @see ZDebug#dump
      */
     public String dump() {
-	String str = super.dump();
+        String str = super.dump();
 
-	if (destNode != null) {
-	    str += "\n Destination node: " + destNode;
-	}
-	if (destBounds != null) {
-	    str += "\n Destination bounds: " + destBounds;
-	}
+        if (destNode != null) {
+            str += "\n Destination node: " + destNode;
+        }
+        if (destBounds != null) {
+            str += "\n Destination bounds: " + destBounds;
+        }
 
-	return str;
+        return str;
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -492,14 +491,14 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @param out The stream that this object writes into
      */
     public void writeObject(ZObjectOutputStream out) throws IOException {
-	super.writeObject(out);
+        super.writeObject(out);
 
-	if (destNode != null) {
-	    out.writeState("ZNode", "destNode", destNode);
-	}
-	if (destBounds != null) {
-	    out.writeState("java.awt.geom.Rectangle2D", "destBounds", destBounds);
-	}
+        if (destNode != null) {
+            out.writeState("ZNode", "destNode", destNode);
+        }
+        if (destBounds != null) {
+            out.writeState("java.awt.geom.Rectangle2D", "destBounds", destBounds);
+        }
     }
 
     /**
@@ -507,11 +506,11 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @param out The stream that this object writes into
      */
     public void writeObjectRecurse(ZObjectOutputStream out) throws IOException {
-	super.writeObjectRecurse(out);
+        super.writeObjectRecurse(out);
 
-	if (destNode != null) {
-	    out.addObject(destNode);
-	}
+        if (destNode != null) {
+            out.addObject(destNode);
+        }
     }
 
     /**
@@ -525,13 +524,13 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @param fieldValue The value of the field
      */
     public void setState(String fieldType, String fieldName, Object fieldValue) {
-	super.setState(fieldType, fieldName, fieldValue);
+        super.setState(fieldType, fieldName, fieldValue);
 
-	if (fieldName.compareTo("destNode") == 0) {
-	    setDestNode((ZNode)fieldValue, null);
-	} else if (fieldName.compareTo("destBounds") == 0) {
-	    setDestBounds((Rectangle2D)fieldValue, null);
-	}
+        if (fieldName.compareTo("destNode") == 0) {
+            setDestNode((ZNode)fieldValue, null);
+        } else if (fieldName.compareTo("destBounds") == 0) {
+            setDestBounds((Rectangle2D)fieldValue, null);
+        }
     }
 
     /**
@@ -539,37 +538,43 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @param out The stream that this object writes into
      */
     private void writeObject(ObjectOutputStream out) throws IOException {
-				// write local class
-	out.defaultWriteObject();
+                                // write local class
+        out.defaultWriteObject();
 
-				// write Rectangle2D destBounds
-	if (destBounds == null) {
-	    out.writeBoolean(false);
-	} else {
-	    out.writeBoolean(true);
-	    out.writeDouble(destBounds.getX());
-	    out.writeDouble(destBounds.getY());
-	    out.writeDouble(destBounds.getWidth());
-	    out.writeDouble(destBounds.getHeight());
-	}
-    }	
+                                // write Rectangle2D destBounds
+        if (destBounds == null) {
+            out.writeBoolean(false);
+        } else {
+            out.writeBoolean(true);
+            out.writeDouble(destBounds.getX());
+            out.writeDouble(destBounds.getY());
+            out.writeDouble(destBounds.getWidth());
+            out.writeDouble(destBounds.getHeight());
+        }
+    }
 
     /**
      * Read in all of this object's state.
      * @param in The stream that this object reads from.
      */
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-				// read local class
-	in.defaultReadObject();
+                                // read local class
+        in.defaultReadObject();
 
-				// read Rectangle2D destBounds
-	if (in.readBoolean()) {
-	    double x, y, w, h;
-	    x = in.readDouble();
-	    y = in.readDouble();
-	    w = in.readDouble();
-	    h = in.readDouble();
-	    destBounds = new Rectangle2D.Double(x, y, w, h);
-	}
+                                // read Rectangle2D destBounds
+        if (in.readBoolean()) {
+            double x, y, w, h;
+            x = in.readDouble();
+            y = in.readDouble();
+            w = in.readDouble();
+            h = in.readDouble();
+            destBounds = new Rectangle2D.Double(x, y, w, h);
+        }
+    }
+    /**
+     * Determine if this ZAnchorGroup has a destination to link to.
+     */
+    public boolean hasDestination() {
+        return (getDestNode() != null || getDestBounds() != null);
     }
 }

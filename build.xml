@@ -1,0 +1,627 @@
+<!-- ===========================================================================
+
+Installing the build tools
+==========================
+
+The Jazz build system is based on Jakarta Ant, which is a Java building tool
+originally developed for the Jakarta Tomcat project but now used in many other
+Apache projects and extended by many developers.
+
+Ant is a little but very handy tool that uses a build file written in XML
+(this file) as building instructions. For more information refer to
+"http://jakarta.apache.org/ant/".
+
+The only thing that you have to make sure of is that the "JAVA_HOME" environment
+property is set to match the top level directory containing the JVM you want
+to use. For example:
+
+C:\> set JAVA_HOME=C:\jdk1.3
+
+or on Unix:
+
+% setenv JAVA_HOME /usr/local/java
+  (csh)
+> JAVA_HOME=/usr/java; export JAVA_HOME
+  (ksh, bash)
+
+That's it!
+
+Building instructions
+=====================
+
+Ok, let's build the samples. First, make sure your current working directory is
+where this very file is located. Then type
+
+  ./build.sh all (unix)
+  .\build.bat all (win32)
+
+if everything is right (see *) and all the required packages are visible, this action
+will generate some jar files:
+
+  jazz.jar     - This jar contains the Jazz 2d graphics framework.
+  jazzx.jar    - This jar contains nonessential, but mabye usefull jazz framework code.
+  hinote.jar   - This jar contains Hinote, a zoomable drawing program with hyperlinks.
+  help.jar     - This jar is used by the Hinote application.
+  graphit.jar  - This jar contains Graphit, a simple jazz graph drawing program.
+  examples.jar - This jar contains simple examples of the jazz programs.
+  tests.jar    - This jar contains unit tests for classes in the jazz framework.
+
+in the "./build" directory. These jar files (excluding jazz.jar wich is a library) can all
+be run by double clicking with the mouse on the jar file or by running the command
+
+  java -jar <jar file name>
+
+from within the ./build directory. Some of the jars depend on others and on files
+in ./lib so the distributions file structure should not be changed without repackaging
+the jars to remove these dependencies.
+
+* On Win/98 you may get an "Out of Environment Space" error message. This happens if
+Windows provides too small a space for environment variables. To work around this
+limitation: 
+  Close the DOS window (the error can corrupt its CLASSPATH variable). 
+  Open a new DOS window. Click on the MS-DOS icon at the top left of the window. 
+  Select the Properties option. 
+  Click on the Memory tab. 
+  Adjust the "Initial Environment" drop-down box from "Auto" to "2816". 
+  Click OK. 
+Then try building.
+
+Build targets
+=============
+
+These are the meaningful targets for this build file:
+
+ - all        -> creates all the jars 
+ - jazz       -> creates the ./build/jazz.jar file 
+ - jazzx      -> creates the ./build/jazzx.jar file 
+ - examples   -> creates the ./build/examples.jar file 
+ - tests      -> creates the ./build/tests.jar file 
+ - hinote     -> creates the ./build/hinote.jar file 
+ - graphit    -> creates the ./build/graphit.jar file 
+ - runtests   -> Runs the test cases in ./build/tests.jar
+ - runptests  -> Runs the performance test cases in ./build/tests.jar
+ - compiledist-> creates the compiled distribution in ./dist
+ - sourcedist -> creates the source distribution in ./dist
+ - api        -> generates the Jazz API documentation in ./doc/api"/
+ - clean      -> restores the distribution to its original and clean state 
+ - usage      -> (default) displays build menu 
+
+-->
+
+<project name="Jazz" default="usage" basedir=".">
+
+  <!-- =================================================================== -->
+  <!-- Initialization target                                               -->
+  <!-- =================================================================== -->
+  <target name="init">
+    <tstamp/>
+    <property name="Name" value="Jazz"/>
+    <property name="name" value="jazz"/>
+    <property name="version" value="1.2"/>
+    <property name="year" value="2001"/>
+
+    <echo message="----------- ${Name} ${version} [${year}] ------------"/>
+
+    <property name="build.compiler" value="modern"/>
+    <property name="debug" value="off"/>
+    <property name="optimize" value="on"/>
+    <property name="deprecation" value="on"/>
+    <property name="packages" value="edu.*"/>
+
+    <!-- Define the source directories -->
+    <property name="root.dir" value="./"/>
+    <property name="src.dir" value="${root.dir}/src"/>
+    <property name="doc.dir" value="${root.dir}/doc"/>
+    <property name="extras.dir" value="${root.dir}/extras"/>
+    <property name="examples.dir" value="${root.dir}/examples"/>
+    <property name="tests.dir" value="${root.dir}/tests"/>
+    <property name="hinote.dir" value="${root.dir}/demo/hinote/src"/>
+    <property name="hinote.resources.dir" value="${root.dir}/demo/hinote/resources"/>
+    <property name="graphit.dir" value="${root.dir}/demo/graphit/src"/>
+    <property name="graphit.resources.dir" value="${root.dir}/demo/graphit/resources"/>
+    <property name="lib.dir" value="${root.dir}/lib"/>
+
+    <!-- Define the source build directories -->
+    <property name="doc.apidocs" value="${doc.dir}/api"/>	   	
+    <property name="build.dir" value="${root.dir}/build"/>
+    <property name="build.lib" value="${root.dir}/build/lib"/>
+    <property name="build.jazz.src" value="${root.dir}/build/jazz/src"/>
+    <property name="build.jazz.dest" value="${root.dir}/build/jazz/classes"/>
+    <property name="build.extras.src" value="${root.dir}/build/extras/src"/>
+    <property name="build.extras.dest" value="${root.dir}/build/extras/classes"/>
+    <property name="build.examples.src" value="${root.dir}/build/examples/src"/>
+    <property name="build.examples.dest" value="${root.dir}/build/examples/classes"/>
+    <property name="build.tests.src" value="${root.dir}/build/tests/src"/>
+    <property name="build.tests.dest" value="${root.dir}/build/tests/classes"/>
+    <property name="build.hinote.src" value="${root.dir}/build/hinote/src"/>
+    <property name="build.hinote.src.resources" value="${root.dir}/build/hinote/src/resources"/>
+    <property name="build.hinote.dest" value="${root.dir}/build/hinote/classes"/>
+    <property name="build.graphit.src" value="${root.dir}/build/graphit/src"/>
+    <property name="build.graphit.src.resources" value="${root.dir}/build/graphit/src/resources"/>
+    <property name="build.graphit.dest" value="${root.dir}/build/graphit/classes"/>
+
+    <!-- Define the distribution directories -->
+    <property name="dist.root" value="${root.dir}/dist"/>
+    <property name="sourcedist.dir" value="${dist.root}/${name}-${version}/${name}-${version}"/>
+    <property name="compiledist.dir" value="${dist.root}/${name}-${version}-compiled/${name}-${version}"/>
+
+    <filter token="Copyright" value="Copyright (C) ${year} by University of Maryland, College Park, MD 20742, USA All rights reserved."/> 
+    <filter token="year" value="${year}"/>
+    <filter token="version" value="${version}"/>
+    <filter token="date" value="${TODAY}"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Help on usage                                                       -->
+  <!-- =================================================================== -->
+  <target name="usage">
+    <echo message=""/>
+    <echo message=""/>
+    <echo message="Jazz Build file"/>
+    <echo message="-------------------------------------------------------------"/>
+    <echo message=""/>
+    <echo message=" available targets are:"/>
+    <echo message=""/>
+    <echo message="   all        --> builds all the jars in ./build"/>
+    <echo message="   jazz       --> builds the jazz.jar file in ./build"/>
+    <echo message="   jazzx      --> builds the jazzx.jar file in ./build"/>
+    <echo message="   examples   --> builds the examples.jar fil in ./build"/>
+    <echo message="   tests      --> builds the tests.jar file in ./build"/>
+    <echo message="   hinote     --> builds the hinote.jar file in ./build"/>
+    <echo message="   graphit    --> builds the graphit.jar file in ./build"/>
+    <echo message="   runtests   --> Runs the test cases in ./build/tests.jar"/>
+    <echo message="   runptests  --> Runs the performance test cases in ./build/tests.jar"/>
+    <echo message="   compiledist--> creates the compiled distribution in ./dist"/>
+    <echo message="   sourcedist --> creates the source distribution in ./dist"/>
+    <echo message="   api        --> generates the Jazz API documentation in ./doc/api"/>
+    <echo message="   clean      --> restores distribution to original state"/>
+    <echo message="   usage      --> (default) displays build menu"/>
+    <echo message=""/>
+    <echo message=" See the comments inside the build.xml file for more details."/>
+    <echo message="-------------------------------------------------------------"/>
+    <echo message=""/>
+    <echo message=""/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Prepares the build directory                                        -->
+  <!-- =================================================================== -->
+  <target name="prepare" depends="init">
+    <mkdir dir="${build.dir}"/>
+    <mkdir dir="${build.lib}"/>
+
+    <copy todir="${build.lib}">
+      <fileset dir="${lib.dir}"/>
+    </copy>
+
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Prepares the jazz code                                              -->
+  <!-- =================================================================== -->
+  <target name="prepare-jazz" depends="prepare">
+    <mkdir dir="${build.jazz.src}"/>
+    <mkdir dir="${build.jazz.dest}"/>
+
+    <copy todir="${build.jazz.src}" filtering="true">
+      <fileset dir="${src.dir}" includes="**/*.java"/>
+    </copy>
+
+    <copy todir="${build.jazz.src}">
+      <fileset dir="${src.dir}" excludes="**/*.java"/>
+    </copy>
+
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Prepares the extras code                                            -->
+  <!-- =================================================================== -->
+  <target name="prepare-extras" depends="prepare">
+    <mkdir dir="${build.extras.src}"/>
+    <mkdir dir="${build.extras.dest}"/>
+
+    <copy todir="${build.extras.src}" filtering="true">
+      <fileset dir="${extras.dir}" includes="**/*.java"/>
+    </copy>
+
+    <copy todir="${build.extras.src}">
+      <fileset dir="${extras.dir}" excludes="**/*.java"/>
+    </copy>
+
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Prepares the example code                                           -->
+  <!-- =================================================================== -->
+  <target name="prepare-examples" depends="prepare">
+    <mkdir dir="${build.examples.src}"/>
+    <mkdir dir="${build.examples.dest}"/>
+
+    <copy todir="${build.examples.src}" filtering="true">
+      <fileset dir="${examples.dir}" includes="**/*.java"/>
+    </copy>
+
+    <copy todir="${build.examples.src}">
+      <fileset dir="${examples.dir}" excludes="**/*.java"/>
+    </copy>
+
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Prepares the test code                                              -->
+  <!-- =================================================================== -->
+  <target name="prepare-tests" depends="prepare">
+    <mkdir dir="${build.tests.src}"/>
+    <mkdir dir="${build.tests.dest}"/>
+
+    <copy todir="${build.tests.src}" filtering="true">
+      <fileset dir="${tests.dir}" includes="**/*.java"/>
+    </copy>
+
+    <copy todir="${build.tests.src}">
+      <fileset dir="${tests.dir}" excludes="**/*.java"/>
+    </copy>
+
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Prepares the hinote code                                            -->
+  <!-- =================================================================== -->
+  <target name="prepare-hinote" depends="prepare">
+    <mkdir dir="${build.hinote.src}"/>
+    <mkdir dir="${build.hinote.src.resources}"/>
+    <mkdir dir="${build.hinote.dest}"/>
+
+    <copy file="${root.dir}/demo/hinote/hinoteapplet.html" 
+          tofile="${build.dir}/hinoteapplet.html" />
+
+    <!-- copy src files -->
+    <copy todir="${build.hinote.src}" filtering="true">
+      <fileset dir="${hinote.dir}"/>
+    </copy>
+
+    <!-- copy resource files -->
+    <copy todir="${build.hinote.src.resources}">
+      <fileset dir="${hinote.resources.dir}"/>
+    </copy>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Prepares the graphit code                                           -->
+  <!-- =================================================================== -->
+  <target name="prepare-graphit" depends="prepare">
+    <mkdir dir="${build.graphit.src}"/>
+    <mkdir dir="${build.graphit.src.resources}"/>
+    <mkdir dir="${build.graphit.dest}"/>
+
+    <copy file="${root.dir}/demo/graphit/graphit.html" 
+          tofile="${build.dir}/graphit.html" />
+
+    <!-- copy src files -->
+   <copy todir="${build.graphit.src}" filtering="true">
+      <fileset dir="${graphit.dir}"/>
+    </copy>
+
+    <!-- copy resource files -->
+    <copy todir="${build.graphit.src.resources}">
+      <fileset dir="${graphit.resources.dir}"/>
+    </copy>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Compiles the jazz directory                                         -->
+  <!-- =================================================================== -->
+  <target name="compile-jazz" depends="prepare-jazz">
+    <!-- copy resource files -->
+    <copy todir="${build.jazz.dest}">
+      <fileset dir="${build.jazz.src}" excludes="**/*.java"/>
+    </copy>
+
+    <javac srcdir="${build.jazz.src}"
+           destdir="${build.jazz.dest}"
+           debug="${debug}"
+           deprecation="${deprecation}" 
+           optimize="${optimize}"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Compiles the extras directory                                       -->
+  <!-- =================================================================== -->
+  <target name="compile-extras" depends="prepare-extras, jazz">
+    <!-- copy resource files -->
+    <copy todir="${build.extras.dest}">
+      <fileset dir="${build.extras.src}" excludes="**/*.java"/>
+    </copy>
+
+    <javac srcdir="${build.extras.src}"
+           destdir="${build.extras.dest}"
+	   classpath="${build.dir}/${name}.jar"
+           debug="${debug}"
+           deprecation="${deprecation}" 
+           optimize="${optimize}"/>
+  </target>
+
+
+  <!-- =================================================================== -->
+  <!-- Compiles the examples directory                                     -->
+  <!-- =================================================================== -->
+  <target name="compile-examples" depends="prepare-examples, jazz, extras">
+    <!-- copy resource files -->
+    <copy todir="${build.examples.dest}">
+      <fileset dir="${build.examples.src}" excludes="**/*.java"/>
+    </copy>
+
+    <javac srcdir="${build.examples.src}"
+           destdir="${build.examples.dest}"
+	   classpath="${build.dir}/${name}.jar;${build.dir}/${name}x.jar"
+           debug="${debug}"
+           deprecation="${deprecation}" 
+           optimize="${optimize}"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Compiles the tests directory                                        -->
+  <!-- =================================================================== -->
+  <target name="compile-tests" depends="prepare-tests, jazz">
+    <!-- copy resource files -->
+    <copy todir="${build.tests.dest}">
+      <fileset dir="${build.tests.src}" excludes="**/*.java"/>
+    </copy>
+
+    <javac srcdir="${build.tests.src}"
+           destdir="${build.tests.dest}"
+	   classpath="${build.dir}/${name}.jar"
+           debug="${debug}"
+           deprecation="${deprecation}" 
+           optimize="${optimize}"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Compiles the hinote directory                                       -->
+  <!-- =================================================================== -->
+  <target name="compile-hinote" depends="prepare-hinote, jazz, extras">
+    <!-- copy resource files -->
+    <copy todir="${build.hinote.dest}">
+      <fileset dir="${build.hinote.src}" excludes="**/*.java"/>
+    </copy>
+
+    <javac srcdir="${build.hinote.src}"
+           destdir="${build.hinote.dest}"
+	   classpath="${build.dir}/${name}.jar;${build.dir}/${name}x.jar"
+           debug="${debug}"
+           deprecation="${deprecation}" 
+           optimize="${optimize}"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Compiles the graphit directory                                      -->
+  <!-- =================================================================== -->
+  <target name="compile-graphit" depends="prepare-graphit, jazz">
+    <!-- copy resource files -->
+   <copy todir="${build.graphit.dest}">
+      <fileset dir="${build.graphit.src}" excludes="**/*.java"/>
+    </copy>
+
+    <javac srcdir="${build.graphit.src}"
+           destdir="${build.graphit.dest}"
+	   classpath="${build.dir}/${name}.jar"
+           debug="${debug}"
+           deprecation="${deprecation}" 
+           optimize="${optimize}"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Creates the jazz.jar in ./build                                     -->
+  <!-- =================================================================== -->
+  <target name="jazz" depends="compile-jazz">
+    <jar jarfile="${build.dir}/${name}.jar"
+         basedir="${build.jazz.dest}"
+         includes="**"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Creates the jazzx.jar in ./build                                 -->
+  <!-- =================================================================== -->
+  <target name="extras" depends="compile-extras">
+    <jar jarfile="${build.dir}/${name}x.jar"
+         basedir="${build.extras.dest}"
+         manifest="${build.extras.src}/extras.manifest"
+         includes="**"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Creates the examples.jar in ./build                                 -->
+  <!-- =================================================================== -->
+  <target name="examples" depends="compile-examples">
+    <jar jarfile="${build.dir}/examples.jar"
+         basedir="${build.examples.dest}"
+         manifest="${build.examples.src}/examples.manifest"
+         includes="**"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Creates the tests.jar in ./build                                    -->
+  <!-- =================================================================== -->
+  <target name="tests" depends="compile-tests">
+    <jar jarfile="${build.dir}/tests.jar"
+         basedir="${build.tests.dest}"
+         manifest="${build.tests.src}/tests.manifest"
+         includes="**"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Creates the hinote.jar in ./build and help.jar (used by hinote)     -->
+  <!-- =================================================================== -->
+  <target name="hinote" depends="compile-hinote">
+    <jar jarfile="${build.dir}/hinote.jar"
+         basedir="${build.hinote.dest}"
+         manifest="${build.hinote.dest}/resources/hinote.manifest"
+         includes="**"/>
+
+    <jar jarfile="${build.dir}/help.jar"
+         basedir="${build.hinote.dest}/resources"
+         manifest="${build.hinote.dest}/resources/help.manifest"
+         includes="*.jazz"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Creates the graphit.jar in ./build                                  -->
+  <!-- =================================================================== -->
+  <target name="graphit" depends="compile-graphit">
+    <jar jarfile="${build.dir}/graphit.jar"
+         basedir="${build.graphit.dest}"
+         manifest="${build.graphit.dest}/resources/graphit.manifest"
+         includes="**"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Run the test cases                                                  -->
+  <!-- =================================================================== -->
+  <target name="runtests" depends="tests">
+    <java fork="yes" classname="junit.textui.TestRunner" taskname="junit" failonerror="true">
+      <arg value="edu.umd.cs.jazztest.RunAllUnitTests"/>
+      <classpath>
+        <pathelement location="${build.dir}/${name}.jar" />
+        <pathelement location="${build.dir}/tests.jar" />
+        <pathelement path="" />
+        <pathelement path="${java.class.path}" />
+      </classpath>
+    </java>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Run performance the test cases                                      -->
+  <!-- =================================================================== -->
+  <target name="runptests" depends="tests">
+    <java fork="yes" classname="edu.umd.cs.jazzperformancetests.RunAllPerformanceTests" taskname="junit" failonerror="true">
+      <arg value="edu.umd.cs.jazzperformancetests.RunAllPerformanceTests"/>
+      <classpath>
+        <pathelement location="${build.dir}/${name}.jar" />
+        <pathelement location="${build.dir}/tests.jar" />
+        <pathelement path="" />
+        <pathelement path="${java.class.path}" />
+      </classpath>
+    </java>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Build all jars in ./build                                           -->
+  <!-- =================================================================== -->
+  <target name="all" depends="jazz, extras, examples, hinote, graphit, runtests"/>
+
+  <!-- =================================================================== -->
+  <!-- Creates the API documentation in ./doc/api/                     -->
+  <!-- =================================================================== -->
+  <target name="api" depends="prepare-jazz">
+    <mkdir dir="${doc.apidocs}"/>
+    <javadoc packagenames="${packages}"
+             sourcepath="${build.jazz.src}"
+             destdir="${doc.apidocs}"
+             overview="${build.jazz.src}/edu/umd/cs/jazz/overview.html"
+             author="true"
+             version="true"
+             use="true"
+             splitindex="true"
+             noindex="false"
+             windowtitle="${Name} API"
+             doctitle="${Name}"
+             bottom="Copyright &#169; ${year} by University of Maryland, College Park, MD 20742, USA All rights reserved."
+    />
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Build source distribution in ./dist                                 -->
+  <!-- =================================================================== -->
+  <target name="sourcedist" depends="clean">
+    <mkdir dir="${dist.root}"/>
+    <mkdir dir="${sourcedist.dir}"/>
+
+    <copy todir="${sourcedist.dir}">
+      <fileset dir="${root.dir}"/>
+    </copy>
+
+    <!-- Now delete what we dont want, probably a better way to do this -->
+    <delete dir="${sourcedist.dir}/tabstospaces"/>
+    <delete dir="${sourcedist.dir}/dist"/>
+
+    <fixcrlf srcdir="${sourcedist.dir}"
+       cr="remove" eof="remove"
+       includes="**/*.sh"
+    />
+
+    <zip zipfile="${dist.root}/${name}-${version}.zip"
+         basedir="${dist.root}/${name}-${version}"
+         whenempty="create"
+    />
+
+  </target>
+	
+
+  <!-- =================================================================== -->
+  <!-- Build compiled distribution in ./dist                                 -->
+  <!-- =================================================================== -->
+  <target name="compiledist" depends="clean, all, api">
+    <mkdir dir="${dist.root}"/>
+    <mkdir dir="${compiledist.dir}"/>
+
+    <copy todir="${compiledist.dir}">
+      <fileset dir="${root.dir}"/>
+    </copy>
+
+    <!-- Now delete what we dont want, probably a better way to do this -->
+    <delete dir="${compiledist.dir}/tabstospaces"/>
+    <delete dir="${compiledist.dir}/dist"/>
+    <delete dir="${compiledist.dir}/build/extras"/>
+    <delete dir="${compiledist.dir}/build/examples"/>
+    <delete dir="${compiledist.dir}/build/graphit"/>
+    <delete dir="${compiledist.dir}/build/hinote"/>
+    <delete dir="${compiledist.dir}/build/jazz"/>
+    <delete dir="${compiledist.dir}/build/tests"/>
+
+    <fixcrlf srcdir="${compiledist.dir}"
+       cr="remove" eof="remove"
+       includes="**/*.sh"
+    />
+
+    <zip zipfile="${dist.root}/${name}-${version}-compiled.zip"
+         basedir="${dist.root}/${name}-${version}-compiled"
+         whenempty="create"
+    />
+
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Clean restors distribution to original state                        -->
+  <!-- =================================================================== -->
+  <target name="clean" depends="init">
+    <delete dir="${build.dir}"/>
+    <delete dir="${dist.root}"/>
+    <delete dir="${doc.apidocs}"/>
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Converts tabs to Visual Age form                                    -->
+  <!-- =================================================================== -->
+  <target name="tabToVA">
+    <fixcrlf 
+         srcDir="./tabstospaces"
+         tab="remove"
+         tablength="8"
+         includes="**/*.java"
+    />
+  </target>
+
+  <!-- =================================================================== -->
+  <!-- Converts tabs from Visual Age for to standard text editor form.     -->
+  <!-- =================================================================== -->
+  <target name="tabFromVA">
+    <fixcrlf 
+         srcdir="./tabstospaces"
+         tab="remove"
+         tablength="4"
+         includes="**/*.java"
+    />
+  </target>
+</project>
+
+<!-- End of file -->

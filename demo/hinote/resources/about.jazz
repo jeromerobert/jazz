@@ -84,7 +84,7 @@
   {
     java.awt.Color caretColor [0.0 0.0 0.0 1.0]
     java.awt.Font font ["Arial" 0 40]
-    String text "Version 1.0"
+    String text "Version 1.2"
   }
 ]
 [OBJECT @Z7 # edu.umd.cs.jazz.ZTransformGroup
@@ -291,7 +291,7 @@
     java.awt.Color penColor [0.0 0.0 0.0 1.0]
     java.awt.Color caretColor [0.0 0.0 0.0 1.0]
     java.awt.Font font ["Arial" 0 40]
-    String text "Britt McAlister   Juan Pablo\nMaria Jump      Lance Good\nJim Mokwa       Raj Iyer\nJon Meyer"
+    String text "Britt McAlister   Juan Pablo\nMaria Jump      Lance Good\nJim Mokwa       Raj Iyer\nJon Meyer       Jesse Grosjean"
   }
 ]
 [OBJECT @Z39 # edu.umd.cs.jazz.ZTransformGroup

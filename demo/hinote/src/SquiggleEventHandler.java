@@ -25,38 +25,38 @@ public class SquiggleEventHandler implements ZEventHandler, ZMouseListener, ZMou
     private HiNoteCore hinote;
     private ZPolyline polyline;
     private Point2D pt;
-				                    // Mask out mouse and mouse/key chords
-    private int            all_button_mask   = (MouseEvent.BUTTON1_MASK | 
-						MouseEvent.BUTTON2_MASK | 
-						MouseEvent.BUTTON3_MASK | 
-						MouseEvent.ALT_GRAPH_MASK | 
-						MouseEvent.CTRL_MASK | 
-						MouseEvent.META_MASK | 
-						MouseEvent.SHIFT_MASK | 
-						MouseEvent.ALT_MASK);
+                                                    // Mask out mouse and mouse/key chords
+    private int            all_button_mask   = (MouseEvent.BUTTON1_MASK |
+                                                MouseEvent.BUTTON2_MASK |
+                                                MouseEvent.BUTTON3_MASK |
+                                                MouseEvent.ALT_GRAPH_MASK |
+                                                MouseEvent.CTRL_MASK |
+                                                MouseEvent.META_MASK |
+                                                MouseEvent.SHIFT_MASK |
+                                                MouseEvent.ALT_MASK);
 
     public SquiggleEventHandler(HiNoteCore hinote, ZNode node) {
-	this.hinote = hinote;
-	this.node = node;
-	pt = new Point2D.Double();
+        this.hinote = hinote;
+        this.node = node;
+        pt = new Point2D.Double();
     }
-    
+
     /**
      * Specifies whether this event handler is active or not.
      * @param active True to make this event handler active
      */
     public void setActive(boolean active) {
-	if (this.active && !active) {
-				// Turn off event handlers
-	    this.active = false;
-	    node.removeMouseListener(this);
-	    node.removeMouseMotionListener(this);
-	} else if (!this.active && active) {
-				// Turn on event handlers
-	    this.active = true;
-	    node.addMouseListener(this);
-	    node.addMouseMotionListener(this);
-	}
+        if (this.active && !active) {
+                                // Turn off event handlers
+            this.active = false;
+            node.removeMouseListener(this);
+            node.removeMouseMotionListener(this);
+        } else if (!this.active && active) {
+                                // Turn on event handlers
+            this.active = true;
+            node.addMouseListener(this);
+            node.addMouseMotionListener(this);
+        }
     }
 
     /**
@@ -64,45 +64,45 @@ public class SquiggleEventHandler implements ZEventHandler, ZMouseListener, ZMou
      * @return True if active
      */
     public boolean isActive() {
-	return active;
+        return active;
     }
 
     public void mousePressed(ZMouseEvent e) {
-	if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
-	    ZSceneGraphPath path = e.getPath();
-	    ZCamera camera = path.getTopCamera();
-	    ZGroup layer = hinote.getDrawingLayer();
+        if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
+            ZSceneGraphPath path = e.getPath();
+            ZCamera camera = path.getTopCamera();
+            ZGroup layer = hinote.getDrawingLayer();
 
-	    camera.getDrawingSurface().setInteracting(true);
+            camera.getDrawingSurface().setInteracting(true);
 
-	    pt.setLocation(e.getX(), e.getY());
-	    path.screenToGlobal(pt);
-	    
-	    polyline = new ZPolyline(pt);
-	    ZVisualLeaf leaf = new ZVisualLeaf(polyline);
+            pt.setLocation(e.getX(), e.getY());
+            path.screenToGlobal(pt);
 
-	    polyline.setPenWidth(hinote.penWidth / camera.getMagnification());
-	    polyline.setPenColor(hinote.penColor);
-	    layer.addChild(leaf);
-	}
+            polyline = new ZPolyline(pt);
+            ZVisualLeaf leaf = new ZVisualLeaf(polyline);
+
+            polyline.setPenWidth(hinote.penWidth / camera.getMagnification());
+            polyline.setPenPaint(hinote.penColor);
+            layer.addChild(leaf);
+        }
     }
-    
+
     public void mouseDragged(ZMouseEvent e) {
-	if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
-	    ZSceneGraphPath path = e.getPath();
-	    pt.setLocation(e.getX(), e.getY());
-	    path.screenToGlobal(pt);
-	    
-	    polyline.add(pt);
-	}
+        if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
+            ZSceneGraphPath path = e.getPath();
+            pt.setLocation(e.getX(), e.getY());
+            path.screenToGlobal(pt);
+
+            polyline.add(pt);
+        }
     }
-    
+
     public void mouseReleased(ZMouseEvent e) {
-	if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
-	    ZSceneGraphPath path = e.getPath();
-	    path.getTopCamera().getDrawingSurface().setInteracting(false);
-	    polyline = null;
-	}
+        if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
+            ZSceneGraphPath path = e.getPath();
+            path.getTopCamera().getDrawingSurface().setInteracting(false);
+            polyline = null;
+        }
     }
 
     /**

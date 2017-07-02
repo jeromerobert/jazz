@@ -1,0 +1,3 @@
+Main-Class: edu.umd.cs.jazztest.RunAllUnitTests
+Class-Path: jazz.jar lib/junit.jar
+Created-By: Jesse Grosjean

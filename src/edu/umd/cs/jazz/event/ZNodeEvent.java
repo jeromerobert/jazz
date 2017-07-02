@@ -22,8 +22,8 @@ import edu.umd.cs.jazz.*;
  * The event is passed to every <code>ZNodeListener</code>
  * or <code>ZNodeAdapter</code> object which registered to receive such
  * events using the Node's <code>addNodeListener</code> method.
- * (<code>ZNodeAdapter</code> objects implement the 
- * <code>ZNodeListener</code> interface.) Each such listener object 
+ * (<code>ZNodeAdapter</code> objects implement the
+ * <code>ZNodeListener</code> interface.) Each such listener object
  * gets this <code>ZNodeEvent</code> when the event occurs.
  *
  * <P>
@@ -37,7 +37,7 @@ import edu.umd.cs.jazz.*;
  * @see ZNodeListener
  * @author Ben Bederson
  */
-public class ZNodeEvent extends AWTEvent implements Serializable {
+public class ZNodeEvent extends AWTEvent implements ZEvent, Serializable {
 
     /**
      * The first number in the range of ids used for node events.
@@ -52,13 +52,13 @@ public class ZNodeEvent extends AWTEvent implements Serializable {
     /**
      * This event indicates that a node's bounds changed.
      */
-    public static final int BOUNDS_CHANGED	= NODE_FIRST;
+    public static final int BOUNDS_CHANGED      = NODE_FIRST;
 
     /**
      * This event indicates that a node's global bounds changed.
      */
     public static final int GLOBAL_BOUNDS_CHANGED = NODE_LAST;
-    
+
     /**
      * The non-null node whose bounds changed.
      *
@@ -73,15 +73,42 @@ public class ZNodeEvent extends AWTEvent implements Serializable {
 
     /**
      * Constructs a ZNodeEvent object.
-     * 
+     *
      * @param source    the ZNode object that originated the event, and whose
      * bounds have changed.
-     * @param id        an integer indicating the type of event
+     * @param id an integer indicating the type of event
+     * @deprecated as of Jazz 1.1, use createBoundsChangedEvent() or createGlobalBoundsChanged() instead.
      */
     public ZNodeEvent(ZNode source, int id) {
         super(source, id);
-	node = source;
-	consumed = false;
+        node = source;
+        consumed = false;
+    }
+
+    protected ZNodeEvent(ZNode source, int id, Object dummy) {
+        super(source, id);
+        node = source;
+        consumed = false;
+    }
+
+    /**
+     * Factory method to create a ZNodeEvent with a BOUNDS_CHANGED ID.
+     *
+     * @param source The ZNode object that originated the event, and whose
+     * bounds have changed.
+     */
+    public static ZNodeEvent createBoundsChangedEvent(ZNode aNode) {
+        return new ZNodeEvent(aNode, ZNodeEvent.BOUNDS_CHANGED, null);
+    }
+
+    /**
+     * Factory method to create a ZNodeEvent with a GLOBAL_BOUNDS_CHANGED ID.
+     *
+     * @param source The ZNode object that originated the event, and whose
+     * bounds have changed.
+     */
+    public static ZNodeEvent createGlobalBoundsChangedEvent(ZNode aNode) {
+        return new ZNodeEvent(aNode, ZNodeEvent.GLOBAL_BOUNDS_CHANGED, null);
     }
 
     /**
@@ -97,13 +124,45 @@ public class ZNodeEvent extends AWTEvent implements Serializable {
      * True if this event has been consumed.
      */
     public boolean isConsumed() {
-	return consumed;
+        return consumed;
     }
 
     /**
      * Consume this event.
      */
     public void consume() {
-	consumed = true;
+        consumed = true;
+    }
+
+    /**
+     * Calls appropriate method on the listener based on this events ID.
+     */
+    public void dispatchTo(Object listener) {
+        ZNodeListener nodeListener = (ZNodeListener) listener;
+        switch (getID()) {
+            case ZNodeEvent.BOUNDS_CHANGED:
+                nodeListener.boundsChanged(this);
+                break;
+            case ZNodeEvent.GLOBAL_BOUNDS_CHANGED:
+                nodeListener.globalBoundsChanged(this);
+                break;
+            default:
+                throw new RuntimeException("ZNodeEvent with bad ID");
+        }
+    }
+
+    /**
+     * Returns the ZNodeLister class.
+     */
+    public Class getListenerType() {
+        return ZNodeListener.class;
+    }
+
+    /**
+     * Set the souce of this event. As the event is fired up the tree the source of the
+     * event will keep changing to reflect the scenegraph object that is firing the event.
+     */
+    public void setSource(Object aSource) {
+        source = aSource;
     }
 }

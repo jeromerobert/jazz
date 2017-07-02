@@ -90,6 +90,34 @@ public class ZObjectOutputStream extends OutputStream implements Serializable {
 	replacedObjs = new Hashtable();
     }
 
+    /**
+     * Determine if the specified object is savable.
+     * @param obj Object to check
+     * @return true if object is savable.
+     */
+    static public boolean isSavable(Object obj) {
+	boolean rc = false;
+
+	if ((obj instanceof Short) ||
+	    (obj instanceof Integer) ||
+	    (obj instanceof Long) ||
+	    (obj instanceof Float) ||
+	    (obj instanceof Double) ||
+	    (obj instanceof Boolean) ||
+	    (obj instanceof String) ||
+	    (obj instanceof Byte) ||
+	    (obj instanceof Color) ||
+	    (obj instanceof Font) ||
+	    (obj instanceof Rectangle2D) ||
+	    (obj instanceof AffineTransform) ||
+	    (obj instanceof Image) ||
+	    (obj instanceof ZSerializable)) {
+	    rc = true;
+	}
+
+	return rc;
+    }
+
     public void writeObject(ZSerializable obj) throws IOException {
 	int i = 0;
 	int objId;
@@ -239,7 +267,7 @@ public class ZObjectOutputStream extends OutputStream implements Serializable {
 				// Write out comment saying that unsavable ones are skipped.
 	for (Iterator i=value.iterator(); i.hasNext();) {
 	    obj = i.next();
-	    if (!isSavable(obj)) {
+	    if (!isSaved(obj)) {
 		if (unsavedObjsList == null) {
 		    unsavedObjsList = new Vector();
 		}
@@ -263,7 +291,7 @@ public class ZObjectOutputStream extends OutputStream implements Serializable {
 	    dos.writeBytes("    " + type + " " + name + " [");
 	    for (Iterator i=value.iterator(); i.hasNext();) {
 		obj = i.next();
-		if (isSavable(obj)) {
+		if (isSaved(obj)) {
 		    if (first) {
 			first = false;
 		    } else {
@@ -314,7 +342,7 @@ public class ZObjectOutputStream extends OutputStream implements Serializable {
 	    dos.writeBytes("\n");
 	}
 
-	if (isSavable(obj)) {
+	if (isSaved(obj)) {
 	    dos.writeBytes("    " + type + " " + name + " ");
 	    writeState(obj);
 	    dos.writeBytes("\n");
@@ -324,7 +352,7 @@ public class ZObjectOutputStream extends OutputStream implements Serializable {
 	}
     }
 
-    public boolean isSavable(Object obj) {
+    public boolean isSaved(Object obj) {
 	boolean rc;
 
 	if ((obj instanceof ZSerializable) &&

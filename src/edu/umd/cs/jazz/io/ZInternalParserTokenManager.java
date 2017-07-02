@@ -1358,7 +1358,7 @@ static private final int jjMoveNfa_0(int startState, int curPos)
                      jjAddStates(71, 72);
                   break;
                case 105:
-                  if ((0x4000000040L & l) != 0L && kind > 25)
+                  if ((0x1000000010L & l) != 0L && kind > 25)
                      kind = 25;
                   break;
                case 108:
@@ -1366,7 +1366,7 @@ static private final int jjMoveNfa_0(int startState, int curPos)
                      jjAddStates(73, 74);
                   break;
                case 111:
-                  if ((0x1000000010L & l) != 0L && kind > 26)
+                  if ((0x4000000040L & l) != 0L && kind > 26)
                      kind = 26;
                   break;
                case 116:
@@ -1686,7 +1686,7 @@ public static final Token getNextToken()
      switch(curLexState)
      {
        case 0:
-         try { 
+         try { input_stream.backup(0);
             while (curChar <= 32 && (0x100003600L & (1L << curChar)) != 0L)
                curChar = input_stream.BeginToken();
          }

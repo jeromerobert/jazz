@@ -1,0 +1,56 @@
+Jazz ToDo List
+--------------
+
+  BUGS
+  ----
+
+  * 06/15/1999: BBB/JJM - The bounding box of ZText is not being
+    computed exactly.   Since the text is rendered differently at
+    different sizes in low quality mode, its actual bounds shifts
+    around while the bounds that we compute is fixed - and thus
+    they are off somewhat.
+
+  * 06/14/1999: BBB - Changing the transform of nodes with sticky
+    object decorators doesn't do what the user might want.  It does
+    do the right thing mathematically, but that might not be what
+    the caller is expecting.  This affects selection of sticky
+    objects in the HiNote application.
+
+  * 05/28/1999: BBB - Animating a node with no visual component,
+    but with children doesn't work for Jim Mokwa.
+
+  * 05/07/1999: BBB - Fix printing of images on HP DeskJet 890C
+    Images don't seem to print, even though they work on other printers.
+
+  FEATURES NEEDED
+  ---------------
+
+  * 06/10/1999: BBB - Make volatile objects use a more general kind ZContext
+    class so that we can have general context-sensitive objects, that define
+    rendering, bounds, and other stuff.  The crucial part is that bounds should
+    be able to be determined by the context so, for example, we can have 
+    single-pixel thick lines within *all* cameras, instead of just one.
+
+  * 05/28/1999: BBB - Pick should return an application-specific
+    integer that allows an application to be more specific about
+    what was picked.
+
+  * 05/10/1999: BBB - Add option to limit zooming in ZoomEventHandlerRightButton
+
+  * 05/07/1999: BBB - Support Jazz running within components with Borders 
+
+  * 05/07/1999: BBB - Add 'select group members' option to pick
+    Want to be able to have control over whether
+    picking picks a group, or a member (i.e., a node or its children)
+
+  * 05/07/1999: BBB - Multiple Camera Application
+    An internal camera should have some window dressing that can be used to pick
+    the camera as an object.
+
+  * 05/07/1999: BBB - Add open arrowhead support for ZPolyline
+
+  * 05/07/1999: BBB - Design Event structure
+
+  * 05/07/1999: BBB - Design Layout Manager structure
+
+  * 05/07/1999: BBB - Design Lenses

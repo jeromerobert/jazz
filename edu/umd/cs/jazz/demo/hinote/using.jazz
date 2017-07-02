@@ -1,0 +1,2053 @@
+#JAZZ1.0
+[
+  Z1 edu.umd.cs.jazz.scenegraph.ZRootNode
+  Z2 edu.umd.cs.jazz.scenegraph.ZNode
+  Z3 edu.umd.cs.jazz.scenegraph.ZNode
+  Z4 edu.umd.cs.jazz.component.ZRectangle
+  Z5 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z6 edu.umd.cs.jazz.scenegraph.ZNode
+  Z7 edu.umd.cs.jazz.component.ZRectangle
+  Z8 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z9 edu.umd.cs.jazz.scenegraph.ZNode
+  Z10 edu.umd.cs.jazz.component.ZRectangle
+  Z11 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z12 edu.umd.cs.jazz.scenegraph.ZNode
+  Z13 edu.umd.cs.jazz.component.ZRectangle
+  Z14 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z15 edu.umd.cs.jazz.scenegraph.ZNode
+  Z16 edu.umd.cs.jazz.component.ZRectangle
+  Z17 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z18 edu.umd.cs.jazz.scenegraph.ZNode
+  Z19 edu.umd.cs.jazz.component.ZRectangle
+  Z20 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z21 edu.umd.cs.jazz.scenegraph.ZNode
+  Z22 edu.umd.cs.jazz.component.ZRectangle
+  Z23 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z24 edu.umd.cs.jazz.scenegraph.ZNode
+  Z25 edu.umd.cs.jazz.component.ZRectangle
+  Z26 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z27 edu.umd.cs.jazz.scenegraph.ZNode
+  Z28 edu.umd.cs.jazz.component.ZText
+  Z29 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z30 edu.umd.cs.jazz.scenegraph.ZNode
+  Z31 edu.umd.cs.jazz.component.ZText
+  Z32 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z33 edu.umd.cs.jazz.scenegraph.ZNode
+  Z34 edu.umd.cs.jazz.component.ZPolyline
+  Z35 edu.umd.cs.jazz.scenegraph.ZNode
+  Z36 edu.umd.cs.jazz.component.ZText
+  Z37 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z38 edu.umd.cs.jazz.scenegraph.ZNode
+  Z39 edu.umd.cs.jazz.component.ZText
+  Z40 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z41 edu.umd.cs.jazz.scenegraph.ZNode
+  Z42 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z43 edu.umd.cs.jazz.component.ZRectangle
+  Z44 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z45 edu.umd.cs.jazz.scenegraph.ZNode
+  Z46 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z47 edu.umd.cs.jazz.component.ZText
+  Z48 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z49 edu.umd.cs.jazz.scenegraph.ZNode
+  Z50 edu.umd.cs.jazz.component.ZText
+  Z51 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z52 edu.umd.cs.jazz.scenegraph.ZNode
+  Z53 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z54 edu.umd.cs.jazz.component.ZText
+  Z55 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z56 edu.umd.cs.jazz.scenegraph.ZNode
+  Z57 edu.umd.cs.jazz.component.ZText
+  Z58 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z59 edu.umd.cs.jazz.scenegraph.ZNode
+  Z60 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z61 edu.umd.cs.jazz.component.ZText
+  Z62 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z63 edu.umd.cs.jazz.scenegraph.ZNode
+  Z64 edu.umd.cs.jazz.component.ZPolyline
+  Z65 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z66 edu.umd.cs.jazz.scenegraph.ZNode
+  Z67 edu.umd.cs.jazz.component.ZText
+  Z68 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z69 edu.umd.cs.jazz.scenegraph.ZNode
+  Z70 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z71 edu.umd.cs.jazz.component.ZText
+  Z72 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z73 edu.umd.cs.jazz.scenegraph.ZNode
+  Z74 edu.umd.cs.jazz.component.ZText
+  Z75 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z76 edu.umd.cs.jazz.scenegraph.ZNode
+  Z77 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z78 edu.umd.cs.jazz.component.ZText
+  Z79 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z80 edu.umd.cs.jazz.scenegraph.ZNode
+  Z81 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z82 edu.umd.cs.jazz.component.ZText
+  Z83 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z84 edu.umd.cs.jazz.scenegraph.ZNode
+  Z85 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z86 edu.umd.cs.jazz.component.ZText
+  Z87 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z88 edu.umd.cs.jazz.scenegraph.ZNode
+  Z89 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z90 edu.umd.cs.jazz.component.ZText
+  Z91 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z92 edu.umd.cs.jazz.scenegraph.ZNode
+  Z93 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z94 edu.umd.cs.jazz.component.ZText
+  Z95 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z96 edu.umd.cs.jazz.scenegraph.ZNode
+  Z97 edu.umd.cs.jazz.component.ZText
+  Z98 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z99 edu.umd.cs.jazz.scenegraph.ZNode
+  Z100 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z101 edu.umd.cs.jazz.component.ZText
+  Z102 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z103 edu.umd.cs.jazz.scenegraph.ZNode
+  Z104 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z105 edu.umd.cs.jazz.component.ZText
+  Z106 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z107 edu.umd.cs.jazz.scenegraph.ZNode
+  Z108 edu.umd.cs.jazz.component.ZPolyline
+  Z109 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z110 edu.umd.cs.jazz.scenegraph.ZNode
+  Z111 edu.umd.cs.jazz.component.ZText
+  Z112 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z113 edu.umd.cs.jazz.scenegraph.ZNode
+  Z114 edu.umd.cs.jazz.component.ZPolyline
+  Z115 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z116 edu.umd.cs.jazz.scenegraph.ZNode
+  Z117 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z118 edu.umd.cs.jazz.component.ZText
+  Z119 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z120 edu.umd.cs.jazz.scenegraph.ZNode
+  Z121 edu.umd.cs.jazz.component.ZPolyline
+  Z122 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z123 edu.umd.cs.jazz.scenegraph.ZNode
+  Z124 edu.umd.cs.jazz.component.ZRectangle
+  Z125 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z126 edu.umd.cs.jazz.scenegraph.ZNode
+  Z127 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z128 edu.umd.cs.jazz.component.ZText
+  Z129 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z130 edu.umd.cs.jazz.scenegraph.ZNode
+  Z131 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z132 edu.umd.cs.jazz.component.ZText
+  Z133 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z134 edu.umd.cs.jazz.scenegraph.ZNode
+  Z135 edu.umd.cs.jazz.component.ZText
+  Z136 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z137 edu.umd.cs.jazz.scenegraph.ZNode
+  Z138 edu.umd.cs.jazz.component.ZRectangle
+  Z139 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z140 edu.umd.cs.jazz.scenegraph.ZNode
+  Z141 edu.umd.cs.jazz.component.ZRectangle
+  Z142 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z143 edu.umd.cs.jazz.scenegraph.ZNode
+  Z144 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z145 edu.umd.cs.jazz.component.ZText
+  Z146 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z147 edu.umd.cs.jazz.scenegraph.ZNode
+  Z148 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z149 edu.umd.cs.jazz.component.ZText
+  Z150 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z151 edu.umd.cs.jazz.scenegraph.ZNode
+  Z152 edu.umd.cs.jazz.component.ZPolyline
+  Z153 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z154 edu.umd.cs.jazz.scenegraph.ZNode
+  Z155 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z156 edu.umd.cs.jazz.component.ZText
+  Z157 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z158 edu.umd.cs.jazz.scenegraph.ZNode
+  Z159 edu.umd.cs.jazz.component.ZText
+  Z160 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z161 edu.umd.cs.jazz.scenegraph.ZNode
+  Z162 edu.umd.cs.jazz.component.ZRectangle
+  Z163 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z164 edu.umd.cs.jazz.scenegraph.ZNode
+  Z165 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z166 edu.umd.cs.jazz.component.ZText
+  Z167 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z168 edu.umd.cs.jazz.scenegraph.ZNode
+  Z169 edu.umd.cs.jazz.component.ZPolyline
+  Z170 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z171 edu.umd.cs.jazz.scenegraph.ZNode
+  Z172 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z173 edu.umd.cs.jazz.component.ZText
+  Z174 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z175 edu.umd.cs.jazz.scenegraph.ZNode
+  Z176 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z177 edu.umd.cs.jazz.component.ZText
+  Z178 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z179 edu.umd.cs.jazz.scenegraph.ZNode
+  Z180 edu.umd.cs.jazz.component.ZText
+  Z181 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z182 edu.umd.cs.jazz.scenegraph.ZNode
+  Z183 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z184 edu.umd.cs.jazz.component.ZText
+  Z185 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z186 edu.umd.cs.jazz.scenegraph.ZNode
+  Z187 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z188 edu.umd.cs.jazz.component.ZText
+  Z189 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z190 edu.umd.cs.jazz.scenegraph.ZNode
+  Z191 edu.umd.cs.jazz.component.ZPolyline
+  Z192 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z193 edu.umd.cs.jazz.scenegraph.ZNode
+  Z194 edu.umd.cs.jazz.component.ZRectangle
+  Z195 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z196 edu.umd.cs.jazz.scenegraph.ZNode
+  Z197 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z198 edu.umd.cs.jazz.component.ZText
+  Z199 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z200 edu.umd.cs.jazz.scenegraph.ZNode
+  Z201 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z202 edu.umd.cs.jazz.component.ZText
+  Z203 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z204 edu.umd.cs.jazz.scenegraph.ZNode
+  Z205 edu.umd.cs.jazz.component.ZPolyline
+  Z206 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z207 edu.umd.cs.jazz.scenegraph.ZNode
+  Z208 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z209 edu.umd.cs.jazz.component.ZText
+  Z210 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z211 edu.umd.cs.jazz.scenegraph.ZNode
+  Z212 edu.umd.cs.jazz.component.ZRectangle
+  Z213 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z214 edu.umd.cs.jazz.scenegraph.ZNode
+  Z215 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z216 edu.umd.cs.jazz.component.ZText
+  Z217 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z218 edu.umd.cs.jazz.scenegraph.ZNode
+  Z219 edu.umd.cs.jazz.component.ZRectangle
+  Z220 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z221 edu.umd.cs.jazz.scenegraph.ZNode
+  Z222 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z223 edu.umd.cs.jazz.component.ZText
+  Z224 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z225 edu.umd.cs.jazz.scenegraph.ZNode
+  Z226 edu.umd.cs.jazz.component.ZRectangle
+  Z227 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z228 edu.umd.cs.jazz.scenegraph.ZNode
+  Z229 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z230 edu.umd.cs.jazz.component.ZText
+  Z231 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z232 edu.umd.cs.jazz.scenegraph.ZNode
+  Z233 edu.umd.cs.jazz.component.ZRectangle
+  Z234 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z235 edu.umd.cs.jazz.scenegraph.ZNode
+  Z236 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z237 edu.umd.cs.jazz.component.ZText
+  Z238 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z239 edu.umd.cs.jazz.scenegraph.ZNode
+  Z240 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z241 edu.umd.cs.jazz.component.ZText
+  Z242 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z243 edu.umd.cs.jazz.scenegraph.ZNode
+  Z244 edu.umd.cs.jazz.component.ZPolyline
+  Z245 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z246 edu.umd.cs.jazz.scenegraph.ZNode
+  Z247 edu.umd.cs.jazz.component.ZText
+  Z248 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z249 edu.umd.cs.jazz.scenegraph.ZNode
+  Z250 edu.umd.cs.jazz.component.ZPolyline
+  Z251 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z252 edu.umd.cs.jazz.scenegraph.ZNode
+  Z253 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z254 edu.umd.cs.jazz.component.ZText
+  Z255 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z256 edu.umd.cs.jazz.scenegraph.ZNode
+  Z257 edu.umd.cs.jazz.component.ZPolyline
+  Z258 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z259 edu.umd.cs.jazz.scenegraph.ZNode
+  Z260 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z261 edu.umd.cs.jazz.component.ZText
+  Z262 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z263 edu.umd.cs.jazz.scenegraph.ZNode
+  Z264 edu.umd.cs.jazz.component.ZRectangle
+  Z265 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z266 edu.umd.cs.jazz.scenegraph.ZNode
+  Z267 edu.umd.cs.jazz.component.ZRectangle
+  Z268 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z269 edu.umd.cs.jazz.scenegraph.ZNode
+  Z270 edu.umd.cs.jazz.component.ZLinkDecorator
+  Z271 edu.umd.cs.jazz.component.ZText
+  Z272 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z273 edu.umd.cs.jazz.scenegraph.ZNode
+  Z274 edu.umd.cs.jazz.component.ZPolyline
+  Z275 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z276 edu.umd.cs.jazz.scenegraph.ZNode
+  Z277 edu.umd.cs.jazz.component.ZPolyline
+  Z278 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z279 edu.umd.cs.jazz.scenegraph.ZCamera
+  Z280 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z281 edu.umd.cs.jazz.scenegraph.ZNode
+  Z282 edu.umd.cs.jazz.scenegraph.ZCamera
+  Z283 edu.umd.cs.jazz.scenegraph.ZTransform
+]
+[OBJECT @Z1 # edu.umd.cs.jazz.scenegraph.ZRootNode
+  {
+    Vector children [@Z2 @Z279 @Z281 @Z282]
+  }
+]
+[OBJECT @Z2 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    Vector children [@Z3 @Z6 @Z9 @Z12 @Z15 @Z18 @Z21 @Z24 @Z27 @Z30 @Z33 @Z35 @Z38 @Z41 @Z45 @Z49 @Z52 @Z56 @Z59 @Z63 @Z66 @Z69 @Z73 @Z76 @Z80 @Z84 @Z88 @Z92 @Z96 @Z99 @Z103 @Z107 @Z110 @Z113 @Z116 @Z120 @Z123 @Z126 @Z130 @Z134 @Z137 @Z140 @Z143 @Z147 @Z151 @Z154 @Z158 @Z161 @Z164 @Z168 @Z171 @Z175 @Z179 @Z182 @Z186 @Z190 @Z193 @Z196 @Z200 @Z204 @Z207 @Z211 @Z214 @Z218 @Z221 @Z225 @Z228 @Z232 @Z235 @Z239 @Z243 @Z246 @Z249 @Z252 @Z256 @Z259 @Z263 @Z266 @Z269 @Z273 @Z276]
+  }
+]
+[OBJECT @Z3 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z4
+    ZTransform transform @Z5
+    float minMag 2.0895207f
+    float maxMag 3.264876f
+  }
+]
+[OBJECT @Z4 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 1.0 1.0]
+    float penWidth 5.4391613f
+    rectangle rect [-1000.2967f 1319.8108f 96.81702f 56.56726f]
+  }
+]
+[OBJECT @Z5 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.5131579897669697d 0.0d 0.0d 0.5131579897669697d -522.7085251858767d 725.8572662936605d]
+  }
+]
+[OBJECT @Z6 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z7
+    ZTransform transform @Z8
+    float maxMag 0.21799144f
+  }
+]
+[OBJECT @Z7 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 1.0 1.0]
+    float penWidth 43.778595f
+    rectangle rect [-592.0644f 3238.1267f 2276.4868f 630.4116f]
+  }
+]
+[OBJECT @Z8 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [1.0d 0.0d 0.0d 1.0d -80.72366333007812d -193.26708984375d]
+  }
+]
+[OBJECT @Z9 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z10
+    ZTransform transform @Z11
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z10 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 1.0 1.0]
+    float penWidth 2.137966f
+    rectangle rect [112.72799f 985.91364f 189.85138f 32.49707f]
+  }
+]
+[OBJECT @Z11 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [1.0d 0.0d 0.0d 1.0d -3.4207611083984375d -3.84832763671875d]
+  }
+]
+[OBJECT @Z12 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z13
+    ZTransform transform @Z14
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z13 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 1.0 1.0]
+    float penWidth 2.010435f
+    rectangle rect [461.97617f -427.01257f 107.35721f 32.16696f]
+  }
+]
+[OBJECT @Z14 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.4240974818702899d 0.0d 0.0d 0.4240974818702899d -114.90715758588183d -462.2980049039356d]
+  }
+]
+[OBJECT @Z15 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z16
+    ZTransform transform @Z17
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z16 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 1.0 1.0]
+    float penWidth 1.6823337f
+    rectangle rect [182.88628f -396.53558f 107.3329f 22.87973f]
+  }
+]
+[OBJECT @Z17 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.5644738089308232d 0.0d 0.0d 0.5644738089308232d 375.2253067442216d -437.0532052726128d]
+  }
+]
+[OBJECT @Z18 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z19
+    ZTransform transform @Z20
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z19 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 1.0 1.0]
+    float penWidth 3.0635576f
+    rectangle rect [1464.3284f 561.51483f 122.54236f 52.080505f]
+  }
+]
+[OBJECT @Z20 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.3855431461168541d 0.0d 0.0d 0.3855431461168541d 1092.5459239964637d -491.0927159897218d]
+  }
+]
+[OBJECT @Z21 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z22
+    ZTransform transform @Z23
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z22 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 1.0 1.0]
+    float penWidth 1.7800095f
+    rectangle rect [1243.5918f 125.8307f 71.20032f 24.564133f]
+  }
+]
+[OBJECT @Z23 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.6830133576592174d 0.0d 0.0d 0.6830133576592174d 810.9649655434732d 86.15567954176765d]
+  }
+]
+[OBJECT @Z24 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z25
+    ZTransform transform @Z26
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z25 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 1.0 1.0]
+    float penWidth 0.19940646f
+    rectangle rect [223.83481f 1220.3375f 13.200714f 3.7489014f]
+  }
+]
+[OBJECT @Z26 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [2.853117386346105d 0.0d 0.0d 2.853117386346105d -315.54642941044926d -1922.6493923315002d]
+  }
+]
+[OBJECT @Z27 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z28
+    ZTransform transform @Z29
+    float minMag 0.1940955f
+    float maxMag 10.0f
+  }
+]
+[OBJECT @Z28 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Welcome to HiNote\n     A Jazz Applet"
+  }
+]
+[OBJECT @Z29 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.9999999859116286d 0.0d 0.0d 0.9999999859116286d 58.00000265777139d 28.000000648065082d]
+  }
+]
+[OBJECT @Z30 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z31
+    ZTransform transform @Z32
+    float minMag 0.1940955f
+    float maxMag 15.625f
+  }
+]
+[OBJECT @Z31 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "from the University of Maryland\nHuman-Computer Interaction Lab"
+  }
+]
+[OBJECT @Z32 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.6399999676617704d 0.0d 0.0d 0.6399999676617704d 36.20000431594941d 136.64000174505085d]
+  }
+]
+[OBJECT @Z33 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z34
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z34 # edu.umd.cs.jazz.component.ZPolyline
+  {
+    java.awt.Color penColor [1.0 0.0 0.0 1.0]
+    float penWidth 5.0f
+    Vector coords [45.2f 240.0f 45.2f 239.0f 46.2f 239.0f 46.2f 238.0f 47.2f 238.0f 47.2f 236.0f 51.2f 234.0f 52.2f 234.0f 54.2f 234.0f 55.2f 233.0f 57.2f 232.0f 58.2f 232.0f 59.2f 232.0f 60.2f 232.0f 62.2f 232.0f 63.2f 232.0f 64.200005f 232.0f 66.200005f 231.0f 68.200005f 231.0f 69.200005f 231.0f 70.200005f 231.0f 71.200005f 231.0f 74.200005f 231.0f 76.200005f 231.0f 78.200005f 231.0f 80.200005f 231.0f 82.200005f 231.0f 83.200005f 231.0f 84.200005f 231.0f 86.200005f 231.0f 87.200005f 231.0f 88.200005f 231.0f 89.200005f 231.0f 90.200005f 231.0f 91.200005f 231.0f 92.200005f 231.0f 93.200005f 231.0f 94.200005f 231.0f 95.200005f 231.0f 96.200005f 231.0f 98.200005f 231.0f 99.200005f 231.0f 100.200005f 231.0f 101.200005f 231.0f 103.200005f 231.0f 106.200005f 231.0f 109.200005f 231.0f 111.200005f 231.0f 112.200005f 231.0f 114.200005f 231.0f 115.200005f 231.0f 116.200005f 231.0f 117.200005f 231.0f 118.2f 231.0f 119.2f 231.0f 120.2f 232.0f 121.2f 232.0f 122.2f 232.0f 123.2f 232.0f 124.2f 232.0f 125.2f 232.0f 126.2f 232.0f 127.2f 233.0f 128.2f 233.0f 129.2f 233.0f 130.2f 233.0f 131.2f 233.0f 132.2f 233.0f 133.2f 234.0f 134.2f 234.0f 136.2f 234.0f 139.2f 235.0f 140.2f 235.0f 140.2f 236.0f 142.2f 236.0f 143.2f 237.0f 144.2f 237.0f 145.2f 237.0f 146.2f 237.0f 147.2f 238.0f 148.2f 238.0f 150.2f 239.0f 152.2f 239.0f 154.2f 240.0f 155.2f 240.0f 157.2f 241.0f 158.2f 241.0f 160.2f 241.0f 161.2f 241.0f 162.2f 241.0f 163.2f 242.0f 164.2f 242.0f 165.2f 242.0f 166.2f 243.0f 169.2f 245.0f 170.2f 245.0f 171.2f 245.0f 171.2f 246.0f 174.2f 247.0f 176.2f 249.0f 178.2f 249.0f 179.2f 250.0f 180.2f 251.0f 181.2f 251.0f 182.2f 252.0f 183.2f 253.0f 184.2f 253.0f 185.2f 254.0f 186.2f 254.0f 186.2f 255.0f 187.2f 255.0f 188.2f 256.0f 189.2f 257.0f 190.2f 257.0f 190.2f 258.0f 191.2f 258.0f 191.2f 259.0f 193.2f 260.0f 194.2f 261.0f 195.2f 261.0f 195.2f 262.0f 195.2f 263.0f 196.2f 263.0f 197.2f 263.0f 197.2f 264.0f 198.2f 264.0f 198.2f 265.0f 199.2f 265.0f 199.2f 266.0f 200.2f 267.0f 201.2f 267.0f 201.2f 268.0f 202.2f 268.0f 202.2f 269.0f 203.2f 269.0f 203.2f 270.0f 204.2f 270.0f 205.2f 271.0f 206.2f 271.0f 207.2f 272.0f 208.2f 272.0f 209.2f 273.0f 210.2f 273.0f 211.2f 273.0f 212.2f 273.0f 213.2f 273.0f 214.2f 273.0f 215.2f 273.0f 216.2f 273.0f 218.2f 273.0f 219.2f 273.0f 220.2f 273.0f 222.2f 273.0f 223.2f 272.0f 225.2f 271.0f 227.2f 270.0f 229.2f 269.0f 231.2f 268.0f 232.2f 267.0f 234.2f 267.0f 235.2f 266.0f 236.2f 265.0f 239.2f 264.0f 239.2f 263.0f 240.2f 263.0f 241.2f 262.0f 242.2f 262.0f 243.2f 262.0f 243.2f 261.0f 244.2f 260.0f 245.2f 260.0f 246.2f 259.0f 247.2f 259.0f 248.2f 258.0f 250.2f 258.0f 251.2f 257.0f 254.2f 256.0f 255.2f 256.0f 257.2f 255.0f 259.2f 255.0f 260.2f 254.0f 262.2f 254.0f 264.2f 253.0f 270.2f 252.0f 272.2f 251.0f 274.2f 251.0f 275.2f 250.0f 276.2f 250.0f 278.2f 250.0f 279.2f 250.0f 280.2f 250.0f 282.2f 250.0f 284.2f 250.0f 286.2f 250.0f 289.2f 250.0f 291.2f 250.0f 294.2f 250.0f 298.2f 250.0f 301.2f 250.0f 303.2f 251.0f 304.2f 251.0f 306.2f 251.0f 307.2f 252.0f 308.2f 253.0f 310.2f 253.0f 310.2f 254.0f 311.2f 255.0f 312.2f 255.0f 313.2f 256.0f 314.2f 257.0f 315.2f 257.0f 315.2f 256.0f 316.2f 256.0f 317.2f 256.0f 318.2f 255.0f 319.2f 254.0f 320.2f 254.0f 320.2f 253.0f 321.2f 252.0f 322.2f 252.0f 323.2f 252.0f 323.2f 251.0f 324.2f 251.0f 326.2f 250.0f 327.2f 249.0f 328.2f 248.0f 329.2f 248.0f 330.2f 247.0f 332.2f 246.0f 334.2f 245.0f 335.2f 244.0f 336.2f 243.0f 338.2f 242.0f 339.2f 241.0f 341.2f 240.0f 342.2f 240.0f 343.2f 239.0f 344.2f 239.0f 345.2f 239.0f 346.2f 239.0f 348.2f 238.0f 351.2f 238.0f 354.2f 237.0f 356.2f 237.0f 357.2f 237.0f 358.2f 236.0f 360.2f 236.0f 365.2f 235.0f 370.2f 235.0f 374.2f 234.0f 376.19998f 234.0f 380.19998f 234.0f 382.19998f 234.0f 384.19998f 234.0f 386.19998f 234.0f 389.19998f 234.0f 391.19998f 234.0f 393.19998f 234.0f 394.19998f 234.0f 395.19998f 234.0f 398.19998f 234.0f 400.19998f 234.0f 402.19998f 234.0f 403.19998f 234.0f 404.19998f 234.0f 405.19998f 234.0f 406.19998f 234.0f]
+  }
+]
+[OBJECT @Z35 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z36
+    ZTransform transform @Z37
+    float minMag 0.1940955f
+    float maxMag 15.625f
+  }
+]
+[OBJECT @Z36 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Press the 'up' arrow on the keyboard\n         a few times to read more"
+  }
+]
+[OBJECT @Z37 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.6399999856948853d 0.0d 0.0d 0.6399999856948853d 21.27997589111328d 321.7599792480469d]
+  }
+]
+[OBJECT @Z38 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z39
+    ZTransform transform @Z40
+    float minMag 0.1940955f
+    float maxMag 15.625f
+  }
+]
+[OBJECT @Z39 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "If you can read this, then you \n   have discovered that the\n      Jazz surface is big"
+  }
+]
+[OBJECT @Z40 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.6399999856948853d 0.0d 0.0d 0.6399999856948853d 60.040000915527344d 529.0399780273438d]
+  }
+]
+[OBJECT @Z41 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z42
+    ZTransform transform @Z44
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z42 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z43
+    java.awt.geom.Rectangle2D destBounds [101.02494812011719 858.0311279296875 211.62586975097656 178.505615234375]
+  }
+]
+[OBJECT @Z43 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 1.0 1.0]
+    float penWidth 6.2499995f
+    rectangle rect [27.885012f 662.6075f 383.74997f 96.25f]
+  }
+]
+[OBJECT @Z44 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.9090908765792847d 0.0d 0.0d 0.9090908765792847d 22.16567181760547d 79.61206700799085d]
+  }
+]
+[OBJECT @Z45 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z46
+    ZTransform transform @Z48
+    float minMag 0.1940955f
+    float maxMag 8.000001f
+  }
+]
+[OBJECT @Z46 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z47
+    java.awt.geom.Rectangle2D destBounds [96.90709686279297 856.780517578125 210.37576293945312 177.451171875]
+  }
+]
+[OBJECT @Z47 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Click on this"
+  }
+]
+[OBJECT @Z48 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [1.1363634873520283d 0.0d 0.0d 1.1363634873520283d 97.44749926775694d 698.9143020063639d]
+  }
+]
+[OBJECT @Z49 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z50
+    ZTransform transform @Z51
+    float minMag 0.1940955f
+    float maxMag 30.517578f
+  }
+]
+[OBJECT @Z50 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Jazz lets you zoom in\nto get more detail.\n\nIf you get lost at any time,\npress the 'Home' key on the\nkeyboard"
+  }
+]
+[OBJECT @Z51 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.32767999172210693d 0.0d 0.0d 0.32767999172210693d 119.82205200195312d 879.7108764648438d]
+  }
+]
+[OBJECT @Z52 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z53
+    ZTransform transform @Z55
+    float minMag 0.1940955f
+    float maxMag 30.517578f
+  }
+]
+[OBJECT @Z53 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z54
+    java.awt.geom.Rectangle2D destBounds [-2412.7353515625 -737.4417724609375 5739.5458984375 4841.28369140625]
+  }
+]
+[OBJECT @Z54 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "To continue, Click Here"
+  }
+]
+[OBJECT @Z55 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.32767999172210693d 0.0d 0.0d 0.32767999172210693d 132.10430908203125d 990.1111450195312d]
+  }
+]
+[OBJECT @Z56 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z57
+    ZTransform transform @Z58
+    float minMag 0.1940955f
+    float maxMag 86.04675f
+  }
+]
+[OBJECT @Z57 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Try panning by pressing\nthe keyboard arrow keys or\nby moving the mouse while\npressing the *left* mouse\nbutton."
+  }
+]
+[OBJECT @Z58 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.11621589213609695d 0.0d 0.0d 0.11621589213609695d 84.04161775112152d 1502.5425415039062d]
+  }
+]
+[OBJECT @Z59 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z60
+    ZTransform transform @Z62
+    float minMag 0.1940955f
+    float maxMag 86.04675f
+  }
+]
+[OBJECT @Z60 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z61
+    java.awt.geom.Rectangle2D destBounds [259.2619934082031 1476.3602294921875 117.275390625 98.9212646484375]
+  }
+]
+[OBJECT @Z61 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Continue"
+  }
+]
+[OBJECT @Z62 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.11621589213609695d 0.0d 0.0d 0.11621589213609695d 126.79495942592621d 1540.9481811523438d]
+  }
+]
+[OBJECT @Z63 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z64
+    ZTransform transform @Z65
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z64 # edu.umd.cs.jazz.component.ZPolyline
+  {
+    java.awt.Color penColor [1.0 0.0 0.0 1.0]
+    float penWidth 0.5810794f
+    Vector coords [228.49168f 1170.8624f 228.37547f 1170.8624f 228.02682f 1170.8624f 227.44574f 1170.8624f 226.86467f 1170.7462f 226.3998f 1170.7462f 225.81873f 1170.7462f 225.23764f 1170.7462f 223.95927f 1170.7462f 223.37819f 1170.7462f 222.91333f 1170.8624f 222.6809f 1170.8624f 222.44846f 1170.9788f 222.21603f 1171.095f 221.86739f 1171.2112f 221.63495f 1171.3274f 221.2863f 1171.5598f 220.93765f 1171.676f 220.70522f 1171.7922f 220.35657f 1172.0247f 220.00792f 1172.2571f 219.65929f 1172.4895f 219.42685f 1172.7219f 219.19441f 1172.9543f 218.96199f 1173.0706f 218.61334f 1173.1868f 218.49712f 1173.4192f 218.2647f 1173.5354f 218.14847f 1173.6516f 218.03226f 1173.8842f 217.79982f 1174.0004f 217.68361f 1174.1166f 217.5674f 1174.349f 217.5674f 1174.5814f 217.33496f 1174.8138f 217.10252f 1175.2787f 216.98631f 1175.5111f 216.8701f 1175.7435f 216.8701f 1175.976f 216.75388f 1176.2084f 216.75388f 1176.4408f 216.75388f 1176.6733f 216.75388f 1176.9058f 216.75388f 1177.2544f 216.75388f 1177.4868f 216.75388f 1177.7192f 216.75388f 1177.8354f 216.75388f 1178.0679f 216.75388f 1178.3003f 216.8701f 1178.6489f 216.98631f 1178.9976f 217.10252f 1179.1138f 217.21875f 1179.3462f 217.33496f 1179.4624f 217.5674f 1179.695f 217.68361f 1179.9274f 218.03226f 1180.1598f 218.14847f 1180.3922f 218.3809f 1180.6246f 218.72955f 1180.857f 219.0782f 1180.9733f 219.42685f 1181.2057f 220.24036f 1181.5543f 220.70522f 1181.7867f 220.93765f 1181.903f 221.2863f 1182.0192f 221.51874f 1182.1354f 221.75116f 1182.2516f 222.09981f 1182.3679f 222.56468f 1182.4841f 223.14575f 1182.6003f 223.61063f 1182.7166f 223.95927f 1182.7166f 224.42413f 1182.8328f 224.65656f 1182.8328f 225.0052f 1182.949f 225.47008f 1182.949f 225.81873f 1182.949f 226.28358f 1182.949f 226.74844f 1182.949f 227.21332f 1182.949f 227.67818f 1182.949f 227.91061f 1182.949f 228.25926f 1182.949f 228.72412f 1182.949f 229.18898f 1182.949f 229.65384f 1182.949f 230.00249f 1182.949f 230.35114f 1182.949f 231.16466f 1182.949f 231.5133f 1182.949f 231.74573f 1182.949f 232.09438f 1182.949f 232.44302f 1182.8328f 232.79167f 1182.8328f 233.25653f 1182.8328f 233.7214f 1182.8328f 234.07005f 1182.8328f 234.30247f 1182.8328f 234.76735f 1182.8328f 235.116f 1182.8328f 235.58086f 1182.8328f 235.9295f 1182.8328f 236.16194f 1182.8328f 236.6268f 1182.8328f 236.97545f 1182.8328f 237.3241f 1182.8328f 237.67274f 1182.8328f 238.0214f 1182.7166f 238.37004f 1182.7166f 238.71869f 1182.6003f 239.06734f 1182.6003f 239.41599f 1182.6003f 239.76463f 1182.4841f 240.22949f 1182.3679f 240.57814f 1182.3679f 240.92679f 1182.2516f 242.20515f 1181.903f 242.5538f 1181.6705f 242.78624f 1181.5543f 243.13489f 1181.4381f 243.36732f 1181.3219f 243.48354f 1181.2057f 243.59975f 1180.9733f 243.83218f 1180.9733f 243.9484f 1180.857f 244.06462f 1180.7408f 244.18083f 1180.6246f 244.41327f 1180.5084f 244.52948f 1180.276f 244.76192f 1180.0436f 244.87813f 1179.8112f 245.11057f 1179.5787f 245.22678f 1179.3462f 245.34299f 1179.1138f 245.45921f 1178.8813f 245.45921f 1178.7651f 245.45921f 1178.5327f 245.57542f 1178.4165f 245.57542f 1178.1841f 245.57542f 1178.0679f 245.57542f 1177.9517f 245.57542f 1177.8354f 245.57542f 1177.7192f 245.57542f 1177.4868f 245.57542f 1177.3706f 245.57542f 1177.2544f 245.57542f 1177.1382f 245.57542f 1177.022f 245.57542f 1176.9058f 245.57542f 1176.7896f 245.57542f 1176.6733f 245.57542f 1176.557f 245.45921f 1176.3246f 245.34299f 1176.0922f 245.11057f 1175.7435f 244.99434f 1175.5111f 244.87813f 1175.3949f 244.76192f 1175.2787f 244.64569f 1175.1625f 244.64569f 1175.0463f 244.52948f 1175.0463f 244.41327f 1174.93f 244.29704f 1174.6976f 244.06462f 1174.5814f 243.9484f 1174.4652f 243.71597f 1174.2328f 243.59975f 1174.1166f 243.36732f 1174.0004f 243.2511f 1173.8842f 243.13489f 1173.768f 242.67003f 1173.5354f 242.20515f 1173.1868f 241.8565f 1173.0706f 241.50786f 1172.9543f 241.27544f 1172.8381f 241.043f 1172.7219f 240.81058f 1172.7219f 240.57814f 1172.6057f 240.3457f 1172.6057f 240.11328f 1172.3733f 239.88084f 1172.3733f 239.6484f 1172.2571f 239.5322f 1172.2571f 239.29976f 1172.1409f 239.06734f 1172.1409f 238.95111f 1172.0247f 238.60246f 1171.9084f 238.37004f 1171.9084f 238.0214f 1171.7922f 237.67274f 1171.676f 237.4403f 1171.676f 237.20787f 1171.5598f 236.85924f 1171.4436f 236.6268f 1171.4436f 236.27815f 1171.3274f 235.9295f 1171.3274f 235.58086f 1171.2112f 234.53491f 1170.9788f 234.18626f 1170.8624f 233.95383f 1170.8624f 233.60518f 1170.7462f 233.37276f 1170.7462f 233.14032f 1170.7462f 232.90788f 1170.7462f 232.67546f 1170.7462f 232.44302f 1170.7462f 232.09438f 1170.7462f 231.74573f 1170.63f 231.39708f 1170.63f 231.04843f 1170.63f 230.69978f 1170.5138f 230.46736f 1170.5138f 230.23492f 1170.5138f 229.88628f 1170.5138f 229.77007f 1170.5138f 229.42142f 1170.5138f 229.30519f 1170.5138f 229.07277f 1170.5138f 228.84033f 1170.5138f 228.72412f 1170.5138f 228.6079f 1170.5138f 228.49168f 1170.5138f 228.37547f 1170.5138f 228.37547f 1170.3976f 228.25926f 1170.3976f]
+  }
+]
+[OBJECT @Z65 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [1.0d 0.0d 0.0d 1.0d -94.60755217075348d 366.36688232421875d]
+  }
+]
+[OBJECT @Z66 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z67
+    ZTransform transform @Z68
+    float minMag 0.1940955f
+    float maxMag 250.74419f
+  }
+]
+[OBJECT @Z67 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Try zooming by pressing\nthe keyboard 'Page Up'\nand 'Page Down' keys.\n\nYou can also  zoom in by\nmoving the mouse to the\nright while pressing the \n*right* mouse button. \n\nLikewise, you can zoom out \nby moving the mouse to \nthe left while pressing the\n*right* mouse button."
+  }
+]
+[OBJECT @Z68 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.11378597779347577d 0.0d 0.0d 0.11378597779347577d 288.74726756920495d 1480.1878833671583d]
+  }
+]
+[OBJECT @Z69 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z70
+    ZTransform transform @Z72
+    float minMag 0.1940955f
+    float maxMag 250.74414f
+  }
+]
+[OBJECT @Z70 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z71
+    java.awt.geom.Rectangle2D destBounds [1577.672607421875 1082.661376953125 172.0859375 145.1536865234375]
+  }
+]
+[OBJECT @Z71 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Keep Going!"
+  }
+]
+[OBJECT @Z72 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.11378600967954733d 0.0d 0.0d 0.11378600967954733d 328.53393187723077d 1562.1923772668947d]
+  }
+]
+[OBJECT @Z73 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z74
+    ZTransform transform @Z75
+    float minMag 0.1940955f
+    float maxMag 612.16833f
+  }
+]
+[OBJECT @Z74 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "You can create objects\nusing one of the three \ntools on the right end of\nthe toolbar.\n\nTo get a description of \nany tool on the toolbar,\npoint the mouse (without\nclicking) for several seconds\nat the toolbar button of \ninterest.\n\nTry creating several objects \nin the space to the right.\n\nYou must get the hand tool\nto continue."
+  }
+]
+[OBJECT @Z75 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.1329745272373867d 0.0d 0.0d 0.1329745272373867d 1590.5672739531988d 1090.477524492632d]
+  }
+]
+[OBJECT @Z76 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z77
+    ZTransform transform @Z79
+    float maxMag 10.0f
+  }
+]
+[OBJECT @Z77 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z78
+    java.awt.geom.Rectangle2D destBounds [64.74383544921875 1483.513671875 96.79696655273438 81.6478271484375]
+  }
+]
+[OBJECT @Z78 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Navigation"
+  }
+]
+[OBJECT @Z79 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [3.7974994881524093d 0.0d 0.0d 3.7974994881524093d -123.65859712341646d 1182.8381218681334d]
+  }
+]
+[OBJECT @Z80 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z81
+    ZTransform transform @Z83
+    float maxMag 10.0f
+  }
+]
+[OBJECT @Z81 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z82
+    java.awt.geom.Rectangle2D destBounds [1576.7103271484375 1082.04345703125 174.233642578125 146.96533203125]
+  }
+]
+[OBJECT @Z82 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Authoring"
+  }
+]
+[OBJECT @Z83 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [3.7974994881524093d 0.0d 0.0d 3.7974994881524093d 794.2965908264991d 915.978636352729d]
+  }
+]
+[OBJECT @Z84 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z85
+    ZTransform transform @Z87
+    float maxMag 10.0f
+  }
+]
+[OBJECT @Z85 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z86
+    java.awt.geom.Rectangle2D destBounds [388.5519104003906 -785.2993774414062 175.92544555664062 148.39239501953125]
+  }
+]
+[OBJECT @Z86 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Hyperlinks"
+  }
+]
+[OBJECT @Z87 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [3.7974994881524093d 0.0d 0.0d 3.7974994881524093d -138.68128667470646d -416.2654268618427d]
+  }
+]
+[OBJECT @Z88 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z89
+    ZTransform transform @Z91
+    float maxMag 10.0f
+  }
+]
+[OBJECT @Z89 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z90
+    java.awt.geom.Rectangle2D destBounds [-1344.2755126953125 -522.3724365234375 236.6956787109375 199.65185546875]
+  }
+]
+[OBJECT @Z90 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Sticky"
+  }
+]
+[OBJECT @Z91 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [3.7974990601477674d 0.0d 0.0d 3.7974990601477674d -911.2547105502135d -268.09926078253886d]
+  }
+]
+[OBJECT @Z92 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z93
+    ZTransform transform @Z95
+    float maxMag 10.0f
+  }
+]
+[OBJECT @Z93 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z94
+    java.awt.geom.Rectangle2D destBounds [1433.1865234375 -58.09040451049805 317.4693603515625 267.7840881347656]
+  }
+]
+[OBJECT @Z94 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Selection"
+  }
+]
+[OBJECT @Z95 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [3.7974994881524093d 0.0d 0.0d 3.7974994881524093d 836.8926247227079d -240.46634389059724d]
+  }
+]
+[OBJECT @Z96 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z97
+    ZTransform transform @Z98
+    float minMag 0.1940955f
+    float maxMag 49.035065f
+  }
+]
+[OBJECT @Z97 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "You can insert images\nby choosing 'Insert' then \n'Image' on the menu bar."
+  }
+]
+[OBJECT @Z98 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.13929079580350426d 0.0d 0.0d 0.13929079580350426d 1621.9340275792938d 865.8823607243512d]
+  }
+]
+[OBJECT @Z99 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z100
+    ZTransform transform @Z102
+    float minMag 0.1940955f
+    float maxMag 49.035065f
+  }
+]
+[OBJECT @Z100 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z101
+    java.awt.geom.Rectangle2D destBounds [1425.2958984375 -58.82134246826172 319.624755859375 269.6022033691406]
+  }
+]
+[OBJECT @Z101 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Don't stop now!"
+  }
+]
+[OBJECT @Z102 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.11511635193442177d 0.0d 0.0d 0.11511635193442177d 1665.0223106824758d 910.0412895810456d]
+  }
+]
+[OBJECT @Z103 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z104
+    ZTransform transform @Z106
+    float minMag 0.1940955f
+    float maxMag 59.58055f
+  }
+]
+[OBJECT @Z104 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z105
+    java.awt.geom.Rectangle2D destBounds [1584.93994140625 836.8085327148438 133.5223388671875 112.62554931640625]
+  }
+]
+[OBJECT @Z105 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Continue"
+  }
+]
+[OBJECT @Z106 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.1525818141820606d 0.0d 0.0d 0.1525818141820606d 1689.7332198785498d 1208.4048751101375d]
+  }
+]
+[OBJECT @Z107 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z108
+    ZTransform transform @Z109
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z108 # edu.umd.cs.jazz.component.ZPolyline
+  {
+    java.awt.Color penColor [1.0 0.0 0.0 1.0]
+    float penWidth 0.8392f
+    Vector coords [686.98706f 1167.6311f 686.98706f 1167.4633f 686.98706f 1167.2954f 686.98706f 1167.1276f 686.8192f 1166.7919f 686.8192f 1166.4563f 686.65137f 1166.2885f 686.4835f 1165.9528f 686.4835f 1165.6171f 686.3157f 1165.6171f 686.3157f 1165.2814f 686.1478f 1164.9457f 686.1478f 1164.7778f 686.1478f 1164.61f 686.1478f 1164.2743f 685.98f 1164.1064f 685.98f 1163.9386f 686.3157f 1164.1064f 686.4835f 1164.2743f 686.65137f 1164.2743f 686.8192f 1164.61f 687.32275f 1164.7778f 687.6584f 1165.1135f 688.1619f 1165.4492f 688.4976f 1165.6171f 688.8333f 1165.7849f 689.16895f 1165.9528f 689.50464f 1166.1206f 689.84033f 1166.2885f 690.0082f 1166.2885f 690.176f 1166.2885f 690.176f 1166.4563f 690.176f 1166.2885f 690.3439f 1165.7849f 690.5117f 1165.2814f 691.3509f 1163.6029f 691.51874f 1163.2673f 691.6866f 1163.0995f 691.6866f 1162.9316f 691.85443f 1162.9316f 692.0223f 1162.9316f 692.19006f 1162.9316f 692.3579f 1163.0995f 692.86145f 1163.4352f 693.53284f 1164.1064f 694.20416f 1164.7778f 695.0434f 1165.4492f 695.7147f 1166.1206f 696.0504f 1166.2885f 696.0504f 1166.4563f 696.21826f 1166.4563f 696.3861f 1166.2885f 696.72174f 1165.9528f 697.05743f 1165.4492f 697.7288f 1164.7778f 698.2323f 1164.1064f 698.9037f 1163.6029f 699.4072f 1163.0995f 699.7429f 1162.9316f 700.07855f 1162.596f 700.2464f 1162.596f 700.41425f 1162.596f 700.74994f 1163.0995f 701.2535f 1163.7708f 701.75696f 1164.4421f 702.2605f 1164.9457f 702.5962f 1165.4492f 702.9318f 1165.7849f 703.0997f 1166.1206f 703.0997f 1166.2885f 703.2675f 1166.2885f 703.43536f 1166.2885f 703.9389f 1165.9528f 704.7781f 1165.4492f 705.44946f 1164.9457f 705.95294f 1164.4421f 706.6243f 1163.7708f 706.96f 1163.4352f 707.12787f 1163.0995f 707.2957f 1163.0995f 707.4635f 1163.0995f 707.63135f 1163.2673f 707.7992f 1163.6029f 708.30273f 1164.1064f 708.8063f 1164.7778f 709.1419f 1165.4492f 710.149f 1166.4563f 710.31683f 1166.4563f 710.31683f 1166.624f 710.4847f 1166.624f 710.98816f 1166.2885f 711.4917f 1165.9528f 711.99524f 1165.6171f 712.4987f 1165.2814f 712.8344f 1164.9457f 713.1701f 1164.7778f 713.6736f 1164.61f 713.84143f 1164.4421f 714.1771f 1164.2743f 714.345f 1164.2743f 714.5128f 1164.1064f 714.68066f 1163.9386f 714.8485f 1163.9386f 715.18414f 1163.7708f 715.51984f 1163.6029f 715.8555f 1163.6029f 716.1912f 1163.2673f 716.1912f 1163.4352f 716.1912f 1163.6029f 716.3591f 1163.7708f 716.3591f 1164.1064f 716.6947f 1164.7778f 716.86255f 1164.9457f 716.86255f 1165.2814f 717.0304f 1165.4492f 717.0304f 1165.7849f 717.19824f 1165.9528f 717.19824f 1166.1206f 717.19824f 1166.2885f 717.3661f 1166.4563f 717.3661f 1166.7919f 717.53394f 1166.7919f 717.53394f 1166.9597f 717.7018f 1166.9597f 718.54095f 1166.9597f 719.7158f 1166.9597f 721.22644f 1166.9597f 722.4013f 1166.9597f 723.2405f 1166.9597f 723.5762f 1166.9597f 723.744f 1166.9597f 723.91187f 1166.9597f 723.91187f 1167.1276f 723.744f 1167.4633f 723.744f 1167.6311f 723.5762f 1167.799f 723.2405f 1168.3025f 723.07263f 1168.4703f 723.07263f 1168.6382f 722.9048f 1168.806f 722.9048f 1168.9739f 722.737f 1169.1417f 722.737f 1169.3096f 722.9048f 1169.3096f 723.2405f 1169.3096f 723.91187f 1169.3096f 724.9189f 1169.4774f 725.7581f 1169.4774f 726.5973f 1169.6453f 727.1008f 1169.813f 727.6043f 1169.813f 727.94f 1169.9808f 728.2757f 1169.9808f 728.44354f 1169.9808f 728.44354f 1170.1487f 728.6114f 1170.1487f 728.77924f 1170.1487f 728.77924f 1170.3165f 728.6114f 1170.4844f 728.6114f 1170.6522f 726.76514f 1171.8271f 726.42944f 1172.1628f 726.09375f 1172.3307f 726.09375f 1172.4985f 725.9259f 1172.4985f 725.9259f 1172.6664f 725.9259f 1172.8341f 726.2616f 1173.1698f 726.5973f 1173.6733f 727.2687f 1174.1769f 727.94f 1174.8483f 728.6114f 1175.3518f 729.11487f 1175.6875f 729.45056f 1176.0231f 729.9541f 1176.3588f 730.2898f 1176.6945f 730.6254f 1176.8623f 730.6254f 1177.0302f 730.4576f 1177.0302f 729.9541f 1177.0302f 729.45056f 1177.0302f 728.6114f 1177.0302f 727.94f 1177.0302f 727.1008f 1177.0302f 725.9259f 1177.0302f 725.7581f 1177.0302f 725.5903f 1177.0302f 725.5903f 1177.198f 725.5903f 1177.5337f 725.5903f 1177.7015f 725.5903f 1178.0372f 725.5903f 1178.7086f 725.5903f 1179.5477f 725.5903f 1180.5548f 725.5903f 1181.5619f 725.5903f 1182.2332f 725.5903f 1182.7367f 725.5903f 1182.9045f 725.5903f 1183.0724f 725.2546f 1182.9045f 724.75104f 1182.401f 724.0797f 1181.8976f 723.2405f 1181.2262f 722.4013f 1180.7227f 721.7299f 1180.0513f 721.0586f 1179.7156f 720.55505f 1179.3799f 720.3872f 1179.212f 720.21936f 1179.212f 720.0515f 1179.212f 719.88367f 1179.212f 719.88367f 1179.5477f 719.7158f 1179.8834f 719.3802f 1180.2191f 719.21234f 1180.5548f 719.21234f 1180.8905f 719.0445f 1181.0583f 719.0445f 1181.394f 718.87665f 1181.7297f 718.7088f 1182.0653f 718.54095f 1182.401f 718.54095f 1182.5688f 718.54095f 1182.7367f 718.54095f 1182.9045f 718.54095f 1183.2402f 718.3731f 1183.5759f 718.3731f 1183.7438f 718.20526f 1183.7438f 718.0375f 1183.5759f 717.7018f 1183.4081f 717.3661f 1182.9045f 716.86255f 1182.5688f 715.51984f 1181.5619f 714.8485f 1181.2262f 714.5128f 1180.8905f 714.0093f 1180.5548f 713.5058f 1180.0513f 713.1701f 1179.7156f 713.00226f 1179.7156f 712.8344f 1179.7156f 712.8344f 1179.5477f 712.66656f 1179.8834f 712.4987f 1180.387f 712.3309f 1180.8905f 711.99524f 1181.5619f 711.8274f 1182.2332f 711.65955f 1182.7367f 711.65955f 1183.0724f 711.4917f 1183.2402f 711.32385f 1183.4081f 711.32385f 1183.5759f 711.156f 1183.5759f 710.98816f 1183.4081f 710.98816f 1183.2402f 710.65247f 1183.0724f 710.4847f 1182.9045f 709.1419f 1181.7297f 708.30273f 1180.7227f 707.7992f 1180.2191f 707.4635f 1179.7156f 706.7922f 1178.8765f 706.6243f 1178.8765f 706.4565f 1178.8765f 706.4565f 1179.0442f 706.4565f 1179.5477f 706.28864f 1179.8834f 705.95294f 1180.387f 705.78516f 1180.8905f 705.44946f 1181.394f 705.1138f 1181.8976f 705.1138f 1182.2332f 704.9459f 1182.5688f 704.9459f 1182.7367f 704.9459f 1182.9045f 704.7781f 1183.2402f 704.6102f 1183.4081f 704.4424f 1183.4081f 704.4424f 1183.2402f 704.2746f 1183.2402f 703.77106f 1182.9045f 702.5962f 1181.8976f 701.42126f 1181.0583f 700.5821f 1180.387f 700.2464f 1180.0513f 699.9107f 1179.8834f 699.7429f 1179.7156f 699.5751f 1179.5477f 699.2394f 1179.3799f 699.07153f 1179.5477f 698.9037f 1179.8834f 698.40015f 1180.387f 698.0645f 1180.8905f 697.7288f 1181.2262f 697.2253f 1181.7297f 696.8896f 1182.0653f 696.3861f 1182.7367f 696.21826f 1182.9045f 696.0504f 1182.9045f 695.88257f 1182.7367f 695.7147f 1182.401f 695.379f 1181.8976f 695.0434f 1181.394f 694.7077f 1180.7227f 694.20416f 1180.2191f 693.86847f 1179.8834f 693.7006f 1179.8834f 693.53284f 1179.7156f 693.365f 1179.5477f 693.19714f 1179.5477f 693.0293f 1179.5477f 692.86145f 1179.8834f 692.3579f 1180.0513f 692.0223f 1180.387f 690.5117f 1181.0583f 689.84033f 1181.394f 689.16895f 1181.5619f 688.8333f 1181.7297f 688.3298f 1181.8976f 688.1619f 1181.8976f 688.1619f 1181.5619f 688.1619f 1181.0583f 688.1619f 1180.2191f 688.1619f 1178.8765f 688.1619f 1178.5408f 687.82623f 1178.3729f 687.49054f 1178.0372f 686.8192f 1177.8694f 686.1478f 1177.7015f 683.7981f 1177.0302f 682.28754f 1176.3588f 682.1197f 1176.3588f 681.784f 1176.3588f 681.61615f 1176.3588f 681.61615f 1176.1909f 681.61615f 1176.0231f 682.1197f 1175.8552f 683.1267f 1175.0161f 683.96594f 1174.6804f 684.8051f 1174.3447f 685.98f 1174.009f 686.3157f 1173.8412f 686.65137f 1173.6733f 686.4835f 1173.6733f 686.3157f 1173.5055f 685.8122f 1173.1698f 684.97296f 1172.3307f 684.4694f 1171.6593f 683.96594f 1171.1558f 682.7911f 1169.813f 682.4554f 1169.6453f 682.28754f 1169.4774f 682.28754f 1169.3096f 681.95184f 1169.1417f 681.784f 1168.9739f 681.61615f 1168.9739f 681.784f 1168.9739f 681.95184f 1168.9739f 682.1197f 1168.9739f 682.6232f 1168.9739f 684.4694f 1168.9739f 684.97296f 1168.9739f 685.4765f 1168.9739f 685.98f 1168.9739f 686.1478f 1168.9739f 686.4835f 1168.9739f 687.1549f 1168.9739f 687.49054f 1168.9739f 687.49054f 1168.806f 687.49054f 1168.6382f 687.49054f 1168.4703f 687.32275f 1168.3025f 687.1549f 1168.3025f 687.1549f 1168.1346f 687.1549f 1167.9668f 686.98706f 1167.9668f 686.98706f 1167.799f]
+  }
+]
+[OBJECT @Z109 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.9090908637716748d 0.0d 0.0d 0.9090908637716748d 1061.385028990078d 145.396227818261d]
+  }
+]
+[OBJECT @Z110 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z111
+    ZTransform transform @Z112
+    float minMag 0.1940955f
+    float maxMag 36.208145f
+  }
+]
+[OBJECT @Z111 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "To perform operations on\nobjects, you must first \nselect them.\n\nTo select an object:\n1. Get the selection tool by \n    clicking on the arrow \n    button on the toolbar.\n2. Click on the object of\n    interest.\n\nTry selecting the star\nat the right.  You will notice\na magenta box around the\nobject when it is seleted.\n\nOnce it is selected, try\npressing 'Page Up' or\n'Page Down'.\n\nTo continue, you must\nget the hand tool."
+  }
+]
+[OBJECT @Z112 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.22824869855497476d 0.0d 0.0d 0.22824869855497476d 1463.9484974213017d -43.89782669289321d]
+  }
+]
+[OBJECT @Z113 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z114
+    ZTransform transform @Z115
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z114 # edu.umd.cs.jazz.component.ZPolyline
+  {
+    java.awt.Color penColor [1.0 0.0 0.0 1.0]
+    float penWidth 2.720337f
+    Vector coords [1237.7035f 30.427036f 1237.7035f 29.882969f 1238.2476f 27.7067f 1238.2476f 23.898226f 1238.7916f 18.457552f 1239.8798f 13.560946f 1240.9679f 9.208407f 1242.6001f 5.9440026f 1243.6882f 2.6795983f 1244.7764f -0.040738717f 1245.8645f -2.7610757f 1246.9526f -5.481413f 1247.4967f -7.6576824f 1248.5848f -9.833952f 1251.3052f -16.906828f 1251.8492f -18.53903f 1252.3933f -19.083097f 1252.3933f -19.627165f 1252.3933f -20.171232f 1252.9374f -20.7153f 1252.9374f -19.627165f 1253.4814f -17.994963f 1254.0255f -15.274626f 1255.1136f -12.554289f 1256.2018f -8.745817f 1257.2899f -4.393278f 1258.9221f 0.5033287f 1260.5543f 4.855868f 1262.1865f 9.208407f 1263.2747f 13.016879f 1264.9069f 16.82535f 1267.0831f 19.545687f 1268.1713f 22.266024f 1269.2594f 23.898226f 1269.8035f 24.986362f 1269.8035f 25.53043f 1270.3475f 26.074497f 1270.8916f 26.618565f 1270.8916f 27.7067f 1270.8916f 28.794834f 1271.4357f 29.882969f 1271.9797f 32.05924f 1271.9797f 31.515171f 1271.4357f 30.971104f 1269.8035f 29.882969f 1268.1713f 28.250767f 1264.9069f 24.986362f 1260.5543f 21.721956f 1256.2018f 17.913485f 1251.8492f 14.105014f 1247.4967f 10.84061f 1243.6882f 8.66434f 1240.4238f 7.0321374f 1238.2476f 5.9440026f 1236.6154f 4.855868f 1234.9832f 3.767733f 1232.8069f 2.135531f 1230.6306f 1.0473961f 1229.5425f -0.040738717f 1228.4543f -1.1288735f 1227.9103f -1.1288735f 1227.3662f -1.6729409f 1226.2781f -1.6729409f 1225.734f -2.2170084f 1224.6459f -2.2170084f 1224.1018f -2.2170084f 1225.19f -2.2170084f 1226.8221f -2.2170084f 1230.0865f -2.2170084f 1236.0713f -2.2170084f 1270.3475f -0.040738717f 1274.156f 0.5033287f 1276.3323f 0.5033287f 1277.4204f 0.5033287f 1277.9645f 0.5033287f 1278.5085f 0.5033287f 1279.0526f 0.5033287f 1279.5967f 0.5033287f 1280.1407f 0.5033287f 1279.0526f 1.0473961f 1278.5085f 1.5914634f 1276.8763f 1.5914634f 1275.7882f 2.135531f 1273.0679f 2.6795983f 1270.3475f 3.767733f 1267.6272f 4.855868f 1264.3628f 6.48807f 1260.5543f 8.120273f 1256.7458f 10.296542f 1254.0255f 13.016879f 1250.7611f 15.737216f 1248.0408f 17.913485f 1245.8645f 20.089754f 1244.2323f 21.177889f 1243.1442f 21.721956f 1241.512f 22.266024f 1240.9679f 23.354158f 1239.8798f 23.898226f 1239.8798f 24.442293f 1239.3357f 24.986362f 1238.7916f 24.986362f 1238.7916f 25.53043f 1238.2476f 25.53043f]
+  }
+]
+[OBJECT @Z115 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.5131579897669697d 0.0d 0.0d 0.5131579897669697d 986.3392243057424d 29.539310850419724d]
+  }
+]
+[OBJECT @Z116 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z117
+    ZTransform transform @Z119
+    float minMag 0.1940955f
+    float maxMag 28.089737f
+  }
+]
+[OBJECT @Z117 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z118
+    java.awt.geom.Rectangle2D destBounds [1442.2164306640625 -482.8148193359375 287.8533935546875 242.80319213867188]
+  }
+]
+[OBJECT @Z118 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Go on!"
+  }
+]
+[OBJECT @Z119 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.243154041949811d 0.0d 0.0d 0.243154041949811d 1669.6673573590217d 175.37718508485318d]
+  }
+]
+[OBJECT @Z120 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z121
+    ZTransform transform @Z122
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z121 # edu.umd.cs.jazz.component.ZPolyline
+  {
+    java.awt.Color penColor [1.0 0.0 0.0 1.0]
+    float penWidth 3.3831098f
+    Vector coords [1504.7631f 493.36264f 1504.7631f 492.686f 1504.7631f 492.00937f 1505.4397f 491.33276f 1506.793f 489.3029f 1508.1462f 487.27304f 1515.5891f 475.09384f 1517.6189f 470.35748f 1519.6488f 464.9445f 1521.6787f 460.20816f 1523.7085f 456.1484f 1525.0618f 452.76532f 1526.415f 450.0588f 1527.0917f 448.02896f 1527.7683f 445.99908f 1528.4448f 444.64584f 1529.1215f 443.2926f 1529.1215f 442.61597f 1529.7981f 441.26273f 1529.7981f 440.58612f 1530.4747f 439.9095f 1530.4747f 440.58612f 1530.4747f 442.61597f 1530.4747f 445.32248f 1530.4747f 448.02896f 1530.4747f 451.41208f 1530.4747f 455.4718f 1530.4747f 459.53152f 1530.4747f 463.59125f 1530.4747f 467.651f 1531.1514f 471.71072f 1531.828f 475.09384f 1532.5046f 478.47693f 1533.1813f 481.18344f 1533.8579f 483.88992f 1536.5643f 493.36264f 1537.241f 494.03925f 1537.241f 495.3925f 1537.9176f 496.74573f 1537.9176f 497.42236f 1537.241f 497.42236f 1536.5643f 496.74573f 1535.8877f 495.3925f 1534.5344f 494.71588f 1533.1813f 493.36264f 1531.1514f 492.00937f 1529.1215f 489.97952f 1525.7384f 487.94965f 1522.3552f 485.24316f 1518.9722f 481.86005f 1514.9125f 477.80032f 1511.5293f 475.09384f 1508.1462f 472.38736f 1504.7631f 469.68085f 1501.38f 466.97437f 1498.6735f 464.9445f 1497.3203f 464.26788f 1496.6437f 463.59125f 1496.6437f 462.91464f 1495.967f 462.91464f 1496.6437f 462.91464f 1497.3203f 462.91464f 1497.9968f 462.91464f 1500.0267f 462.91464f 1503.4099f 463.59125f 1508.1462f 464.26788f 1518.9722f 466.29776f 1530.4747f 468.3276f 1535.8877f 469.00424f 1539.9474f 469.00424f 1543.3306f 469.00424f 1545.3605f 469.00424f 1546.7136f 469.00424f 1548.0669f 469.00424f 1548.7435f 469.00424f 1549.4202f 469.00424f 1550.0968f 469.00424f 1550.7734f 469.00424f 1552.1266f 469.00424f 1553.4799f 469.68085f 1554.8331f 469.68085f 1555.5098f 469.68085f 1556.1864f 469.68085f 1555.5098f 469.68085f 1554.8331f 470.35748f 1552.8032f 470.35748f 1551.4501f 471.71072f 1548.7435f 471.71072f 1545.3605f 473.06396f 1541.9773f 473.7406f 1538.5942f 475.09384f 1535.211f 475.77045f 1531.1514f 477.1237f 1527.7683f 477.80032f 1525.0618f 478.47693f 1522.3552f 479.8302f 1520.3254f 481.18344f 1508.8229f 487.27304f 1507.4696f 487.94965f 1506.793f 488.62628f 1506.1163f 489.3029f]
+  }
+]
+[OBJECT @Z122 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.5644738089308232d 0.0d 0.0d 0.5644738089308232d 791.8339420659984d -643.5017446901932d]
+  }
+]
+[OBJECT @Z123 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z124
+    ZTransform transform @Z125
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z124 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 1.0 1.0]
+    float penWidth 3.3831098f
+    rectangle rect [1474.3151f 373.60052f 55.483032f 52.77652f]
+  }
+]
+[OBJECT @Z125 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.5644738089308232d 0.0d 0.0d 0.5644738089308232d 790.3061694473931d -645.0294828560513d]
+  }
+]
+[OBJECT @Z126 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z127
+    ZTransform transform @Z129
+    float minMag 0.1940955f
+    float maxMag 26.62057f
+  }
+]
+[OBJECT @Z127 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z128
+    ZNode destNode @Z126
+  }
+]
+[OBJECT @Z128 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Groups of objects can\nalso be selected.\n\nTo select a group:\n1. Get the selection tool.\n2. On a blank space near\n    the group, press and \n    hold the *left* mouse\n    button.\n3. Move the mouse over\n    the objects in the group.\n\nTry selecting the rectangle\nand star at the right.\n\nOnce they are selected,\ntry pressing the  keyboard\narrow keys.\n\nTo continue, you must\nget the hand tool."
+  }
+]
+[OBJECT @Z129 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.21204422664356698d 0.0d 0.0d 0.21204422664356698d 1469.2644379585893d -466.3224566098582d]
+  }
+]
+[OBJECT @Z130 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z131
+    ZTransform transform @Z133
+    float minMag 0.1940955f
+    float maxMag 16.320894f
+  }
+]
+[OBJECT @Z131 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z132
+    java.awt.geom.Rectangle2D destBounds [389.0833435058594 -783.5789794921875 175.48141479492188 148.017822265625]
+  }
+]
+[OBJECT @Z132 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Continue"
+  }
+]
+[OBJECT @Z133 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.19522869528285006d 0.0d 0.0d 0.19522869528285006d 1664.2748946850493d -268.0436607111604d]
+  }
+]
+[OBJECT @Z134 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z135
+    ZTransform transform @Z136
+    float minMag 0.1940955f
+    float maxMag 49.12082f
+  }
+]
+[OBJECT @Z135 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Hyperlinks can be created between\nobjects on the Jazz surface.\n\nTo create a link between the\ntwo rectangles at the right:\n1. Get the hyperlink tool by \n    clicking the 'hyper link' button\n    on the toolbar\n2. Left click on the larger rectangle\n3. Left click on the smaller rectangle\n\nTry out the link by getting the hand\ntool then left clicking  on the  larger\nrectangle."
+  }
+]
+[OBJECT @Z136 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.13904764019479732d 0.0d 0.0d 0.13904764019479732d 399.6486380028824d -768.1311576913113d]
+  }
+]
+[OBJECT @Z137 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z138
+    ZTransform transform @Z139
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z138 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 1.0 1.0]
+    float penWidth 1.8899705f
+    rectangle rect [287.9151f -521.30426f 59.723083f 36.287415f]
+  }
+]
+[OBJECT @Z139 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.6830133576592174d 0.0d 0.0d 0.6830133576592174d 309.66371164699956d -391.95939298371707d]
+  }
+]
+[OBJECT @Z140 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z141
+    ZTransform transform @Z142
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z141 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 1.0 1.0]
+    float penWidth 1.8899705f
+    rectangle rect [318.15463f -463.0932f 22.301666f 12.095825f]
+  }
+]
+[OBJECT @Z142 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.6830133576592174d 0.0d 0.0d 0.6830133576592174d 304.1189596843836d -393.86064970996006d]
+  }
+]
+[OBJECT @Z143 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z144
+    ZTransform transform @Z146
+    float minMag 0.1940955f
+    float maxMag 29.72062f
+  }
+]
+[OBJECT @Z144 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z145
+    java.awt.geom.Rectangle2D destBounds [-106.001953125 -820.9508056640625 246.23150634765625 207.69525146484375]
+  }
+]
+[OBJECT @Z145 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Continue"
+  }
+]
+[OBJECT @Z146 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.18992667328156104d 0.0d 0.0d 0.18992667328156104d 492.6287811591182d -658.803771626434d]
+  }
+]
+[OBJECT @Z147 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z148
+    ZTransform transform @Z150
+    float minMag 0.1940955f
+    float maxMag 29.466362f
+  }
+]
+[OBJECT @Z148 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    boolean isvolatile true
+    ZVisualComponent child @Z149
+    ZNode destNode @Z147
+  }
+]
+[OBJECT @Z149 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Hyperlinks can also be created\nbetween an object and a \nviewpoint.  A viewpoint is\nwhatever you currently see\nin this window.\n\nInstead of making a link by\nclicking on a second object,\nyou will  make the link by\npressing the space bar.\nTo create a link from the\nsquiggle to a vIewpoint:\n1. Get the hyperlink tool.\n2. Click on the squiggle.\n3. Using the keyboard, pan \n    and zoom to your favorite\n    viewpoint.\n4. Press the space bar.\n\nTry it out. Zoom in on the\nsquiggle then click on it\nusing the hand tool."
+  }
+]
+[OBJECT @Z150 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.17415042838351102d 0.0d 0.0d 0.17415042838351102d -92.26983083722025d -807.8251950937765d]
+  }
+]
+[OBJECT @Z151 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z152
+    ZTransform transform @Z153
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z152 # edu.umd.cs.jazz.component.ZPolyline
+  {
+    java.awt.Color penColor [1.0 0.0 0.0 1.0]
+    float penWidth 2.8337493f
+    Vector coords [496.89148f -533.46216f 496.89148f -532.89545f 497.45822f -532.3287f 497.45822f -531.7619f 497.45822f -531.1952f 498.02496f -530.6284f 498.59174f -530.0617f 498.59174f -528.92816f 499.15848f -528.36145f 499.15848f -527.7947f 499.72522f -527.7947f 500.29196f -527.2279f 500.85873f -526.6612f 501.42548f -526.0944f 502.55896f -525.5277f 503.69247f -524.96094f 504.25922f -524.39417f 505.39273f -523.82745f 505.95947f -523.2607f 506.5262f -522.6939f 507.65973f -522.1272f 509.36f -522.1272f 512.1937f -522.1272f 512.7605f -522.1272f 513.894f -522.1272f 515.02747f -522.6939f 516.16095f -523.2607f 517.2945f -523.82745f 517.8612f -524.96094f 518.428f -524.96094f 518.9947f -525.5277f 518.9947f -526.0944f 519.56146f -526.6612f 519.56146f -527.2279f 520.12823f -527.7947f 520.69495f -528.36145f 521.2617f -529.49493f 521.8285f -530.0617f 521.8285f -530.6284f 522.3952f -531.1952f 522.962f -531.7619f 524.09546f -534.02893f 524.66223f -534.5957f 525.22894f -535.1624f 526.3625f -536.29596f 527.496f -536.8627f 528.62946f -537.42944f 529.1962f -538.5629f 530.3297f -538.5629f 533.16345f -539.6964f 533.7302f -539.6964f 535.4305f -540.2632f 536.56396f -540.2632f 537.69745f -540.2632f 539.9645f -540.2632f 541.66473f -540.2632f 541.66473f -539.6964f 542.7982f -539.1297f 543.9317f -538.5629f 543.9317f -537.99615f 544.4985f -537.99615f 544.4985f -537.42944f 545.0652f -537.42944f 545.63196f -536.8627f 546.1987f -536.29596f 547.3322f -534.5957f 548.4657f -533.46216f 549.0325f -532.89545f 549.0325f -532.3287f 550.16595f -531.1952f 550.7327f -530.6284f 552.9997f -527.7947f 552.9997f -527.2279f 553.56647f -526.6612f 554.13324f -525.5277f 554.69995f -524.39417f 556.967f -522.1272f 558.66724f -520.9937f 560.9342f -518.7267f 562.0677f -518.7267f 563.20123f -518.1599f 564.3347f -518.1599f 567.16846f -517.5932f 567.7352f -517.5932f 568.8687f -517.5932f 569.4355f -517.5932f 570.0022f -517.5932f 573.4027f -518.1599f 577.36993f -520.9937f 577.9367f -521.5604f 578.5035f -522.1272f 580.20374f -523.82745f 580.77045f -524.39417f 580.77045f -524.96094f 580.77045f -525.5277f 581.3372f -525.5277f 582.4707f -527.2279f 582.4707f -527.7947f 583.0375f -528.92816f 583.0375f -529.49493f]
+  }
+]
+[OBJECT @Z153 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.7513146673702451d 0.0d 0.0d 0.7513146673702451d -338.1319184439485d -337.77099485671687d]
+  }
+]
+[OBJECT @Z154 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z155
+    ZTransform transform @Z157
+    float minMag 0.1940955f
+    float maxMag 22.123093f
+  }
+]
+[OBJECT @Z155 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z156
+    java.awt.geom.Rectangle2D destBounds [-1337.9239501953125 -521.780029296875 235.7283935546875 198.83590698242188]
+  }
+]
+[OBJECT @Z156 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Forward"
+  }
+]
+[OBJECT @Z157 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.19169899732899456d 0.0d 0.0d 0.19169899732899456d 88.96292143188336d -640.5659391245458d]
+  }
+]
+[OBJECT @Z158 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z159
+    ZTransform transform @Z160
+    float minMag 0.1940955f
+    float maxMag 73.86306f
+  }
+]
+[OBJECT @Z159 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Objects on the Jazz surface\ncan be made sticky.  You can\nthink of sticky objects as glued\nto your monitor's glass.  Hence,\nas you pan and zoom, these\nobjects remain fixed.\n\nTo make the rectangle at the \nright sticky:\n1. Select the rectangle using the\n    arrow tool.\n2. Choose  'Edit' then 'Sticky'\n    from the menu bar.\n\nTry panning and zooming to \nconfirm that it is sticky.\n\nMake the rectangle unsticky by:\n1. Selecting the rectangle using\n    the arrow tool.\n2. Choose 'Edit' then 'UnSticky'\n    from the menu bar.\n\nTo continue, you must get the\nhand tool."
+  }
+]
+[OBJECT @Z160 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.14892422967874944d 0.0d 0.0d 0.14892422967874944d -1323.650409287237d -509.73752610835845d]
+  }
+]
+[OBJECT @Z161 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z162
+    ZTransform transform @Z163
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z162 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 1.0 1.0]
+    float penWidth 1.8476945f
+    rectangle rect [-858.6702f -9.572246f 51.735413f 29.932652f]
+  }
+]
+[OBJECT @Z163 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [1.0281405888732877d 0.0d 0.0d 1.0281405888732877d -328.248940206478d -467.2639747081969d]
+  }
+]
+[OBJECT @Z164 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z165
+    ZTransform transform @Z167
+    float minMag 0.1940955f
+    float maxMag 37.82587f
+  }
+]
+[OBJECT @Z165 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z166
+    java.awt.geom.Rectangle2D destBounds [-1241.5537109375 1349.25 300.935791015625 253.838134765625]
+  }
+]
+[OBJECT @Z166 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Continue"
+  }
+]
+[OBJECT @Z167 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.21848703811333703d 0.0d 0.0d 0.21848703811333703d -1162.4323717711943d -356.1003759851491d]
+  }
+]
+[OBJECT @Z168 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z169
+    ZTransform transform @Z170
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z169 # edu.umd.cs.jazz.component.ZPolyline
+  {
+    java.awt.Color penColor [1.0 0.0 0.0 1.0]
+    float penWidth 1.3218466f
+    Vector coords [-847.56415f 70.12187f -847.2998f 69.8575f -847.2998f 69.59313f -847.2998f 69.328766f -847.03546f 69.328766f -846.5067f 69.06439f -846.2423f 68.53565f -845.4492f 68.271286f -844.9205f 68.00692f -844.1274f 67.47818f -843.59863f 67.213806f -843.0699f 66.94944f -842.80554f 66.94944f -842.2768f 66.94944f -842.0124f 66.94944f -840.95496f 66.68507f -839.6331f 66.4207f -839.1044f 66.156334f -838.83997f 66.156334f -838.3113f 66.156334f -838.0469f 66.156334f -837.5181f 66.156334f -836.9894f 66.156334f -836.4607f 66.156334f -835.93195f 66.156334f -835.1388f 66.156334f -834.6101f 65.89196f -833.81696f 65.89196f -833.2882f 65.89196f -832.4951f 65.89196f -831.9664f 65.89196f -831.4376f 65.89196f -830.64453f 65.89196f -830.1158f 65.89196f -829.3227f 65.89196f -828.79395f 65.89196f -828.2652f 65.89196f -827.4721f 65.89196f -826.679f 65.89196f -825.88586f 65.89196f -825.0928f 66.156334f -824.2997f 66.156334f -823.2422f 66.156334f -822.71344f 66.4207f -821.92035f 66.4207f -821.12726f 66.68507f -820.5985f 66.68507f -818.2192f 67.213806f -817.1617f 67.47818f -816.63293f 67.742546f -816.3686f 67.742546f -815.83984f 68.00692f -815.3111f 68.271286f -814.78235f 68.271286f -814.25366f 68.53565f -813.98926f 68.800026f -813.4605f 68.800026f -812.9318f 68.800026f -812.4031f 69.06439f -811.8743f 69.328766f -811.3456f 69.59313f -811.08124f 69.8575f -810.5525f 69.8575f -810.2881f 70.12187f -810.02374f 70.12187f -809.75934f 70.38624f -809.495f 70.38624f -809.23065f 70.38624f -809.23065f 70.65061f -809.23065f 70.91498f]
+  }
+]
+[OBJECT @Z170 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.9090908637716748d 0.0d 0.0d 0.9090908637716748d -391.8835181675454d -404.71729881139674d]
+  }
+]
+[OBJECT @Z171 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z172
+    ZTransform transform @Z174
+    float minMag 21.413198f
+    float maxMag 214.13199f
+  }
+]
+[OBJECT @Z172 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z173
+    java.awt.geom.Rectangle2D destBounds [363.51898193359375 -633.2930297851562 168.04437255859375 141.74472045898438]
+  }
+]
+[OBJECT @Z173 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Click here\nto go back."
+  }
+]
+[OBJECT @Z174 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.046700168401002884d 0.0d 0.0d 0.046700168401002884d 491.5118713378906d -564.30078125d]
+  }
+]
+[OBJECT @Z175 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z176
+    ZTransform transform @Z178
+    float maxMag 10.0f
+  }
+]
+[OBJECT @Z176 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z177
+    java.awt.geom.Rectangle2D destBounds [-1238.6453857421875 1351.725341796875 298.10626220703125 251.451416015625]
+  }
+]
+[OBJECT @Z177 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Fading"
+  }
+]
+[OBJECT @Z178 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [3.7974994881524093d 0.0d 0.0d 3.7974994881524093d -932.3896683223239d 908.7551657210748d]
+  }
+]
+[OBJECT @Z179 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z180
+    ZTransform transform @Z181
+    float maxMag 0.21799144f
+  }
+]
+[OBJECT @Z180 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "This is an overview of the tutorial.  You\ncan click on any of the headings to jump\nto that part of the tutorial or click below\nto begin."
+  }
+]
+[OBJECT @Z181 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [6.043973445892334d 0.0d 0.0d 6.043973445892334d -1803.1697120666504d 1716.25048828125d]
+  }
+]
+[OBJECT @Z182 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z183
+    ZTransform transform @Z185
+    float maxMag 0.21799144f
+  }
+]
+[OBJECT @Z183 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z184
+    java.awt.geom.Rectangle2D destBounds [64.56912994384766 1484.1319580078125 102.23412322998047 86.234130859375]
+  }
+]
+[OBJECT @Z184 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Begin"
+  }
+]
+[OBJECT @Z185 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [8.755719184875488d 0.0d 0.0d 8.755719184875488d -97.64889907836914d 3158.684326171875d]
+  }
+]
+[OBJECT @Z186 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z187
+    ZTransform transform @Z189
+    float minMag 0.1940955f
+    float maxMag 86.04675f
+  }
+]
+[OBJECT @Z187 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z188
+    java.awt.geom.Rectangle2D destBounds [-2440.822998046875 -631.9738159179688 5705.2783203125 4812.37939453125]
+  }
+]
+[OBJECT @Z188 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Back"
+  }
+]
+[OBJECT @Z189 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.11621589213609695d 0.0d 0.0d 0.11621589213609695d 91.09394463782765d 1540.3551070380734d]
+  }
+]
+[OBJECT @Z190 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z191
+    ZTransform transform @Z192
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z191 # edu.umd.cs.jazz.component.ZPolyline
+  {
+    java.awt.Color penColor [1.0 0.0 0.0 1.0]
+    float penWidth 0.5810794f
+    Vector coords [228.49168f 1170.8624f 228.37547f 1170.8624f 228.02682f 1170.8624f 227.44574f 1170.8624f 226.86467f 1170.7462f 226.3998f 1170.7462f 225.81873f 1170.7462f 225.23764f 1170.7462f 223.95927f 1170.7462f 223.37819f 1170.7462f 222.91333f 1170.8624f 222.6809f 1170.8624f 222.44846f 1170.9788f 222.21603f 1171.095f 221.86739f 1171.2112f 221.63495f 1171.3274f 221.2863f 1171.5598f 220.93765f 1171.676f 220.70522f 1171.7922f 220.35657f 1172.0247f 220.00792f 1172.2571f 219.65929f 1172.4895f 219.42685f 1172.7219f 219.19441f 1172.9543f 218.96199f 1173.0706f 218.61334f 1173.1868f 218.49712f 1173.4192f 218.2647f 1173.5354f 218.14847f 1173.6516f 218.03226f 1173.8842f 217.79982f 1174.0004f 217.68361f 1174.1166f 217.5674f 1174.349f 217.5674f 1174.5814f 217.33496f 1174.8138f 217.10252f 1175.2787f 216.98631f 1175.5111f 216.8701f 1175.7435f 216.8701f 1175.976f 216.75388f 1176.2084f 216.75388f 1176.4408f 216.75388f 1176.6733f 216.75388f 1176.9058f 216.75388f 1177.2544f 216.75388f 1177.4868f 216.75388f 1177.7192f 216.75388f 1177.8354f 216.75388f 1178.0679f 216.75388f 1178.3003f 216.8701f 1178.6489f 216.98631f 1178.9976f 217.10252f 1179.1138f 217.21875f 1179.3462f 217.33496f 1179.4624f 217.5674f 1179.695f 217.68361f 1179.9274f 218.03226f 1180.1598f 218.14847f 1180.3922f 218.3809f 1180.6246f 218.72955f 1180.857f 219.0782f 1180.9733f 219.42685f 1181.2057f 220.24036f 1181.5543f 220.70522f 1181.7867f 220.93765f 1181.903f 221.2863f 1182.0192f 221.51874f 1182.1354f 221.75116f 1182.2516f 222.09981f 1182.3679f 222.56468f 1182.4841f 223.14575f 1182.6003f 223.61063f 1182.7166f 223.95927f 1182.7166f 224.42413f 1182.8328f 224.65656f 1182.8328f 225.0052f 1182.949f 225.47008f 1182.949f 225.81873f 1182.949f 226.28358f 1182.949f 226.74844f 1182.949f 227.21332f 1182.949f 227.67818f 1182.949f 227.91061f 1182.949f 228.25926f 1182.949f 228.72412f 1182.949f 229.18898f 1182.949f 229.65384f 1182.949f 230.00249f 1182.949f 230.35114f 1182.949f 231.16466f 1182.949f 231.5133f 1182.949f 231.74573f 1182.949f 232.09438f 1182.949f 232.44302f 1182.8328f 232.79167f 1182.8328f 233.25653f 1182.8328f 233.7214f 1182.8328f 234.07005f 1182.8328f 234.30247f 1182.8328f 234.76735f 1182.8328f 235.116f 1182.8328f 235.58086f 1182.8328f 235.9295f 1182.8328f 236.16194f 1182.8328f 236.6268f 1182.8328f 236.97545f 1182.8328f 237.3241f 1182.8328f 237.67274f 1182.8328f 238.0214f 1182.7166f 238.37004f 1182.7166f 238.71869f 1182.6003f 239.06734f 1182.6003f 239.41599f 1182.6003f 239.76463f 1182.4841f 240.22949f 1182.3679f 240.57814f 1182.3679f 240.92679f 1182.2516f 242.20515f 1181.903f 242.5538f 1181.6705f 242.78624f 1181.5543f 243.13489f 1181.4381f 243.36732f 1181.3219f 243.48354f 1181.2057f 243.59975f 1180.9733f 243.83218f 1180.9733f 243.9484f 1180.857f 244.06462f 1180.7408f 244.18083f 1180.6246f 244.41327f 1180.5084f 244.52948f 1180.276f 244.76192f 1180.0436f 244.87813f 1179.8112f 245.11057f 1179.5787f 245.22678f 1179.3462f 245.34299f 1179.1138f 245.45921f 1178.8813f 245.45921f 1178.7651f 245.45921f 1178.5327f 245.57542f 1178.4165f 245.57542f 1178.1841f 245.57542f 1178.0679f 245.57542f 1177.9517f 245.57542f 1177.8354f 245.57542f 1177.7192f 245.57542f 1177.4868f 245.57542f 1177.3706f 245.57542f 1177.2544f 245.57542f 1177.1382f 245.57542f 1177.022f 245.57542f 1176.9058f 245.57542f 1176.7896f 245.57542f 1176.6733f 245.57542f 1176.557f 245.45921f 1176.3246f 245.34299f 1176.0922f 245.11057f 1175.7435f 244.99434f 1175.5111f 244.87813f 1175.3949f 244.76192f 1175.2787f 244.64569f 1175.1625f 244.64569f 1175.0463f 244.52948f 1175.0463f 244.41327f 1174.93f 244.29704f 1174.6976f 244.06462f 1174.5814f 243.9484f 1174.4652f 243.71597f 1174.2328f 243.59975f 1174.1166f 243.36732f 1174.0004f 243.2511f 1173.8842f 243.13489f 1173.768f 242.67003f 1173.5354f 242.20515f 1173.1868f 241.8565f 1173.0706f 241.50786f 1172.9543f 241.27544f 1172.8381f 241.043f 1172.7219f 240.81058f 1172.7219f 240.57814f 1172.6057f 240.3457f 1172.6057f 240.11328f 1172.3733f 239.88084f 1172.3733f 239.6484f 1172.2571f 239.5322f 1172.2571f 239.29976f 1172.1409f 239.06734f 1172.1409f 238.95111f 1172.0247f 238.60246f 1171.9084f 238.37004f 1171.9084f 238.0214f 1171.7922f 237.67274f 1171.676f 237.4403f 1171.676f 237.20787f 1171.5598f 236.85924f 1171.4436f 236.6268f 1171.4436f 236.27815f 1171.3274f 235.9295f 1171.3274f 235.58086f 1171.2112f 234.53491f 1170.9788f 234.18626f 1170.8624f 233.95383f 1170.8624f 233.60518f 1170.7462f 233.37276f 1170.7462f 233.14032f 1170.7462f 232.90788f 1170.7462f 232.67546f 1170.7462f 232.44302f 1170.7462f 232.09438f 1170.7462f 231.74573f 1170.63f 231.39708f 1170.63f 231.04843f 1170.63f 230.69978f 1170.5138f 230.46736f 1170.5138f 230.23492f 1170.5138f 229.88628f 1170.5138f 229.77007f 1170.5138f 229.42142f 1170.5138f 229.30519f 1170.5138f 229.07277f 1170.5138f 228.84033f 1170.5138f 228.72412f 1170.5138f 228.6079f 1170.5138f 228.49168f 1170.5138f 228.37547f 1170.5138f 228.37547f 1170.3976f 228.25926f 1170.3976f]
+  }
+]
+[OBJECT @Z192 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [1.0d 0.0d 0.0d 1.0d -133.89503467082977d 366.15793681144714d]
+  }
+]
+[OBJECT @Z193 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z194
+    ZTransform transform @Z195
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z194 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 1.0 1.0]
+    float penWidth 0.19940646f
+    rectangle rect [223.83481f 1220.3375f 13.200714f 3.7489014f]
+  }
+]
+[OBJECT @Z195 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [2.853117386346105d 0.0d 0.0d 2.853117386346105d -362.94737806755506d -1922.7860892796216d]
+  }
+]
+[OBJECT @Z196 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z197
+    ZTransform transform @Z199
+    float minMag 0.1940955f
+    float maxMag 250.74414f
+  }
+]
+[OBJECT @Z197 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z198
+    java.awt.geom.Rectangle2D destBounds [56.652076721191406 1476.3602294921875 117.27539825439453 98.9212646484375]
+  }
+]
+[OBJECT @Z198 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Go Back!"
+  }
+]
+[OBJECT @Z199 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.11378600967954733d 0.0d 0.0d 0.11378600967954733d 284.86764395250856d 1562.2193876820163d]
+  }
+]
+[OBJECT @Z200 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z201
+    ZTransform transform @Z203
+    float minMag 0.1940955f
+    float maxMag 59.58055f
+  }
+]
+[OBJECT @Z201 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z202
+    java.awt.geom.Rectangle2D destBounds [258.81634521484375 1473.955322265625 122.19873046875 103.07421875]
+  }
+]
+[OBJECT @Z202 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Back"
+  }
+]
+[OBJECT @Z203 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.1525818141820606d 0.0d 0.0d 0.1525818141820606d 1627.597301989627d 1207.9641778672276d]
+  }
+]
+[OBJECT @Z204 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z205
+    ZTransform transform @Z206
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z205 # edu.umd.cs.jazz.component.ZPolyline
+  {
+    java.awt.Color penColor [1.0 0.0 0.0 1.0]
+    float penWidth 0.8392f
+    Vector coords [686.98706f 1167.6311f 686.98706f 1167.4633f 686.98706f 1167.2954f 686.98706f 1167.1276f 686.8192f 1166.7919f 686.8192f 1166.4563f 686.65137f 1166.2885f 686.4835f 1165.9528f 686.4835f 1165.6171f 686.3157f 1165.6171f 686.3157f 1165.2814f 686.1478f 1164.9457f 686.1478f 1164.7778f 686.1478f 1164.61f 686.1478f 1164.2743f 685.98f 1164.1064f 685.98f 1163.9386f 686.3157f 1164.1064f 686.4835f 1164.2743f 686.65137f 1164.2743f 686.8192f 1164.61f 687.32275f 1164.7778f 687.6584f 1165.1135f 688.1619f 1165.4492f 688.4976f 1165.6171f 688.8333f 1165.7849f 689.16895f 1165.9528f 689.50464f 1166.1206f 689.84033f 1166.2885f 690.0082f 1166.2885f 690.176f 1166.2885f 690.176f 1166.4563f 690.176f 1166.2885f 690.3439f 1165.7849f 690.5117f 1165.2814f 691.3509f 1163.6029f 691.51874f 1163.2673f 691.6866f 1163.0995f 691.6866f 1162.9316f 691.85443f 1162.9316f 692.0223f 1162.9316f 692.19006f 1162.9316f 692.3579f 1163.0995f 692.86145f 1163.4352f 693.53284f 1164.1064f 694.20416f 1164.7778f 695.0434f 1165.4492f 695.7147f 1166.1206f 696.0504f 1166.2885f 696.0504f 1166.4563f 696.21826f 1166.4563f 696.3861f 1166.2885f 696.72174f 1165.9528f 697.05743f 1165.4492f 697.7288f 1164.7778f 698.2323f 1164.1064f 698.9037f 1163.6029f 699.4072f 1163.0995f 699.7429f 1162.9316f 700.07855f 1162.596f 700.2464f 1162.596f 700.41425f 1162.596f 700.74994f 1163.0995f 701.2535f 1163.7708f 701.75696f 1164.4421f 702.2605f 1164.9457f 702.5962f 1165.4492f 702.9318f 1165.7849f 703.0997f 1166.1206f 703.0997f 1166.2885f 703.2675f 1166.2885f 703.43536f 1166.2885f 703.9389f 1165.9528f 704.7781f 1165.4492f 705.44946f 1164.9457f 705.95294f 1164.4421f 706.6243f 1163.7708f 706.96f 1163.4352f 707.12787f 1163.0995f 707.2957f 1163.0995f 707.4635f 1163.0995f 707.63135f 1163.2673f 707.7992f 1163.6029f 708.30273f 1164.1064f 708.8063f 1164.7778f 709.1419f 1165.4492f 710.149f 1166.4563f 710.31683f 1166.4563f 710.31683f 1166.624f 710.4847f 1166.624f 710.98816f 1166.2885f 711.4917f 1165.9528f 711.99524f 1165.6171f 712.4987f 1165.2814f 712.8344f 1164.9457f 713.1701f 1164.7778f 713.6736f 1164.61f 713.84143f 1164.4421f 714.1771f 1164.2743f 714.345f 1164.2743f 714.5128f 1164.1064f 714.68066f 1163.9386f 714.8485f 1163.9386f 715.18414f 1163.7708f 715.51984f 1163.6029f 715.8555f 1163.6029f 716.1912f 1163.2673f 716.1912f 1163.4352f 716.1912f 1163.6029f 716.3591f 1163.7708f 716.3591f 1164.1064f 716.6947f 1164.7778f 716.86255f 1164.9457f 716.86255f 1165.2814f 717.0304f 1165.4492f 717.0304f 1165.7849f 717.19824f 1165.9528f 717.19824f 1166.1206f 717.19824f 1166.2885f 717.3661f 1166.4563f 717.3661f 1166.7919f 717.53394f 1166.7919f 717.53394f 1166.9597f 717.7018f 1166.9597f 718.54095f 1166.9597f 719.7158f 1166.9597f 721.22644f 1166.9597f 722.4013f 1166.9597f 723.2405f 1166.9597f 723.5762f 1166.9597f 723.744f 1166.9597f 723.91187f 1166.9597f 723.91187f 1167.1276f 723.744f 1167.4633f 723.744f 1167.6311f 723.5762f 1167.799f 723.2405f 1168.3025f 723.07263f 1168.4703f 723.07263f 1168.6382f 722.9048f 1168.806f 722.9048f 1168.9739f 722.737f 1169.1417f 722.737f 1169.3096f 722.9048f 1169.3096f 723.2405f 1169.3096f 723.91187f 1169.3096f 724.9189f 1169.4774f 725.7581f 1169.4774f 726.5973f 1169.6453f 727.1008f 1169.813f 727.6043f 1169.813f 727.94f 1169.9808f 728.2757f 1169.9808f 728.44354f 1169.9808f 728.44354f 1170.1487f 728.6114f 1170.1487f 728.77924f 1170.1487f 728.77924f 1170.3165f 728.6114f 1170.4844f 728.6114f 1170.6522f 726.76514f 1171.8271f 726.42944f 1172.1628f 726.09375f 1172.3307f 726.09375f 1172.4985f 725.9259f 1172.4985f 725.9259f 1172.6664f 725.9259f 1172.8341f 726.2616f 1173.1698f 726.5973f 1173.6733f 727.2687f 1174.1769f 727.94f 1174.8483f 728.6114f 1175.3518f 729.11487f 1175.6875f 729.45056f 1176.0231f 729.9541f 1176.3588f 730.2898f 1176.6945f 730.6254f 1176.8623f 730.6254f 1177.0302f 730.4576f 1177.0302f 729.9541f 1177.0302f 729.45056f 1177.0302f 728.6114f 1177.0302f 727.94f 1177.0302f 727.1008f 1177.0302f 725.9259f 1177.0302f 725.7581f 1177.0302f 725.5903f 1177.0302f 725.5903f 1177.198f 725.5903f 1177.5337f 725.5903f 1177.7015f 725.5903f 1178.0372f 725.5903f 1178.7086f 725.5903f 1179.5477f 725.5903f 1180.5548f 725.5903f 1181.5619f 725.5903f 1182.2332f 725.5903f 1182.7367f 725.5903f 1182.9045f 725.5903f 1183.0724f 725.2546f 1182.9045f 724.75104f 1182.401f 724.0797f 1181.8976f 723.2405f 1181.2262f 722.4013f 1180.7227f 721.7299f 1180.0513f 721.0586f 1179.7156f 720.55505f 1179.3799f 720.3872f 1179.212f 720.21936f 1179.212f 720.0515f 1179.212f 719.88367f 1179.212f 719.88367f 1179.5477f 719.7158f 1179.8834f 719.3802f 1180.2191f 719.21234f 1180.5548f 719.21234f 1180.8905f 719.0445f 1181.0583f 719.0445f 1181.394f 718.87665f 1181.7297f 718.7088f 1182.0653f 718.54095f 1182.401f 718.54095f 1182.5688f 718.54095f 1182.7367f 718.54095f 1182.9045f 718.54095f 1183.2402f 718.3731f 1183.5759f 718.3731f 1183.7438f 718.20526f 1183.7438f 718.0375f 1183.5759f 717.7018f 1183.4081f 717.3661f 1182.9045f 716.86255f 1182.5688f 715.51984f 1181.5619f 714.8485f 1181.2262f 714.5128f 1180.8905f 714.0093f 1180.5548f 713.5058f 1180.0513f 713.1701f 1179.7156f 713.00226f 1179.7156f 712.8344f 1179.7156f 712.8344f 1179.5477f 712.66656f 1179.8834f 712.4987f 1180.387f 712.3309f 1180.8905f 711.99524f 1181.5619f 711.8274f 1182.2332f 711.65955f 1182.7367f 711.65955f 1183.0724f 711.4917f 1183.2402f 711.32385f 1183.4081f 711.32385f 1183.5759f 711.156f 1183.5759f 710.98816f 1183.4081f 710.98816f 1183.2402f 710.65247f 1183.0724f 710.4847f 1182.9045f 709.1419f 1181.7297f 708.30273f 1180.7227f 707.7992f 1180.2191f 707.4635f 1179.7156f 706.7922f 1178.8765f 706.6243f 1178.8765f 706.4565f 1178.8765f 706.4565f 1179.0442f 706.4565f 1179.5477f 706.28864f 1179.8834f 705.95294f 1180.387f 705.78516f 1180.8905f 705.44946f 1181.394f 705.1138f 1181.8976f 705.1138f 1182.2332f 704.9459f 1182.5688f 704.9459f 1182.7367f 704.9459f 1182.9045f 704.7781f 1183.2402f 704.6102f 1183.4081f 704.4424f 1183.4081f 704.4424f 1183.2402f 704.2746f 1183.2402f 703.77106f 1182.9045f 702.5962f 1181.8976f 701.42126f 1181.0583f 700.5821f 1180.387f 700.2464f 1180.0513f 699.9107f 1179.8834f 699.7429f 1179.7156f 699.5751f 1179.5477f 699.2394f 1179.3799f 699.07153f 1179.5477f 698.9037f 1179.8834f 698.40015f 1180.387f 698.0645f 1180.8905f 697.7288f 1181.2262f 697.2253f 1181.7297f 696.8896f 1182.0653f 696.3861f 1182.7367f 696.21826f 1182.9045f 696.0504f 1182.9045f 695.88257f 1182.7367f 695.7147f 1182.401f 695.379f 1181.8976f 695.0434f 1181.394f 694.7077f 1180.7227f 694.20416f 1180.2191f 693.86847f 1179.8834f 693.7006f 1179.8834f 693.53284f 1179.7156f 693.365f 1179.5477f 693.19714f 1179.5477f 693.0293f 1179.5477f 692.86145f 1179.8834f 692.3579f 1180.0513f 692.0223f 1180.387f 690.5117f 1181.0583f 689.84033f 1181.394f 689.16895f 1181.5619f 688.8333f 1181.7297f 688.3298f 1181.8976f 688.1619f 1181.8976f 688.1619f 1181.5619f 688.1619f 1181.0583f 688.1619f 1180.2191f 688.1619f 1178.8765f 688.1619f 1178.5408f 687.82623f 1178.3729f 687.49054f 1178.0372f 686.8192f 1177.8694f 686.1478f 1177.7015f 683.7981f 1177.0302f 682.28754f 1176.3588f 682.1197f 1176.3588f 681.784f 1176.3588f 681.61615f 1176.3588f 681.61615f 1176.1909f 681.61615f 1176.0231f 682.1197f 1175.8552f 683.1267f 1175.0161f 683.96594f 1174.6804f 684.8051f 1174.3447f 685.98f 1174.009f 686.3157f 1173.8412f 686.65137f 1173.6733f 686.4835f 1173.6733f 686.3157f 1173.5055f 685.8122f 1173.1698f 684.97296f 1172.3307f 684.4694f 1171.6593f 683.96594f 1171.1558f 682.7911f 1169.813f 682.4554f 1169.6453f 682.28754f 1169.4774f 682.28754f 1169.3096f 681.95184f 1169.1417f 681.784f 1168.9739f 681.61615f 1168.9739f 681.784f 1168.9739f 681.95184f 1168.9739f 682.1197f 1168.9739f 682.6232f 1168.9739f 684.4694f 1168.9739f 684.97296f 1168.9739f 685.4765f 1168.9739f 685.98f 1168.9739f 686.1478f 1168.9739f 686.4835f 1168.9739f 687.1549f 1168.9739f 687.49054f 1168.9739f 687.49054f 1168.806f 687.49054f 1168.6382f 687.49054f 1168.4703f 687.32275f 1168.3025f 687.1549f 1168.3025f 687.1549f 1168.1346f 687.1549f 1167.9668f 686.98706f 1167.9668f 686.98706f 1167.799f]
+  }
+]
+[OBJECT @Z206 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.9090908637716748d 0.0d 0.0d 0.9090908637716748d 994.0205494686369d 145.06277300922272d]
+  }
+]
+[OBJECT @Z207 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z208
+    ZTransform transform @Z210
+    float minMag 0.1940955f
+    float maxMag 49.035065f
+  }
+]
+[OBJECT @Z208 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z209
+    java.awt.geom.Rectangle2D destBounds [1583.0926513671875 1082.61669921875 167.43310546875 141.229248046875]
+  }
+]
+[OBJECT @Z209 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Back"
+  }
+]
+[OBJECT @Z210 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.11511635193442177d 0.0d 0.0d 0.11511635193442177d 1614.3291723723773d 910.0768437928191d]
+  }
+]
+[OBJECT @Z211 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z212
+    ZTransform transform @Z213
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z212 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 1.0 1.0]
+    float penWidth 1.7800095f
+    rectangle rect [1243.5918f 125.8307f 71.20032f 24.564133f]
+  }
+]
+[OBJECT @Z213 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.6830133576592174d 0.0d 0.0d 0.6830133576592174d 749.196170345251d 86.01086963407276d]
+  }
+]
+[OBJECT @Z214 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z215
+    ZTransform transform @Z217
+    float minMag 0.1940955f
+    float maxMag 28.089737f
+  }
+]
+[OBJECT @Z215 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z216
+    java.awt.geom.Rectangle2D destBounds [1596.9005126953125 851.685791015625 108.55615234375 91.56671142578125]
+  }
+]
+[OBJECT @Z216 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Back!"
+  }
+]
+[OBJECT @Z217 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.243154041949811d 0.0d 0.0d 0.243154041949811d 1610.3296775626882d 175.65464048139083d]
+  }
+]
+[OBJECT @Z218 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z219
+    ZTransform transform @Z220
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z219 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 1.0 1.0]
+    float penWidth 3.0635576f
+    rectangle rect [1464.3284f 561.51483f 122.54236f 52.080505f]
+  }
+]
+[OBJECT @Z220 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.3855431461168541d 0.0d 0.0d 0.3855431461168541d 1037.7338363015642d -491.2518857751978d]
+  }
+]
+[OBJECT @Z221 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z222
+    ZTransform transform @Z224
+    float minMag 0.1940955f
+    float maxMag 16.320894f
+  }
+]
+[OBJECT @Z222 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z223
+    java.awt.geom.Rectangle2D destBounds [1427.38818359375 -61.61476135253906 321.092041015625 270.83984375]
+  }
+]
+[OBJECT @Z223 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Back"
+  }
+]
+[OBJECT @Z224 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.21475157249124976d 0.0d 0.0d 0.21475157249124976d 1615.468149712266d -267.97520417036037d]
+  }
+]
+[OBJECT @Z225 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z226
+    ZTransform transform @Z227
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z226 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 1.0 1.0]
+    float penWidth 1.6823337f
+    rectangle rect [182.88628f -396.53558f 107.3329f 22.87973f]
+  }
+]
+[OBJECT @Z227 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.5644738089308232d 0.0d 0.0d 0.5644738089308232d 309.41781378989356d -437.1028379703407d]
+  }
+]
+[OBJECT @Z228 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z229
+    ZTransform transform @Z231
+    float minMag 0.1940955f
+    float maxMag 29.72062f
+  }
+]
+[OBJECT @Z229 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z230
+    java.awt.geom.Rectangle2D destBounds [1440.599365234375 -476.3324890136719 284.2310791015625 239.74771118164062]
+  }
+]
+[OBJECT @Z230 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Back"
+  }
+]
+[OBJECT @Z231 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.18992667328156104d 0.0d 0.0d 0.18992667328156104d 432.2625346026833d -658.4858306804175d]
+  }
+]
+[OBJECT @Z232 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z233
+    ZTransform transform @Z234
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z233 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 1.0 1.0]
+    float penWidth 2.010435f
+    rectangle rect [461.97617f -427.01257f 107.35721f 32.16696f]
+  }
+]
+[OBJECT @Z234 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.4240974818702899d 0.0d 0.0d 0.4240974818702899d -174.54611638821518d -462.04589929693185d]
+  }
+]
+[OBJECT @Z235 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z236
+    ZTransform transform @Z238
+    float minMag 0.1940955f
+    float maxMag 22.123093f
+  }
+]
+[OBJECT @Z236 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z237
+    java.awt.geom.Rectangle2D destBounds [385.7797546386719 -788.5050659179688 184.82534790039062 155.8994140625]
+  }
+]
+[OBJECT @Z237 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Back"
+  }
+]
+[OBJECT @Z238 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.19169899732899456d 0.0d 0.0d 0.19169899732899456d 34.686831086734315d -640.5740203652043d]
+  }
+]
+[OBJECT @Z239 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z240
+    ZTransform transform @Z242
+    float minMag 0.1940955f
+    float maxMag 37.82587f
+  }
+]
+[OBJECT @Z240 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z241
+    java.awt.geom.Rectangle2D destBounds [-115.71186828613281 -827.0120239257812 259.4154052734375 218.81585693359375]
+  }
+]
+[OBJECT @Z241 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Go Back"
+  }
+]
+[OBJECT @Z242 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.21848703811333703d 0.0d 0.0d 0.21848703811333703d -1211.7515634696213d -355.7432506201504d]
+  }
+]
+[OBJECT @Z243 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z244
+    ZTransform transform @Z245
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z244 # edu.umd.cs.jazz.component.ZPolyline
+  {
+    java.awt.Color penColor [1.0 0.0 0.0 1.0]
+    float penWidth 1.3218466f
+    Vector coords [-847.56415f 70.12187f -847.2998f 69.8575f -847.2998f 69.59313f -847.2998f 69.328766f -847.03546f 69.328766f -846.5067f 69.06439f -846.2423f 68.53565f -845.4492f 68.271286f -844.9205f 68.00692f -844.1274f 67.47818f -843.59863f 67.213806f -843.0699f 66.94944f -842.80554f 66.94944f -842.2768f 66.94944f -842.0124f 66.94944f -840.95496f 66.68507f -839.6331f 66.4207f -839.1044f 66.156334f -838.83997f 66.156334f -838.3113f 66.156334f -838.0469f 66.156334f -837.5181f 66.156334f -836.9894f 66.156334f -836.4607f 66.156334f -835.93195f 66.156334f -835.1388f 66.156334f -834.6101f 65.89196f -833.81696f 65.89196f -833.2882f 65.89196f -832.4951f 65.89196f -831.9664f 65.89196f -831.4376f 65.89196f -830.64453f 65.89196f -830.1158f 65.89196f -829.3227f 65.89196f -828.79395f 65.89196f -828.2652f 65.89196f -827.4721f 65.89196f -826.679f 65.89196f -825.88586f 65.89196f -825.0928f 66.156334f -824.2997f 66.156334f -823.2422f 66.156334f -822.71344f 66.4207f -821.92035f 66.4207f -821.12726f 66.68507f -820.5985f 66.68507f -818.2192f 67.213806f -817.1617f 67.47818f -816.63293f 67.742546f -816.3686f 67.742546f -815.83984f 68.00692f -815.3111f 68.271286f -814.78235f 68.271286f -814.25366f 68.53565f -813.98926f 68.800026f -813.4605f 68.800026f -812.9318f 68.800026f -812.4031f 69.06439f -811.8743f 69.328766f -811.3456f 69.59313f -811.08124f 69.8575f -810.5525f 69.8575f -810.2881f 70.12187f -810.02374f 70.12187f -809.75934f 70.38624f -809.495f 70.38624f -809.23065f 70.38624f -809.23065f 70.65061f -809.23065f 70.91498f]
+  }
+]
+[OBJECT @Z245 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.9090908637716748d 0.0d 0.0d 0.9090908637716748d -441.367590900181d -402.88931237465056d]
+  }
+]
+[OBJECT @Z246 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z247
+    ZTransform transform @Z248
+    float minMag 0.1940955f
+    float maxMag 29.443226f
+  }
+]
+[OBJECT @Z247 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "You can also make objects on the\nJazz surface fade out as the zoom\nchanges.  For instance, if you press\nthe keyboard 'Page Up', the top\nrectangle on the right will fade out.\n\nTo make an object fade out when you\nzoom in:\n1. Select the object using the arrow tool.\n2. Choose 'Edit' then 'Fade on Zoom in'\n    from the menu bar  (NOTE: the object\n    will DISAPPEAR at the current zoom.\n    Zoom out to see it again).\n\nTry it out on the bottom rectangle on the\nright.  Remeber, the rectangle will \ndisappear at the current zoom.  Zoom\nout to see it again.  Now when you zoom\nin, the object will fade out.\n\nYou must get the hand tool to continue."
+  }
+]
+[OBJECT @Z248 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.19171600966661845d 0.0d 0.0d 0.19171600966661845d -1216.4947017223897d 1362.5610497118366d]
+  }
+]
+[OBJECT @Z249 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z250
+    ZTransform transform @Z251
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z250 # edu.umd.cs.jazz.component.ZPolyline
+  {
+    java.awt.Color penColor [1.0 0.0 0.0 1.0]
+    float penWidth 5.4499745f
+    Vector coords [-993.93866f 1485.216f -993.93866f 1484.126f -993.93866f 1483.0359f -993.93866f 1481.9459f -993.93866f 1479.766f -993.93866f 1478.6759f -993.93866f 1477.5859f -993.93866f 1476.496f -992.84863f 1475.406f -991.75867f 1474.3159f -991.75867f 1473.226f -990.66864f 1473.226f -989.5787f 1473.226f -989.5787f 1472.136f -988.48865f 1472.136f -987.3987f 1471.046f -985.2187f 1471.046f -984.12866f 1469.956f -983.0387f 1468.866f -980.8587f 1468.866f -979.7687f 1468.866f -978.6787f 1468.866f -976.4987f 1468.866f -975.4087f 1468.866f -974.3187f 1468.866f -973.2287f 1468.866f -972.13873f 1468.866f -969.95874f 1468.866f -968.8688f 1468.866f -966.6888f 1468.866f -965.59875f 1468.866f -965.59875f 1469.956f -963.41876f 1469.956f -962.3288f 1469.956f -961.2388f 1469.956f -960.1488f 1471.046f -959.0588f 1471.046f -957.9688f 1472.136f -956.8788f 1472.136f -954.6988f 1473.226f -953.6088f 1473.226f -952.5188f 1473.226f -951.42883f 1473.226f -950.3388f 1473.226f -949.24884f 1473.226f -947.06885f 1473.226f -945.9789f 1473.226f -944.88885f 1473.226f -943.7989f 1473.226f -940.5289f 1473.226f -938.3489f 1473.226f -937.2589f 1473.226f -935.0789f 1473.226f -935.0789f 1472.136f -933.9889f 1472.136f -932.8989f 1472.136f -931.8089f 1471.046f -930.71893f 1471.046f -929.6289f 1469.956f -928.53894f 1468.866f -927.4489f 1468.866f -926.35895f 1467.776f -924.17896f 1466.686f -923.0889f 1466.686f -923.0889f 1465.5961f -921.99896f 1465.5961f -920.909f 1465.5961f -919.819f 1464.506f -918.729f 1464.506f -917.639f 1464.506f -916.549f 1464.506f -915.459f 1464.506f -914.369f 1464.506f -913.279f 1464.506f -912.189f 1464.506f -911.099f 1464.506f -910.00903f 1464.506f -908.919f 1464.506f -907.82904f 1465.5961f -906.739f 1465.5961f -905.64905f 1466.686f -905.64905f 1467.776f -904.559f 1467.776f -904.559f 1468.866f -903.46906f 1468.866f -903.46906f 1469.956f -902.379f 1469.956f -902.379f 1471.046f -901.28906f 1471.046f -901.28906f 1472.136f -900.19904f 1473.226f -899.1091f 1474.3159f -898.0191f 1475.406f -898.0191f 1476.496f -898.0191f 1478.6759f -896.9291f 1478.6759f -896.9291f 1479.766f -895.8391f 1480.856f -894.7491f 1481.9459f -893.6591f 1481.9459f -893.6591f 1483.0359f -892.5691f 1483.0359f -891.4791f 1483.0359f -890.3891f 1484.126f -889.29913f 1484.126f -888.2091f 1484.126f -887.11914f 1485.216f -886.0291f 1485.216f -884.93915f 1485.216f -883.8491f 1485.216f -882.75916f 1485.216f -881.6691f 1485.216f -880.57916f 1485.216f -879.48914f 1485.216f -878.3992f 1485.216f -877.30914f 1485.216f -876.2192f 1485.216f -875.12915f 1485.216f -874.0392f 1485.216f -872.9492f 1485.216f -871.8592f 1485.216f -870.7692f 1485.216f -869.6792f 1485.216f -868.58923f 1485.216f -867.4992f 1485.216f -866.40924f 1485.216f -865.3192f 1485.216f -864.22925f 1486.3059f -863.1392f 1487.3959f -862.04926f 1488.486f -860.9592f 1491.7559f -860.9592f 1492.846f -860.9592f 1493.9359f -859.86926f 1493.9359f -859.86926f 1495.0259f -859.86926f 1496.1158f -859.86926f 1497.2059f -859.86926f 1498.2959f -859.86926f 1499.3859f -859.86926f 1500.4758f -859.86926f 1501.5658f -859.86926f 1502.6559f -859.86926f 1503.7458f -859.86926f 1504.8358f -859.86926f 1505.9258f -860.9592f 1505.9258f -860.9592f 1507.0159f -862.04926f 1507.0159f -863.1392f 1507.0159f -864.22925f 1508.1058f -864.22925f 1509.1958f -865.3192f 1509.1958f -865.3192f 1510.2858f -866.40924f 1510.2858f -866.40924f 1511.3759f -867.4992f 1512.4658f -867.4992f 1513.5558f -868.58923f 1514.6458f -868.58923f 1515.7358f -868.58923f 1516.8258f -868.58923f 1517.9158f -869.6792f 1519.0057f -869.6792f 1520.0958f -869.6792f 1521.1858f -869.6792f 1522.2758f -869.6792f 1523.3657f -869.6792f 1524.4557f -870.7692f 1524.4557f -870.7692f 1525.5458f -870.7692f 1526.6357f -870.7692f 1527.7257f -871.8592f 1527.7257f -871.8592f 1528.8157f -872.9492f 1528.8157f -872.9492f 1529.9058f -872.9492f 1530.9957f -874.0392f 1530.9957f -874.0392f 1532.0857f -875.12915f 1532.0857f -875.12915f 1533.1757f -876.2192f 1533.1757f -877.30914f 1533.1757f -878.3992f 1534.2657f -879.48914f 1534.2657f -880.57916f 1534.2657f -881.6691f 1534.2657f -882.75916f 1534.2657f -883.8491f 1534.2657f -884.93915f 1534.2657f -886.0291f 1534.2657f -887.11914f 1534.2657f -888.2091f 1534.2657f -889.29913f 1534.2657f -890.3891f 1534.2657f -891.4791f 1534.2657f -892.5691f 1534.2657f -893.6591f 1534.2657f -894.7491f 1534.2657f -895.8391f 1534.2657f -896.9291f 1534.2657f -898.0191f 1534.2657f -899.1091f 1534.2657f -900.19904f 1534.2657f -901.28906f 1535.3557f -902.379f 1535.3557f -903.46906f 1535.3557f -904.559f 1536.4457f -905.64905f 1537.5356f -906.739f 1537.5356f -907.82904f 1538.6257f -908.919f 1539.7157f -910.00903f 1539.7157f -912.189f 1542.9857f -913.279f 1544.0757f -914.369f 1545.1656f -915.459f 1545.1656f -916.549f 1545.1656f -917.639f 1546.2556f -918.729f 1546.2556f -919.819f 1546.2556f -920.909f 1546.2556f -921.99896f 1547.3456f -923.0889f 1547.3456f -926.35895f 1547.3456f -927.4489f 1547.3456f -930.71893f 1547.3456f -931.8089f 1547.3456f -932.8989f 1547.3456f -933.9889f 1547.3456f -935.0789f 1547.3456f -936.1689f 1547.3456f -938.3489f 1547.3456f -939.4389f 1547.3456f -940.5289f 1547.3456f -941.6189f 1546.2556f -942.70886f 1546.2556f -943.7989f 1545.1656f -944.88885f 1544.0757f -944.88885f 1542.9857f -947.06885f 1542.9857f -947.06885f 1541.8956f -948.1588f 1540.8057f -949.24884f 1540.8057f -949.24884f 1539.7157f -950.3388f 1539.7157f -951.42883f 1539.7157f -952.5188f 1538.6257f -953.6088f 1538.6257f -954.6988f 1538.6257f -955.7888f 1538.6257f -956.8788f 1537.5356f -957.9688f 1537.5356f -959.0588f 1537.5356f -960.1488f 1537.5356f -961.2388f 1537.5356f -962.3288f 1537.5356f -963.41876f 1537.5356f -964.5088f 1537.5356f -965.59875f 1537.5356f -966.6888f 1537.5356f -967.77875f 1537.5356f -969.95874f 1537.5356f -971.0487f 1537.5356f -973.2287f 1537.5356f -974.3187f 1537.5356f -975.4087f 1537.5356f -979.7687f 1537.5356f -981.94867f 1537.5356f -983.0387f 1537.5356f -984.12866f 1537.5356f -987.3987f 1537.5356f -989.5787f 1537.5356f -991.75867f 1537.5356f -992.84863f 1537.5356f -995.0286f 1537.5356f -996.1186f 1537.5356f -996.1186f 1536.4457f -997.2086f 1536.4457f -999.3886f 1536.4457f -1000.4786f 1535.3557f -1001.5686f 1535.3557f -1001.5686f 1534.2657f -1002.65857f 1533.1757f -1003.7486f 1530.9957f -1003.7486f 1529.9058f -1003.7486f 1528.8157f -1004.83856f 1527.7257f -1004.83856f 1526.6357f -1004.83856f 1525.5458f -1005.9286f 1525.5458f -1005.9286f 1524.4557f -1005.9286f 1523.3657f -1007.01855f 1522.2758f -1007.01855f 1521.1858f -1008.1086f 1520.0958f -1009.19855f 1519.0057f -1009.19855f 1516.8258f -1010.2886f 1516.8258f -1010.2886f 1515.7358f -1011.37854f 1514.6458f -1012.46857f 1514.6458f -1013.55853f 1513.5558f -1013.55853f 1512.4658f -1014.64856f 1512.4658f -1014.64856f 1511.3759f -1015.7385f 1511.3759f -1016.82855f 1510.2858f -1017.9185f 1510.2858f -1017.9185f 1509.1958f -1017.9185f 1508.1058f -1017.9185f 1507.0159f -1019.0085f 1507.0159f -1019.0085f 1505.9258f -1019.0085f 1504.8358f -1019.0085f 1503.7458f -1019.0085f 1502.6559f -1019.0085f 1501.5658f -1019.0085f 1500.4758f -1019.0085f 1499.3859f -1019.0085f 1498.2959f -1019.0085f 1497.2059f -1017.9185f 1497.2059f -1017.9185f 1496.1158f -1016.82855f 1496.1158f -1016.82855f 1495.0259f -1015.7385f 1495.0259f -1014.64856f 1493.9359f -1013.55853f 1493.9359f -1012.46857f 1492.846f -1011.37854f 1492.846f -1010.2886f 1491.7559f -1009.19855f 1490.6659f -1008.1086f 1490.6659f -1007.01855f 1490.6659f -1005.9286f 1490.6659f -1005.9286f 1489.5759f -1004.83856f 1489.5759f -1003.7486f 1489.5759f -1002.65857f 1489.5759f -1001.5686f 1489.5759f -1000.4786f 1488.486f -999.3886f 1488.486f -998.2986f 1488.486f -998.2986f 1487.3959f -997.2086f 1487.3959f -997.2086f 1486.3059f -996.1186f 1486.3059f -996.1186f 1485.216f -995.0286f 1485.216f -995.0286f 1484.126f]
+  }
+]
+[OBJECT @Z251 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.2896642409861484d 0.0d 0.0d 0.2896642409861484d -763.2872525492375d 1139.0263930656479d]
+  }
+]
+[OBJECT @Z252 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z253
+    ZTransform transform @Z255
+    float minMag 0.1940955f
+    float maxMag 12.386818f
+  }
+]
+[OBJECT @Z253 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z254
+    java.awt.geom.Rectangle2D destBounds [0.0 0.0 492.0 415.0]
+  }
+]
+[OBJECT @Z254 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Finish"
+  }
+]
+[OBJECT @Z255 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.2338487995614814d 0.0d 0.0d 0.2338487995614814d -1045.9212483506362d 1570.5157907932269d]
+  }
+]
+[OBJECT @Z256 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z257
+    ZTransform transform @Z258
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z257 # edu.umd.cs.jazz.component.ZPolyline
+  {
+    java.awt.Color penColor [1.0 0.0 0.0 1.0]
+    float penWidth 5.4499745f
+    Vector coords [-993.93866f 1485.216f -993.93866f 1484.126f -993.93866f 1483.0359f -993.93866f 1481.9459f -993.93866f 1479.766f -993.93866f 1478.6759f -993.93866f 1477.5859f -993.93866f 1476.496f -992.84863f 1475.406f -991.75867f 1474.3159f -991.75867f 1473.226f -990.66864f 1473.226f -989.5787f 1473.226f -989.5787f 1472.136f -988.48865f 1472.136f -987.3987f 1471.046f -985.2187f 1471.046f -984.12866f 1469.956f -983.0387f 1468.866f -980.8587f 1468.866f -979.7687f 1468.866f -978.6787f 1468.866f -976.4987f 1468.866f -975.4087f 1468.866f -974.3187f 1468.866f -973.2287f 1468.866f -972.13873f 1468.866f -969.95874f 1468.866f -968.8688f 1468.866f -966.6888f 1468.866f -965.59875f 1468.866f -965.59875f 1469.956f -963.41876f 1469.956f -962.3288f 1469.956f -961.2388f 1469.956f -960.1488f 1471.046f -959.0588f 1471.046f -957.9688f 1472.136f -956.8788f 1472.136f -954.6988f 1473.226f -953.6088f 1473.226f -952.5188f 1473.226f -951.42883f 1473.226f -950.3388f 1473.226f -949.24884f 1473.226f -947.06885f 1473.226f -945.9789f 1473.226f -944.88885f 1473.226f -943.7989f 1473.226f -940.5289f 1473.226f -938.3489f 1473.226f -937.2589f 1473.226f -935.0789f 1473.226f -935.0789f 1472.136f -933.9889f 1472.136f -932.8989f 1472.136f -931.8089f 1471.046f -930.71893f 1471.046f -929.6289f 1469.956f -928.53894f 1468.866f -927.4489f 1468.866f -926.35895f 1467.776f -924.17896f 1466.686f -923.0889f 1466.686f -923.0889f 1465.5961f -921.99896f 1465.5961f -920.909f 1465.5961f -919.819f 1464.506f -918.729f 1464.506f -917.639f 1464.506f -916.549f 1464.506f -915.459f 1464.506f -914.369f 1464.506f -913.279f 1464.506f -912.189f 1464.506f -911.099f 1464.506f -910.00903f 1464.506f -908.919f 1464.506f -907.82904f 1465.5961f -906.739f 1465.5961f -905.64905f 1466.686f -905.64905f 1467.776f -904.559f 1467.776f -904.559f 1468.866f -903.46906f 1468.866f -903.46906f 1469.956f -902.379f 1469.956f -902.379f 1471.046f -901.28906f 1471.046f -901.28906f 1472.136f -900.19904f 1473.226f -899.1091f 1474.3159f -898.0191f 1475.406f -898.0191f 1476.496f -898.0191f 1478.6759f -896.9291f 1478.6759f -896.9291f 1479.766f -895.8391f 1480.856f -894.7491f 1481.9459f -893.6591f 1481.9459f -893.6591f 1483.0359f -892.5691f 1483.0359f -891.4791f 1483.0359f -890.3891f 1484.126f -889.29913f 1484.126f -888.2091f 1484.126f -887.11914f 1485.216f -886.0291f 1485.216f -884.93915f 1485.216f -883.8491f 1485.216f -882.75916f 1485.216f -881.6691f 1485.216f -880.57916f 1485.216f -879.48914f 1485.216f -878.3992f 1485.216f -877.30914f 1485.216f -876.2192f 1485.216f -875.12915f 1485.216f -874.0392f 1485.216f -872.9492f 1485.216f -871.8592f 1485.216f -870.7692f 1485.216f -869.6792f 1485.216f -868.58923f 1485.216f -867.4992f 1485.216f -866.40924f 1485.216f -865.3192f 1485.216f -864.22925f 1486.3059f -863.1392f 1487.3959f -862.04926f 1488.486f -860.9592f 1491.7559f -860.9592f 1492.846f -860.9592f 1493.9359f -859.86926f 1493.9359f -859.86926f 1495.0259f -859.86926f 1496.1158f -859.86926f 1497.2059f -859.86926f 1498.2959f -859.86926f 1499.3859f -859.86926f 1500.4758f -859.86926f 1501.5658f -859.86926f 1502.6559f -859.86926f 1503.7458f -859.86926f 1504.8358f -859.86926f 1505.9258f -860.9592f 1505.9258f -860.9592f 1507.0159f -862.04926f 1507.0159f -863.1392f 1507.0159f -864.22925f 1508.1058f -864.22925f 1509.1958f -865.3192f 1509.1958f -865.3192f 1510.2858f -866.40924f 1510.2858f -866.40924f 1511.3759f -867.4992f 1512.4658f -867.4992f 1513.5558f -868.58923f 1514.6458f -868.58923f 1515.7358f -868.58923f 1516.8258f -868.58923f 1517.9158f -869.6792f 1519.0057f -869.6792f 1520.0958f -869.6792f 1521.1858f -869.6792f 1522.2758f -869.6792f 1523.3657f -869.6792f 1524.4557f -870.7692f 1524.4557f -870.7692f 1525.5458f -870.7692f 1526.6357f -870.7692f 1527.7257f -871.8592f 1527.7257f -871.8592f 1528.8157f -872.9492f 1528.8157f -872.9492f 1529.9058f -872.9492f 1530.9957f -874.0392f 1530.9957f -874.0392f 1532.0857f -875.12915f 1532.0857f -875.12915f 1533.1757f -876.2192f 1533.1757f -877.30914f 1533.1757f -878.3992f 1534.2657f -879.48914f 1534.2657f -880.57916f 1534.2657f -881.6691f 1534.2657f -882.75916f 1534.2657f -883.8491f 1534.2657f -884.93915f 1534.2657f -886.0291f 1534.2657f -887.11914f 1534.2657f -888.2091f 1534.2657f -889.29913f 1534.2657f -890.3891f 1534.2657f -891.4791f 1534.2657f -892.5691f 1534.2657f -893.6591f 1534.2657f -894.7491f 1534.2657f -895.8391f 1534.2657f -896.9291f 1534.2657f -898.0191f 1534.2657f -899.1091f 1534.2657f -900.19904f 1534.2657f -901.28906f 1535.3557f -902.379f 1535.3557f -903.46906f 1535.3557f -904.559f 1536.4457f -905.64905f 1537.5356f -906.739f 1537.5356f -907.82904f 1538.6257f -908.919f 1539.7157f -910.00903f 1539.7157f -912.189f 1542.9857f -913.279f 1544.0757f -914.369f 1545.1656f -915.459f 1545.1656f -916.549f 1545.1656f -917.639f 1546.2556f -918.729f 1546.2556f -919.819f 1546.2556f -920.909f 1546.2556f -921.99896f 1547.3456f -923.0889f 1547.3456f -926.35895f 1547.3456f -927.4489f 1547.3456f -930.71893f 1547.3456f -931.8089f 1547.3456f -932.8989f 1547.3456f -933.9889f 1547.3456f -935.0789f 1547.3456f -936.1689f 1547.3456f -938.3489f 1547.3456f -939.4389f 1547.3456f -940.5289f 1547.3456f -941.6189f 1546.2556f -942.70886f 1546.2556f -943.7989f 1545.1656f -944.88885f 1544.0757f -944.88885f 1542.9857f -947.06885f 1542.9857f -947.06885f 1541.8956f -948.1588f 1540.8057f -949.24884f 1540.8057f -949.24884f 1539.7157f -950.3388f 1539.7157f -951.42883f 1539.7157f -952.5188f 1538.6257f -953.6088f 1538.6257f -954.6988f 1538.6257f -955.7888f 1538.6257f -956.8788f 1537.5356f -957.9688f 1537.5356f -959.0588f 1537.5356f -960.1488f 1537.5356f -961.2388f 1537.5356f -962.3288f 1537.5356f -963.41876f 1537.5356f -964.5088f 1537.5356f -965.59875f 1537.5356f -966.6888f 1537.5356f -967.77875f 1537.5356f -969.95874f 1537.5356f -971.0487f 1537.5356f -973.2287f 1537.5356f -974.3187f 1537.5356f -975.4087f 1537.5356f -979.7687f 1537.5356f -981.94867f 1537.5356f -983.0387f 1537.5356f -984.12866f 1537.5356f -987.3987f 1537.5356f -989.5787f 1537.5356f -991.75867f 1537.5356f -992.84863f 1537.5356f -995.0286f 1537.5356f -996.1186f 1537.5356f -996.1186f 1536.4457f -997.2086f 1536.4457f -999.3886f 1536.4457f -1000.4786f 1535.3557f -1001.5686f 1535.3557f -1001.5686f 1534.2657f -1002.65857f 1533.1757f -1003.7486f 1530.9957f -1003.7486f 1529.9058f -1003.7486f 1528.8157f -1004.83856f 1527.7257f -1004.83856f 1526.6357f -1004.83856f 1525.5458f -1005.9286f 1525.5458f -1005.9286f 1524.4557f -1005.9286f 1523.3657f -1007.01855f 1522.2758f -1007.01855f 1521.1858f -1008.1086f 1520.0958f -1009.19855f 1519.0057f -1009.19855f 1516.8258f -1010.2886f 1516.8258f -1010.2886f 1515.7358f -1011.37854f 1514.6458f -1012.46857f 1514.6458f -1013.55853f 1513.5558f -1013.55853f 1512.4658f -1014.64856f 1512.4658f -1014.64856f 1511.3759f -1015.7385f 1511.3759f -1016.82855f 1510.2858f -1017.9185f 1510.2858f -1017.9185f 1509.1958f -1017.9185f 1508.1058f -1017.9185f 1507.0159f -1019.0085f 1507.0159f -1019.0085f 1505.9258f -1019.0085f 1504.8358f -1019.0085f 1503.7458f -1019.0085f 1502.6559f -1019.0085f 1501.5658f -1019.0085f 1500.4758f -1019.0085f 1499.3859f -1019.0085f 1498.2959f -1019.0085f 1497.2059f -1017.9185f 1497.2059f -1017.9185f 1496.1158f -1016.82855f 1496.1158f -1016.82855f 1495.0259f -1015.7385f 1495.0259f -1014.64856f 1493.9359f -1013.55853f 1493.9359f -1012.46857f 1492.846f -1011.37854f 1492.846f -1010.2886f 1491.7559f -1009.19855f 1490.6659f -1008.1086f 1490.6659f -1007.01855f 1490.6659f -1005.9286f 1490.6659f -1005.9286f 1489.5759f -1004.83856f 1489.5759f -1003.7486f 1489.5759f -1002.65857f 1489.5759f -1001.5686f 1489.5759f -1000.4786f 1488.486f -999.3886f 1488.486f -998.2986f 1488.486f -998.2986f 1487.3959f -997.2086f 1487.3959f -997.2086f 1486.3059f -996.1186f 1486.3059f -996.1186f 1485.216f -995.0286f 1485.216f -995.0286f 1484.126f]
+  }
+]
+[OBJECT @Z258 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.2896642409861484d 0.0d 0.0d 0.2896642409861484d -850.9618946967404d 1140.1723023437157d]
+  }
+]
+[OBJECT @Z259 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z260
+    ZTransform transform @Z262
+    float minMag 0.1940955f
+    float maxMag 12.386818f
+  }
+]
+[OBJECT @Z260 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z261
+    java.awt.geom.Rectangle2D destBounds [-1348.5435791015625 -521.9795532226562 242.7445068359375 204.7540283203125]
+  }
+]
+[OBJECT @Z261 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Back"
+  }
+]
+[OBJECT @Z262 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.2338487995614814d 0.0d 0.0d 0.2338487995614814d -1133.796525123626d 1571.4610654458077d]
+  }
+]
+[OBJECT @Z263 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z264
+    ZTransform transform @Z265
+    float minMag 0.1940955f
+    float maxMag 2.0706713f
+  }
+]
+[OBJECT @Z264 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 1.0 1.0]
+    float penWidth 5.4391613f
+    rectangle rect [-1000.2967f 1319.8108f 96.81702f 56.56726f]
+  }
+]
+[OBJECT @Z265 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.5131579897669697d 0.0d 0.0d 0.5131579897669697d -523.6160848974765d 722.9797382479094d]
+  }
+]
+[OBJECT @Z266 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z267
+    ZTransform transform @Z268
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z267 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 1.0 1.0]
+    float penWidth 5.4391613f
+    rectangle rect [-1000.2967f 1319.8108f 96.81702f 56.56726f]
+  }
+]
+[OBJECT @Z268 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.5131579897669697d 0.0d 0.0d 0.5131579897669697d -523.1418448077743d 784.0020716717629d]
+  }
+]
+[OBJECT @Z269 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z270
+    ZTransform transform @Z272
+    float minMag 14.860374f
+    float maxMag 188.93362f
+  }
+]
+[OBJECT @Z270 # edu.umd.cs.jazz.component.ZLinkDecorator
+  {
+    ZVisualComponent child @Z271
+    java.awt.geom.Rectangle2D destBounds [386.296630859375 -782.6793823242188 177.92449951171875 150.07855224609375]
+  }
+]
+[OBJECT @Z271 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Font font ["Arial" 0 40]
+    String text "Go Back"
+  }
+]
+[OBJECT @Z272 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [0.05292864143848419d 0.0d 0.0d 0.05292864143848419d 524.9341430664062d -707.2182006835938d]
+  }
+]
+[OBJECT @Z273 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z274
+    ZTransform transform @Z275
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z274 # edu.umd.cs.jazz.component.ZPolyline
+  {
+    java.awt.Color penColor [1.0 0.0 0.0 1.0]
+    float penWidth 1.3569343f
+    Vector coords [1666.8988f 917.1391f 1667.4415f 917.1391f 1668.7985f 917.1391f 1670.4268f 917.41046f 1672.5979f 917.6819f 1675.0404f 917.6819f 1678.297f 917.6819f 1681.5537f 917.6819f 1684.539f 917.6819f 1686.4386f 917.6819f 1686.9814f 917.41046f 1687.2528f 917.41046f 1687.5242f 917.41046f 1687.7955f 917.41046f 1688.0669f 917.41046f 1688.3384f 917.41046f 1688.6097f 917.41046f 1688.8811f 917.41046f 1689.4238f 917.41046f 1689.9667f 917.41046f 1690.238f 917.41046f 1690.5094f 917.41046f 1690.7808f 917.41046f 1691.0522f 917.41046f 1691.3236f 917.41046f 1691.595f 917.41046f 1692.1377f 917.41046f 1692.4092f 917.41046f 1692.6805f 917.41046f 1692.9519f 917.41046f 1693.2233f 917.41046f 1693.4946f 917.41046f 1693.7661f 917.41046f 1694.0375f 917.41046f 1693.7661f 917.41046f 1692.9519f 917.6819f 1691.3236f 918.2247f 1689.4238f 918.76746f 1686.9814f 919.5816f 1678.297f 921.4813f 1677.4829f 921.7527f 1676.6687f 921.7527f 1675.5831f 922.02405f 1674.769f 922.02405f 1673.9548f 922.02405f 1673.4121f 922.2955f 1673.1406f 922.2955f 1672.8693f 922.56683f 1672.5979f 922.56683f 1672.3265f 922.56683f 1672.0552f 922.83826f 1672.3265f 922.83826f 1673.1406f 922.83826f 1674.2262f 922.83826f 1676.126f 922.83826f 1678.0256f 922.83826f 1679.9253f 922.83826f 1681.2822f 922.83826f 1682.6392f 922.83826f 1683.7247f 922.83826f 1685.0817f 922.83826f 1686.71f 922.83826f 1687.7955f 922.83826f 1688.6097f 922.83826f 1688.8811f 922.83826f 1689.1525f 922.83826f 1689.4238f 922.83826f 1689.6953f 922.83826f 1689.1525f 923.1096f 1678.8398f 926.09485f 1678.297f 926.3663f 1677.7543f 926.3663f 1677.4829f 926.3663f 1677.2114f 926.3663f 1676.9401f 926.3663f 1676.6687f 926.3663f 1676.3973f 926.3663f 1676.126f 926.63763f 1675.8545f 926.63763f 1675.5831f 926.90906f 1675.3118f 926.90906f 1675.0404f 926.90906f 1675.0404f 927.1804f 1675.8545f 927.1804f 1676.9401f 927.4518f 1678.5684f 927.4518f 1680.4681f 927.4518f 1682.3678f 927.4518f 1683.7247f 927.4518f 1684.539f 927.4518f 1685.0817f 927.4518f 1685.6245f 927.4518f 1685.8959f 927.4518f 1686.1672f 927.4518f 1686.71f 927.4518f 1686.9814f 927.4518f 1687.2528f 927.4518f 1687.7955f 927.4518f 1688.0669f 927.4518f 1688.3384f 927.4518f 1688.6097f 927.4518f 1688.8811f 927.4518f]
+  }
+]
+[OBJECT @Z275 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [1.0d 0.0d 0.0d 1.0d -59.9764404296875d 0.0d]
+  }
+]
+[OBJECT @Z276 # edu.umd.cs.jazz.scenegraph.ZNode
+  {
+    ZVisualComponent visualComponent @Z277
+    ZTransform transform @Z278
+    float minMag 0.1940955f
+  }
+]
+[OBJECT @Z277 # edu.umd.cs.jazz.component.ZPolyline
+  {
+    java.awt.Color penColor [1.0 0.0 0.0 1.0]
+    float penWidth 1.3569343f
+    Vector coords [1666.8988f 917.1391f 1667.4415f 917.1391f 1668.7985f 917.1391f 1670.4268f 917.41046f 1672.5979f 917.6819f 1675.0404f 917.6819f 1678.297f 917.6819f 1681.5537f 917.6819f 1684.539f 917.6819f 1686.4386f 917.6819f 1686.9814f 917.41046f 1687.2528f 917.41046f 1687.5242f 917.41046f 1687.7955f 917.41046f 1688.0669f 917.41046f 1688.3384f 917.41046f 1688.6097f 917.41046f 1688.8811f 917.41046f 1689.4238f 917.41046f 1689.9667f 917.41046f 1690.238f 917.41046f 1690.5094f 917.41046f 1690.7808f 917.41046f 1691.0522f 917.41046f 1691.3236f 917.41046f 1691.595f 917.41046f 1692.1377f 917.41046f 1692.4092f 917.41046f 1692.6805f 917.41046f 1692.9519f 917.41046f 1693.2233f 917.41046f 1693.4946f 917.41046f 1693.7661f 917.41046f 1694.0375f 917.41046f 1693.7661f 917.41046f 1692.9519f 917.6819f 1691.3236f 918.2247f 1689.4238f 918.76746f 1686.9814f 919.5816f 1678.297f 921.4813f 1677.4829f 921.7527f 1676.6687f 921.7527f 1675.5831f 922.02405f 1674.769f 922.02405f 1673.9548f 922.02405f 1673.4121f 922.2955f 1673.1406f 922.2955f 1672.8693f 922.56683f 1672.5979f 922.56683f 1672.3265f 922.56683f 1672.0552f 922.83826f 1672.3265f 922.83826f 1673.1406f 922.83826f 1674.2262f 922.83826f 1676.126f 922.83826f 1678.0256f 922.83826f 1679.9253f 922.83826f 1681.2822f 922.83826f 1682.6392f 922.83826f 1683.7247f 922.83826f 1685.0817f 922.83826f 1686.71f 922.83826f 1687.7955f 922.83826f 1688.6097f 922.83826f 1688.8811f 922.83826f 1689.1525f 922.83826f 1689.4238f 922.83826f 1689.6953f 922.83826f 1689.1525f 923.1096f 1678.8398f 926.09485f 1678.297f 926.3663f 1677.7543f 926.3663f 1677.4829f 926.3663f 1677.2114f 926.3663f 1676.9401f 926.3663f 1676.6687f 926.3663f 1676.3973f 926.3663f 1676.126f 926.63763f 1675.8545f 926.63763f 1675.5831f 926.90906f 1675.3118f 926.90906f 1675.0404f 926.90906f 1675.0404f 927.1804f 1675.8545f 927.1804f 1676.9401f 927.4518f 1678.5684f 927.4518f 1680.4681f 927.4518f 1682.3678f 927.4518f 1683.7247f 927.4518f 1684.539f 927.4518f 1685.0817f 927.4518f 1685.6245f 927.4518f 1685.8959f 927.4518f 1686.1672f 927.4518f 1686.71f 927.4518f 1686.9814f 927.4518f 1687.2528f 927.4518f 1687.7955f 927.4518f 1688.0669f 927.4518f 1688.3384f 927.4518f 1688.6097f 927.4518f 1688.8811f 927.4518f]
+  }
+]
+[OBJECT @Z278 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [1.0d 0.0d 0.0d 1.0d 1.3569350242614746d 0.2714247703552246d]
+  }
+]
+[OBJECT @Z279 # edu.umd.cs.jazz.scenegraph.ZCamera
+  {
+    Vector paintStartPoints [@Z2 @Z281]
+  }
+]
+[OBJECT @Z280 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [1.0d 0.0d 0.0d 1.0d 0.0d 0.0d]
+  }
+]
+[OBJECT @Z281 # edu.umd.cs.jazz.scenegraph.ZNode
+  {}
+]
+[OBJECT @Z282 # edu.umd.cs.jazz.scenegraph.ZCamera
+  {
+    ZTransform viewTransform @Z283
+    Vector paintStartPoints [@Z2]
+  }
+]
+[OBJECT @Z283 # edu.umd.cs.jazz.scenegraph.ZTransform
+  {
+    java.awt.geom.AffineTransform transform [1.850602388381958d 0.0d 0.0d 1.850602388381958d 56.751800537109375d 0.0d]
+  }
+]
+[RETURN @Z1]

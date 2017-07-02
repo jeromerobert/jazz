@@ -88,10 +88,10 @@ public class ZBounds extends Rectangle2D.Double implements Serializable {
      * @param tf the AffineTransform to apply.
      */
     public void transform(AffineTransform tf) {
-        if (isEmpty()) {
-            return;
-        }
-
+    	if (isEmpty()) {
+    		return;
+    	}
+    	
                     // First, transform all 4 corners of the rectangle
         double[] pts = new double[8];
         pts[0] = x;          // top left corner

@@ -1,5 +1,5 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest.componenttest;
@@ -25,20 +25,20 @@ public class ZTextTest extends TestCase {
     }
 
     public void testTranslate() {
-        assert(text.getTranslateX() == 0);
-        assert(text.getTranslateY() == 0);
+        assertTrue(text.getTranslateX() == 0);
+        assertTrue(text.getTranslateY() == 0);
 
         text.setTranslateX(1);
-        assert(text.getTranslateX() == 1);
-        assert(text.getTranslateY() == 0);
+        assertTrue(text.getTranslateX() == 1);
+        assertTrue(text.getTranslateY() == 0);
 
         text.setTranslateY(1);
-        assert(text.getTranslateX() == 1);
-        assert(text.getTranslateY() == 1);
+        assertTrue(text.getTranslateX() == 1);
+        assertTrue(text.getTranslateY() == 1);
 
         text.setTranslation(new java.awt.geom.Point2D.Double(2, 2));
-        assert(text.getTranslateX() == 2);
-        assert(text.getTranslateY() == 2);
+        assertTrue(text.getTranslateX() == 2);
+        assertTrue(text.getTranslateY() == 2);
     }
 
     public void testDuplicate() {
@@ -50,7 +50,7 @@ public class ZTextTest extends TestCase {
             ZText result = (ZText) FileSavingSimulator.doSerialize(text);
             doCompare(result, text);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
@@ -59,13 +59,13 @@ public class ZTextTest extends TestCase {
             ZText result = (ZText) FileSavingSimulator.doZSerialize(text);
             doCompare(result, text);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
     protected void doCompare(ZText a, ZText b) {
         assertEquals(a.getBackgroundColor(), b.getBackgroundColor());
         assertEquals(a.getText(), b.getText());
-        assert(a.getEditable() == b.getEditable());
+        assertTrue(a.getEditable() == b.getEditable());
     }
 }

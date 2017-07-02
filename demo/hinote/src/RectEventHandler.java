@@ -23,6 +23,7 @@ public class RectEventHandler implements ZEventHandler, ZMouseListener, ZMouseMo
 
     private HiNoteCore hinote;
     private ZRectangle rect;
+    private ZVisualLeaf leaf;
     private Point2D pt;
     private Point2D pressObjPt; // Event coords of mouse press (in object space)
                                                     // Mask out mouse and mouse/key chords
@@ -79,11 +80,14 @@ public class RectEventHandler implements ZEventHandler, ZMouseListener, ZMouseMo
             pressObjPt = (Point2D)pt.clone();
 
             rect = new ZRectangle(pt.getX(), pt.getY(), 0.0, 0.0);
-            ZVisualLeaf leaf = new ZVisualLeaf(rect);
-            rect.setPenWidth(hinote.penWidth  / camera.getMagnification());
+            leaf = new ZVisualLeaf(rect);
+            rect.setPenWidth(hinote.penWidth);
+//          rect.setPenWidth(hinote.penWidth  / camera.getMagnification());
             rect.setPenPaint(hinote.penColor);
             rect.setFillPaint(hinote.fillColor);
             layer.addChild(leaf);
+
+            leaf.editor().getTransformGroup().scale(1/camera.getMagnification(), pt.getX(), pt.getY());
         }
     }
 
@@ -92,7 +96,9 @@ public class RectEventHandler implements ZEventHandler, ZMouseListener, ZMouseMo
             ZSceneGraphPath path = e.getPath();
             ZGroup layer = hinote.getDrawingLayer();
             pt.setLocation(e.getX(), e.getY());
+
             path.screenToGlobal(pt);
+            leaf.globalToLocal(pt);
 
             double x, y, width, height;
             x = Math.min(pressObjPt.getX(), pt.getX());

@@ -21,9 +21,9 @@ public class ZPriorityQueueTest extends TestCase {
     public void testInsert() {
         ZPriorityQueue queue = new ZPriorityQueue();
 
-        assert(queue.size() == 0);
+        assertTrue(queue.size() == 0);
         queue.insert(new Double(1));
-        assert(queue.size() == 1);
+        assertTrue(queue.size() == 1);
     }
 
     public void testFirst() {
@@ -34,10 +34,10 @@ public class ZPriorityQueueTest extends TestCase {
         queue.insert(new Double(12));
         queue.insert(new Double(4));
 
-        assert(queue.size() == 4);
-        assert(((Double)queue.first()).doubleValue() == 34);
-        assert(queue.size() == 4);
-        assert(((Double)queue.first()).doubleValue() == 34);
+        assertTrue(queue.size() == 4);
+        assertTrue(((Double)queue.first()).doubleValue() == 34);
+        assertTrue(queue.size() == 4);
+        assertTrue(((Double)queue.first()).doubleValue() == 34);
     }
 
     public void testExtractFirst() {
@@ -48,15 +48,15 @@ public class ZPriorityQueueTest extends TestCase {
         queue.insert(new Double(12));
         queue.insert(new Double(4));
 
-        assert(queue.size() == 4);
-        assert(((Double)queue.extractFirst()).doubleValue() == 34);
-        assert(queue.size() == 3);
-        assert(((Double)queue.extractFirst()).doubleValue() == 12);
-        assert(queue.size() == 2);
-        assert(((Double)queue.extractFirst()).doubleValue() == 7);
-        assert(queue.size() == 1);
-        assert(((Double)queue.extractFirst()).doubleValue() == 4);
-        assert(queue.size() == 0);
+        assertTrue(queue.size() == 4);
+        assertTrue(((Double)queue.extractFirst()).doubleValue() == 34);
+        assertTrue(queue.size() == 3);
+        assertTrue(((Double)queue.extractFirst()).doubleValue() == 12);
+        assertTrue(queue.size() == 2);
+        assertTrue(((Double)queue.extractFirst()).doubleValue() == 7);
+        assertTrue(queue.size() == 1);
+        assertTrue(((Double)queue.extractFirst()).doubleValue() == 4);
+        assertTrue(queue.size() == 0);
 
     }
 }

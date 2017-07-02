@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz;
@@ -192,7 +192,9 @@ public class ZLayerGroup extends ZGroup implements ZSerializable, Serializable {
                                 // ZLayerGroup needs to override the base repaint method
                                 // so it can pass on the repaint call to the cameras that
                                 // look at this layer.
-        repaint(getBounds());
+        if (!inTransaction) {
+            repaint(getBounds());
+        }
     }
 
     /**
@@ -208,54 +210,21 @@ public class ZLayerGroup extends ZGroup implements ZSerializable, Serializable {
             System.out.println("ZLayerGroup.repaint(ZBounds): repaintBounds = " + repaintBounds);
         }
 
-        super.repaint(repaintBounds);
-
-        ZCamera[] camerasRef = getCamerasReference();
-        for (int i = 0; i < cameras.size(); i++) {
-            camerasRef[i].repaint(repaintBounds);
+        if (inTransaction) {
+            return;
         }
-    }
-
-    /**
-     * Method to pass repaint methods up the tree,
-     * and to any cameras looking here.  Repaints only the sub-portion of
-     * this object specified by the given ZBounds.
-     * Note that the transform and clipBounds parameters may be modified as a result of this call.
-     * @param obj The object to repaint
-     * @param at  The affine transform
-     * @param clipBounds The bounds to clip to when repainting
-     */
-    public void repaint(ZSceneGraphObject obj, AffineTransform at, ZBounds clipBounds) {
-        if (ZDebug.debug && ZDebug.debugRepaint) {
-            System.out.println("ZLayerGroup.repaint(obj, at, bounds): this = " + this);
-            System.out.println("ZLayerGroup.repaint(obj, at, bounds): obj = " + obj);
-            System.out.println("ZLayerGroup.repaint(obj, at, bounds): at = " + at);
-        }
-
-        super.repaint(obj, at, clipBounds);
-
-                                // The camera could modify the transform and clip bounds,
-                                // so if there is more than one camera, make a copy of them,
+                                // The camera could modify the repaint bounds,
+                                // so make a copy of them,
                                 // and use the copies for each other camera.
-        AffineTransform origAT = null;
-        ZBounds origClipBounds = null;
+        ZBounds origRepaintBounds = (ZBounds) repaintBounds.clone();
 
-        if (cameras.size() > 1) {
-            origAT = (AffineTransform)at.clone();
-            if (clipBounds != null) {
-                origClipBounds = (ZBounds) clipBounds.clone();
-            }
-        }
         ZCamera[] camerasRef = getCamerasReference();
         for (int i=0; i<cameras.size(); i++) {
-            if (i >= 1) {
-                at.setTransform(origAT);
-                if (origClipBounds != null) {
-                    clipBounds.setRect(origClipBounds);
-                }
-            }
-            camerasRef[i].repaint(obj, at, clipBounds);
+            repaintBounds.setRect(origRepaintBounds);
+            camerasRef[i].repaint(repaintBounds);
         }
+
+        super.repaint(origRepaintBounds);
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {

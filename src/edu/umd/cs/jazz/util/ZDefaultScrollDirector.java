@@ -145,7 +145,9 @@ public class ZDefaultScrollDirector implements ZScrollDirector, ZCameraListener,
 
 	    // Then we put the bounds into camera coordinates and
 	    // union the camera bounds	    
-	    camera.localToCamera(bounds,null);
+	    if (!bounds.isEmpty()) {
+		camera.localToCamera(bounds,null);
+	    }
 	    bounds.add(viewBounds);
 
 	    size.setSize((int)(bounds.getWidth()+0.5),

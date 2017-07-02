@@ -90,7 +90,7 @@ public class ZArc extends ZShape {
      * @param a The <CODE>Arc2D</CODE> to use to set the arc's values.
      */
     public void setArc(Arc2D a) {
-        arc = a;
+        getArc().setArc(a);
         reshape();
     }
 

@@ -7,13 +7,10 @@ package edu.umd.cs.jazz.util;
 import java.awt.*;
 import java.awt.geom.*;
 import java.awt.event.*;
-import java.awt.MediaTracker;
 import java.awt.image.*;
-import java.awt.image.renderable.RenderContext;
 import java.util.*;
 import java.io.*;
 import javax.swing.*;
-import javax.swing.event.*;
 
 import edu.umd.cs.jazz.*;
 import edu.umd.cs.jazz.event.*;
@@ -145,7 +142,6 @@ public class ZCanvas extends JComponent implements Serializable {
         root.addChild(layer);
         root.addChild(cameraNode);
         camera.addLayer(layer);
-
         init();
     }
 
@@ -180,6 +176,8 @@ public class ZCanvas extends JComponent implements Serializable {
      * Internal method to support initialization of a ZCanvas.
      */
     protected void init() {
+		setBackground(Color.WHITE);
+    	
                                 // Add support for Swing widgets
         swingWrapper = new JComponent() {
             public boolean isValidateRoot() {
@@ -208,9 +206,14 @@ public class ZCanvas extends JComponent implements Serializable {
      * to the underlying Jazz surface.
      * @param g The graphics to be painted onto
      */
-    public void paintComponent(Graphics g) {
+    public void paintComponent(Graphics g) {    	
         try {
-            surface.paint(g);
+			ZDebug.startProcessingOutput();
+			Graphics2D g2 = (Graphics2D) g.create();		
+		    g2.setColor(getBackground());
+		    g2.fillRect(0, 0, getWidth(), getHeight());			
+            surface.paint(g2);
+			ZDebug.endProcessingOutput();				
         } catch (ZNoninvertibleTransformException e) {
             e.printStackTrace();
         }
@@ -228,18 +231,7 @@ public class ZCanvas extends JComponent implements Serializable {
         super.setBounds(x, y, w, h);
         Rectangle bounds = getBounds();
         camera.setBounds(0, 0, (int)bounds.getWidth(), (int)bounds.getHeight());
-    }
-
-    /**
-     * Sets the background color of this component.
-     * Actually - this is implemented by changing the fill color of the
-     * camera associated with this component since the camera controls
-     * the rendering onto this component.
-     * @param background The new color to use for this component's background
-     */
-    public void setBackground(Color background) {
-        super.setBackground(background);
-        camera.setFillColor(background);
+        getCameraNode().getBoundsReference();
     }
 
     /**
@@ -249,6 +241,7 @@ public class ZCanvas extends JComponent implements Serializable {
     public void setDrawingSurface(ZDrawingSurface aSurface) {
         surface = aSurface;
         surface.setCamera(camera,cameraNode);
+        surface.setComponent(this);
         camera.repaint();
     }
 
@@ -274,6 +267,10 @@ public class ZCanvas extends JComponent implements Serializable {
         boolean zoomActive = zoomEventHandler.isActive();
         boolean panActive = panEventHandler.isActive();
         boolean swingActive = swingEventHandler.isActive();
+
+	zoomEventHandler.setActive(false);
+	panEventHandler.setActive(false);
+	swingEventHandler.setActive(false);
 
         zoomEventHandler = null;
         panEventHandler = null;
@@ -771,43 +768,54 @@ public class ZCanvas extends JComponent implements Serializable {
         }
 
         public void mouseMoved(MouseEvent e) {
+			ZDebug.startProcessingInput();        	
             if (getExcludeMouseMoveEvents())
                 return;
 
             updateMouseOverPath(e);
             updateTargetPath();
             checkForMouseEnteredOrExited(e);
-            dispatchEventToPath(MouseEvent.MOUSE_MOVED, e, targetPath);
+            dispatchEventToPath(MouseEvent.MOUSE_MOVED, e, targetPath);            
+			ZDebug.endProcessingInput();
         }
 
         public void mousePressed(MouseEvent e) {
+			ZDebug.startProcessingInput();        	
             updateMouseOverPath(e);
             updateTargetPath();
             dispatchEventToPath(MouseEvent.MOUSE_PRESSED, e, targetPath);
+			ZDebug.endProcessingInput();
         }
 
         public void mouseDragged(MouseEvent e) {
+			ZDebug.startProcessingInput();        	
                                 // We need to set the transform using the objects on the grab path.
                                 // We can't use the current transform from the current path because the path may be different.
                                 // So instead, we recompute the transform using the objects along the path.
             updateMouseOverPath(e);
             targetPath.updateTransform();
             dispatchEventToPath(MouseEvent.MOUSE_DRAGGED, e, targetPath);
+			ZDebug.endProcessingInput();
         }
 
         public void mouseReleased(MouseEvent e) {
+			ZDebug.startProcessingInput();        	
             updateMouseOverPath(e);
             targetPath.updateTransform();
             dispatchEventToPath(MouseEvent.MOUSE_RELEASED, e, targetPath);
+			ZDebug.endProcessingInput();
         }
 
         public void mouseClicked(MouseEvent e) {
+			ZDebug.startProcessingInput();        	
             updateMouseOverPath(e);
             updateTargetPath();
             dispatchEventToPath(MouseEvent.MOUSE_CLICKED, e, targetPath);
+			ZDebug.endProcessingInput();
         }
 
         public void mouseExited(MouseEvent e) {
+			ZDebug.startProcessingInput();        	
             //updateMouseOverPath(e);
             mouseOverPath = null;
             currentObject = null;
@@ -817,11 +825,14 @@ public class ZCanvas extends JComponent implements Serializable {
             //targetPath = null;
             //previousObject = null;
             //targetObject = null;
+			ZDebug.endProcessingInput();
         }
 
         public void mouseEntered(MouseEvent e) {
+			ZDebug.startProcessingInput();        	
             updateMouseOverPath(e);
             checkForMouseEnteredOrExited(e);
+			ZDebug.endProcessingInput();
         }
 
         protected void dispatchEventToPath(int id, MouseEvent e, ZSceneGraphPath aPath) {
@@ -909,7 +920,7 @@ public class ZCanvas extends JComponent implements Serializable {
          * @param w Width of the dirty region in the component
          * @param h Height of the dirty region in the component
          */
-        public synchronized void addDirtyRegion(JComponent c, int x, int y, int w, int h) {
+        public synchronized void addDirtyRegion(JComponent c, int x, int y, final int w, final int h) {
             boolean captureRepaint = false;
             JComponent capturedComponent = null;
             int captureX = x, captureY = y;
@@ -942,10 +953,17 @@ public class ZCanvas extends JComponent implements Serializable {
             if (captureRepaint) {
                 if (!isPainting(capturedComponent)) {
 
-                    ZSwing vis = (ZSwing)capturedComponent.getClientProperty(ZSwing.VISUAL_COMPONENT_KEY);
+                    final ZSwing vis = (ZSwing)capturedComponent.getClientProperty(ZSwing.VISUAL_COMPONENT_KEY);
 
                     if (vis != null) {
-                        vis.repaint(new ZBounds((double)captureX,(double)captureY,(double)w,(double)h));
+			final int repaintX = captureX;
+			final int repaintY = captureY;			
+			Runnable repainter = new Runnable() {
+				public void run() {
+				    vis.repaint(new ZBounds((double)repaintX,(double)repaintY,(double)w,(double)h));
+				}
+			    };
+			SwingUtilities.invokeLater(repainter);
                     }
 
                 }

@@ -39,6 +39,7 @@ public class ZSelectionDeleteHandler extends ZFilteredEventHandler {
      */
     public ZSelectionDeleteHandler(ZCanvas aFilteredKeyEventSouce) {
         super(null, aFilteredKeyEventSouce);
+        fListenerList = new EventListenerList();
     }
 
     /**

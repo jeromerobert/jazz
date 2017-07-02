@@ -1,5 +1,5 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.event;
@@ -37,6 +37,21 @@ public class ZHandleEventHandler extends ZDragSequenceEventHandler {
     }
 
     /**
+     * Return ZHandle that is the target of the current drag sequence. This
+     * will be null if a drag sequence is not in progress.
+     */
+    public ZHandle getCurrentHandle() {
+        return fCurrentHandle;
+    }
+
+    /**
+     * Return ZHandle that is currently highlighted.
+     */
+    public ZHandle getCurrentHighlightedHandle() {
+        return fCurrentHighlightedHandle;
+    }
+
+    /**
      * ZHandles are dragged with BUTTON1 by default.
      */
     public ZMouseFilter getMouseFilter() {
@@ -56,7 +71,7 @@ public class ZHandleEventHandler extends ZDragSequenceEventHandler {
 
         if (aPath.getObject() instanceof ZHandle) {
             fCurrentHighlightedHandle = (ZHandle) aPath.getObject();
-            fCurrentHighlightedHandle.isHighlighted(true);
+            fCurrentHighlightedHandle.setIsHighlighted(true);
         }
     }
 
@@ -65,7 +80,7 @@ public class ZHandleEventHandler extends ZDragSequenceEventHandler {
      */
     public void filteredMouseExited(ZMouseEvent e) {
         if (fCurrentHighlightedHandle != null) {
-            fCurrentHighlightedHandle.isHighlighted(false);
+            fCurrentHighlightedHandle.setIsHighlighted(false);
             fCurrentHighlightedHandle = null;
         }
     }
@@ -77,8 +92,13 @@ public class ZHandleEventHandler extends ZDragSequenceEventHandler {
         super.startDrag(e);
         fCurrentHandle = (ZHandle) e.getPath().getObject();
         Point2D localPoint = e.getLocalPoint();
+
         fCurrentHandle.handleStartDrag(localPoint.getX(),
                                        localPoint.getY());
+
+        fCurrentHandle.handleStartDrag(localPoint.getX(),
+                                       localPoint.getY(),
+                                       e);
         e.consume();
     }
 
@@ -87,8 +107,13 @@ public class ZHandleEventHandler extends ZDragSequenceEventHandler {
      */
     protected void dragInScreenCoords(ZMouseEvent e, Dimension2D aScreenDelta) {
         e.getPath().screenToLocal(aScreenDelta);
+
         fCurrentHandle.handleDragged(aScreenDelta.getWidth(),
                                      aScreenDelta.getHeight());
+
+        fCurrentHandle.handleDragged(aScreenDelta.getWidth(),
+                                     aScreenDelta.getHeight(),
+                                     e);
         e.consume();
     }
 
@@ -98,8 +123,13 @@ public class ZHandleEventHandler extends ZDragSequenceEventHandler {
     protected void endDrag(ZMouseEvent e) {
         super.endDrag(e);
         Point2D localPoint = e.getLocalPoint();
+
         fCurrentHandle.handleEndDrag(localPoint.getX(),
                                      localPoint.getY());
+
+        fCurrentHandle.handleEndDrag(localPoint.getX(),
+                                     localPoint.getY(),
+                                     e);
         fCurrentHandle = null;
         e.consume();
     }

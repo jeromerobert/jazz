@@ -44,9 +44,9 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
     protected ZList.ZNodeList children = ZListImpl.NullList;
 
     /**
-     * Cached volatility computation.
+     * Cached volatility computation for children.
      */
-    transient boolean cacheVolatile = false;
+    protected transient boolean childrenVolatileBoundsCache = false;
 
     /**
      *  True if pick should pick children.
@@ -157,6 +157,13 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
             child.parent = null;
             parent = p;
         }
+
+                                // Mark self as in a transaction if the node we are replacing was
+                                // in a transaction.
+        if (inTransaction != child.inTransaction && child.inTransaction) {
+            markInTransaction();
+        }
+
         addChildImpl(child,false);     // Then, add the child below this.
 
 
@@ -336,20 +343,25 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
                                 // Finally, update parent pointer.
         child.parent = this;
 
-        if (!volatileBounds && child.getVolatileBounds()) {
-            updateVolatility();     // Need to update volatility since new child could be volatile
-        }
+        updateVolatility();     // Need to update volatility since new child could be volatile
 
         if (!hasNodeListener && child.hasNodeListener) {
             updateHasNodeListener(); // Need to update hasNodeListener since new child could have a node listener
         }
+
+                                // Make the childs transaction state match our own.
+        if (inTransaction != child.inTransaction) {
+            if (inTransaction) {
+                child.markInTransaction();
+            } else {
+                child.markNotInTransaction();
+            }
+        }
+
                                 // Manually update bounds and repaint since reshape would result
                                 // in entire group being painted twice.  Since we're adding a new
                                 // item, we only have to repaint the new part.
-        if (!getBoundsReference().contains(child.getBoundsReference())) {
-            updateBounds();
-        }
-
+        updateBounds();
         child.repaint();
 
         if (fireEvent) {
@@ -399,6 +411,15 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
 
             children.add(child);
 
+                                // Make the childs transaction state match our own.
+            if (inTransaction != child.inTransaction) {
+                if (inTransaction) {
+                    child.markInTransaction();
+                } else {
+                    child.markNotInTransaction();
+                }
+            }
+
                                 // Finally, update parent pointer.
             child.parent = this;
             if (fireGroupEvents) {
@@ -407,7 +428,7 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
         }
 
         updateVolatility();     // Need to update volatility since new child could be volatile
-        updateHasNodeListener(); // Need to update hasNodeListener since new child could have a node listener
+        updateHasNodeListener();// Need to update hasNodeListener since new child could have a node listener
 
                                 // Manually update bounds and repaint since reshape would result
                                 // in entire group being painted twice.  Since we're adding a new
@@ -462,6 +483,7 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
         ZNode[] childrenNodes = getChildrenReference();
         for (int i = 0; i < numChildren; i++) {
             childrenNodes[i].parent = null;
+
             if (fireGroupEvents) {
                 childRemovedNotification(childrenNodes[i], false);
             }
@@ -547,9 +569,7 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
         removedChild.repaint(); // Repaint area that child was in before removing it so it damages the proper area
         removedChild.parent = null;
 
-        if (removedChild.getVolatileBounds()) {
-            updateVolatility(); // Need to update volatility since previous child could have be volatile
-        }
+        updateVolatility(); // Need to update volatility since previous child could have be volatile
 
         if (removedChild.hasNodeListener()) {
             updateHasNodeListener(); // Need to update node listener since previous child could have been the last node listener
@@ -776,39 +796,23 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
     }
 
     /**
-     * Internal method to compute and cache the volatility of a node,
-     * to recursively call the parents to compute volatility.
-     * A node is considered to be volatile if it is set to be volatile,
-     * or any of its descendants are volatile.
-     * All parents of this node are also volatile when this is volatile.
-     * @see #setVolatileBounds(boolean)
-     * @see #getVolatileBounds()
+     * Determine if this ZGroup is volatile. A group is volatile if it or any of its
+     * children have been marked as volatile.
      */
-    protected void updateVolatility() {
-                                // If this node set to volatile, then it is volatile
-        cacheVolatile = volatileBounds;
-
-        if (!cacheVolatile && !children.isNull()) {
-            cacheVolatile = children.collectiveHasVolatileBounds();
-        }
-
-        super.updateVolatility();
+    public boolean getVolatileBounds() {
+        return super.getVolatileBounds() || childrenVolatileBoundsCache;
     }
 
     /**
-     * Determines if this node is volatile.
-     * A node is considered to be volatile if it is specifically set
-     * to be volatile with {@link ZNode#setVolatileBounds}, or if any
-     * of its children are volatile.
-     * All parents of this node are also volatile when this is volatile.
-     * <p>
-     * Volatile objects are those objects that change regularly, such as an object
-     * that is animated, or one whose rendering depends on its context.
-     * @return true if this node is volatile
-     * @see #setVolatileBounds(boolean)
+     * Compute the volatile bounds cache. When asked for its volatile bounds a ZGroup
+     * will return its volatileBounds varriable ored with this cache.
      */
-    public boolean getVolatileBounds() {
-        return cacheVolatile;
+    protected void computeVolatileBounds() {
+        if (!children.isNull()) {
+            childrenVolatileBoundsCache = children.collectiveHasVolatileBounds();
+        } else {
+            childrenVolatileBoundsCache = false;
+        }
     }
 
     //****************************************************************************
@@ -932,6 +936,30 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
         return new ZBounds();
     }
 
+    /**
+     * Mark this group and all of its children as being part of a transaction.
+     */
+    protected void markInTransaction() {
+        super.markInTransaction();
+
+        ZNode[] childrenNodes = children.getNodesReference();
+        for (int i=0; i<children.size(); i++) {
+            childrenNodes[i].markInTransaction();
+        }
+    }
+
+    /**
+     * Mark this group and all of its children as not being part of a transaction.
+     */
+    protected void markNotInTransaction() {
+        super.markNotInTransaction();
+
+        ZNode[] childrenNodes = children.getNodesReference();
+        for (int i=0; i<children.size(); i++) {
+            childrenNodes[i].markNotInTransaction();
+        }
+    }
+
     // *********************************************************************
     //
     // Event methods
@@ -1016,7 +1044,7 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
 
             if (node instanceof ZGroup) {
                 // Only create the event if we have a listener.
-                if (e == null && node.hasLisenerOfType(ZGroupListener.class)) {
+                if (e == null && node.hasListenerOfType(ZGroupListener.class)) {
                     e = ZGroupEvent.createNodeAddedEvent(this, child, isModification);
                 }
                 if (e != null) {
@@ -1048,7 +1076,7 @@ public class ZGroup extends ZNode implements ZSerializable, Serializable {
 
             if (node instanceof ZGroup) {
                 // Only create the event if we have a listener.
-                if (e == null && node.hasLisenerOfType(ZGroupListener.class)) {
+                if (e == null && node.hasListenerOfType(ZGroupListener.class)) {
                     e = ZGroupEvent.createNodeRemovedEvent(this, child, isModification);
                 }
                 if (e != null) {

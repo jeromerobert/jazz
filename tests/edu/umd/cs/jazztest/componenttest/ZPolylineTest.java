@@ -1,5 +1,5 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest.componenttest;
@@ -41,7 +41,7 @@ public class ZPolylineTest extends TestCase {
             ZPolyline savedShape = (ZPolyline) ((ZVisualLeaf)result.getChild(0)).getVisualComponent(0);
             doCompare(savedShape, polyline);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
@@ -50,16 +50,16 @@ public class ZPolylineTest extends TestCase {
             ZPolyline result = (ZPolyline) FileSavingSimulator.doZSerialize(polyline);
             doCompare(result, polyline);
         } catch (Exception e) {
-            assert(e.toString(), false);
+            assertTrue(e.toString(), false);
         }
     }
 
     protected void doCompare(ZPolyline a, ZPolyline b) {
-        assert(a.getNumberPoints() == b.getNumberPoints());
+        assertTrue(a.getNumberPoints() == b.getNumberPoints());
 
         for (int i = 0; i < a.getNumberPoints(); i++) {
-            assert(a.getX(i) == b.getX(i));
-            assert(a.getY(i) == b.getY(i));
+            assertTrue(a.getX(i) == b.getX(i));
+            assertTrue(a.getY(i) == b.getY(i));
         }
 
         assertEquals(a.getBounds(), b.getBounds());
@@ -69,13 +69,13 @@ public class ZPolylineTest extends TestCase {
         ZPolygon p = new ZPolygon(0, 0, 100, 100);
         p.add(50, 50, 1);
 
-        assert(p.getX(0) == 0);
-        assert(p.getY(0) == 0);
-        assert(p.getX(1) == 50);
-        assert(p.getY(1) == 50);
-        assert(p.getX(2) == 100);
-        assert(p.getY(2) == 100);
-        assert(p.getNumberPoints() == 3);
+        assertTrue(p.getX(0) == 0);
+        assertTrue(p.getY(0) == 0);
+        assertTrue(p.getX(1) == 50);
+        assertTrue(p.getY(1) == 50);
+        assertTrue(p.getX(2) == 100);
+        assertTrue(p.getY(2) == 100);
+        assertTrue(p.getNumberPoints() == 3);
     }
 
     public void testSetCoords() {
@@ -94,11 +94,11 @@ public class ZPolylineTest extends TestCase {
 
         aPolyline.setCoords(xc, yc);
 
-        assert(aPolyline.getX(0) == 2);
-        assert(aPolyline.getX(1) == 98);
+        assertTrue(aPolyline.getX(0) == 2);
+        assertTrue(aPolyline.getX(1) == 98);
 
         aPolyline.setCoords(new Point2D.Double(xc[0], yc[0]), new Point2D.Double(xc[1], yc[1]));
-        assert(aPolyline.getX(0) == 2);
-        assert(aPolyline.getX(1) == 98);
+        assertTrue(aPolyline.getX(0) == 2);
+        assertTrue(aPolyline.getX(1) == 98);
     }
 }

@@ -10,8 +10,8 @@ import java.awt.geom.*;
 import java.util.*;
 import java.io.*;
 
-
 import edu.umd.cs.jazz.*;
+import edu.umd.cs.jazz.event.*;
 import edu.umd.cs.jazz.util.*;
 
 /**
@@ -51,16 +51,16 @@ public class ZCompositeSelectionHandler implements ZEventHandler, Serializable {
     private int enabledFlag = 0;
 
     /** true when event handler is active */
-    private boolean active = false;
+    protected boolean active = false;
 
     /** node this event handler attaches to */
-    private ZNode node = null;
+    protected ZNode node = null;
 
     /** canvas this event handler attaches to */
-    private ZCanvas canvas = null;
+    protected ZCanvas canvas = null;
 
     /** Marquee layer */
-    private ZLayerGroup layer = null;
+    protected ZLayerGroup layer = null;
 
     /** Selection modify handler */
     private ZSelectionModifyHandler modifyHandler = null;
@@ -196,7 +196,7 @@ public class ZCompositeSelectionHandler implements ZEventHandler, Serializable {
         if (enable) {
             if ((flags & MOVE) == MOVE) {
                 if (moveHandler == null) {
-                    moveHandler = new ZSelectionMoveHandler(node,canvas);
+                    moveHandler = createSelectionMoveHandler();
 
                     if (active && modifyHandler != null && resizeHandler != null) {
                         resizeHandler.setActive(false);
@@ -222,7 +222,7 @@ public class ZCompositeSelectionHandler implements ZEventHandler, Serializable {
             }
             if ((flags & RESIZE) == RESIZE) {
                 if (resizeHandler == null) {
-                    resizeHandler = new ZSelectionResizeHandler(node);
+                    resizeHandler = createSelectionResizeHandler();
 
                     if (active && modifyHandler != null) {
                         modifyHandler.setActive(false);
@@ -236,7 +236,7 @@ public class ZCompositeSelectionHandler implements ZEventHandler, Serializable {
             }
             if ((flags & MODIFY) == MODIFY) {
                 if (modifyHandler == null) {
-                    modifyHandler = new ZSelectionModifyHandler(node ,layer);
+                    modifyHandler = createSelectionModifyHandler();
 
                     if (active) {
                         modifyHandler.setActive(true);
@@ -245,7 +245,7 @@ public class ZCompositeSelectionHandler implements ZEventHandler, Serializable {
             }
             if ((flags & SCALE) == SCALE) {
                 if (scaleHandler == null) {
-                    scaleHandler = new ZSelectionScaleHandler(canvas);
+                    scaleHandler = createSelectionScaleHandler();
 
                     if (active) {
                         scaleHandler.setActive(true);
@@ -254,7 +254,7 @@ public class ZCompositeSelectionHandler implements ZEventHandler, Serializable {
             }
             if ((flags & DELETE) == DELETE) {
                 if (deleteHandler == null) {
-                    deleteHandler = new ZSelectionDeleteHandler(canvas);
+                    deleteHandler = createSelectionDeleteHandler();
 
                     if (active) {
                         deleteHandler.setActive(true);
@@ -347,4 +347,40 @@ public class ZCompositeSelectionHandler implements ZEventHandler, Serializable {
     public ZSelectionResizeHandler getSelectionResizeHandler() {
         return resizeHandler;
     }
+
+    /**
+     * @return a new instance of a ZSelectionMoveHandler
+     */
+    protected ZSelectionMoveHandler createSelectionMoveHandler() {
+	return new ZSelectionMoveHandler(node,canvas);
+    }
+
+    /**
+     * @return a new instance of a ZSelectionResizeHandler
+     */
+    protected ZSelectionResizeHandler createSelectionResizeHandler() {
+	return new ZSelectionResizeHandler(node);
+    }
+
+    /**
+     * @return a new instance of a ZSelectionModifyHandler
+     */
+    protected ZSelectionModifyHandler createSelectionModifyHandler() {
+	return new ZSelectionModifyHandler(node,layer);
+    }
+
+    /**
+     * @return a new instance of a ZSelectionScaleHandler
+     */
+    protected ZSelectionScaleHandler createSelectionScaleHandler() {
+	return new ZSelectionScaleHandler(canvas);
+    }
+
+    /**
+     * @return a new instance of a ZSelectionDeleteHandler
+     */
+    protected ZSelectionDeleteHandler createSelectionDeleteHandler() {
+	return new ZSelectionDeleteHandler(canvas);
+    }
+
 }

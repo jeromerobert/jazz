@@ -55,6 +55,7 @@ public class ZAudioAnimation extends ZAnimation {
      */
     protected void animationStarted() {
         getAudioClip().loop();
+        super.animationStarted();
     }
 
     /**
@@ -62,5 +63,6 @@ public class ZAudioAnimation extends ZAnimation {
      */
     protected void animationStopped() {
         getAudioClip().stop();
+        super.animationStopped();
     }
 }

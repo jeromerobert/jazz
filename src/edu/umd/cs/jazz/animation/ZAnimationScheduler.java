@@ -30,6 +30,7 @@ public class ZAnimationScheduler implements ActionListener {
     private long fCurrentTime = 0;
     private long fCurrentFrame = 0;
     private ArrayList fProcessList = new ArrayList();
+    private Runnable fFrameEndedRunnable;
 
     private ZPriorityQueue fTimeConditionQueue = new ZPriorityQueue();
     private ZPriorityQueue fFrameConditionQueue = new ZPriorityQueue();
@@ -152,6 +153,10 @@ public class ZAnimationScheduler implements ActionListener {
             stopAnimationScheduler();
         }
 
+        if (fFrameEndedRunnable != null) {
+            fFrameEndedRunnable.run();
+        }
+
         fCurrentFrame++;
     }
 
@@ -196,6 +201,21 @@ public class ZAnimationScheduler implements ActionListener {
     }
 
     /**
+     * Forces all animations that are in the queue's to be stopped.
+     */
+    public void stopPendingAnimations() {
+        while (!fTimeConditionQueue.isEmpty()) {
+            ZScheduledAnimation scheduledAnimation = (ZScheduledAnimation) fTimeConditionQueue.extractFirst();
+            scheduledAnimation.getAnimation().stop();
+        }
+
+        while (!fFrameConditionQueue.isEmpty()) {
+            ZScheduledAnimation scheduledAnimation = (ZScheduledAnimation) fFrameConditionQueue.extractFirst();
+            scheduledAnimation.getAnimation().stop();
+        }
+    }
+
+    /**
      * Start the timer that drives this animation scheduler.
      */
     protected synchronized void startAnimationScheduler() {
@@ -225,5 +245,13 @@ public class ZAnimationScheduler implements ActionListener {
             fTimer = new javax.swing.Timer(getFrameDelay(), this);
         }
         return fTimer;
+    }
+
+    /**
+     * Set a runnable that will be run when all the animations
+     * for one frame have finished.
+     */
+    public void setFrameEndedRunnable(Runnable aRunnable) {
+        fFrameEndedRunnable = aRunnable;
     }
 }

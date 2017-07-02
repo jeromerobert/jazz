@@ -368,21 +368,25 @@ public class ZFilteredEventHandler implements ZEventHandler {
      */
     public void setFilteredMouseEventSource(ZSceneGraphObject aFilteredMouseEventSource) {
         if (fFilteredMouseEventSource != null && isActive()) {
-            if (wantsMouseEvents())
-                aFilteredMouseEventSource.removeMouseListener(getFilteredEventDispatcher());
+            if (wantsMouseEvents()) {
+                fFilteredMouseEventSource.removeMouseListener(getFilteredEventDispatcher());
+            }
 
-            if (wantsMouseMotionEvents())
-                aFilteredMouseEventSource.removeMouseMotionListener(getFilteredEventDispatcher());
+            if (wantsMouseMotionEvents()) {
+                fFilteredMouseEventSource.removeMouseMotionListener(getFilteredEventDispatcher());
+            }
         }
 
         fFilteredMouseEventSource = aFilteredMouseEventSource;
 
         if (fFilteredMouseEventSource != null && isActive()) {
-            if (wantsMouseEvents())
-                aFilteredMouseEventSource.addMouseListener(getFilteredEventDispatcher());
+            if (wantsMouseEvents()) {
+                fFilteredMouseEventSource.addMouseListener(getFilteredEventDispatcher());
+            }
 
-            if (wantsMouseMotionEvents())
-                aFilteredMouseEventSource.addMouseMotionListener(getFilteredEventDispatcher());
+            if (wantsMouseMotionEvents()) {
+                fFilteredMouseEventSource.addMouseMotionListener(getFilteredEventDispatcher());
+            }
         }
     }
 
@@ -402,15 +406,17 @@ public class ZFilteredEventHandler implements ZEventHandler {
      */
     public void setFilteredKeyEventSource(ZCanvas aFilteredKeyEventSource) {
         if (fFilteredKeyEventSource != null && isActive()) {
-            if (wantsKeyEvents())
-                aFilteredKeyEventSource.removeKeyListener(getFilteredEventDispatcher());
+            if (wantsKeyEvents()) {
+                fFilteredKeyEventSource.removeKeyListener(getFilteredEventDispatcher());
+            }
         }
 
         fFilteredKeyEventSource = aFilteredKeyEventSource;
 
         if (fFilteredKeyEventSource != null && isActive()) {
-            if (wantsKeyEvents())
-                aFilteredKeyEventSource.addKeyListener(getFilteredEventDispatcher());
+            if (wantsKeyEvents()) {
+                fFilteredKeyEventSource.addKeyListener(getFilteredEventDispatcher());
+            }
         }
     }
 
@@ -452,11 +458,13 @@ public class ZFilteredEventHandler implements ZEventHandler {
                                 // Turn on event handlers
             fIsActive = true;
 
-            if (wantsMouseEvents())
+            if (wantsMouseEvents()) {
                 fFilteredMouseEventSource.addMouseListener(getFilteredEventDispatcher());
+            }
 
-            if (wantsMouseMotionEvents())
+            if (wantsMouseMotionEvents()) {
                 fFilteredMouseEventSource.addMouseMotionListener(getFilteredEventDispatcher());
+            }
 
             if (wantsKeyEvents()) {
                 fFilteredKeyEventSource.addKeyListener(getFilteredEventDispatcher());

@@ -89,6 +89,9 @@ public class ZEllipse extends ZShape {
      * @return the Ellipse2D.
      */
     public Ellipse2D getEllipse() {
+        if (ellipse == null) {
+            ellipse = new Ellipse2D.Double();
+        }
         return ellipse;
     }
 
@@ -125,7 +128,10 @@ public class ZEllipse extends ZShape {
      * @param <code>aEllipse</code> The new ellipse.
      */
     public void setEllipse(Ellipse2D aEllipse) {
-        ellipse = aEllipse;
+        getEllipse().setFrame(aEllipse.getX(),
+                              aEllipse.getY(),
+                              aEllipse.getWidth(),
+                              aEllipse.getHeight());
         reshape();
     }
 

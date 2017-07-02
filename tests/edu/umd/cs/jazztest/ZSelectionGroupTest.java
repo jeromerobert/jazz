@@ -1,14 +1,16 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest;
 
+import java.util.*;
+
+import junit.framework.*;
+
 import edu.umd.cs.jazz.component.*;
 import edu.umd.cs.jazz.*;
-import junit.framework.*;
 import edu.umd.cs.jazz.event.*;
-import java.util.*;
 import edu.umd.cs.jazztest.iotest.*;
 
 /**
@@ -38,7 +40,7 @@ public class ZSelectionGroupTest extends TestCase {
             ZSelectionGroup result = (ZSelectionGroup) FileSavingSimulator.doSerialize(selection);
             doCompare(result, selection);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
@@ -47,12 +49,12 @@ public class ZSelectionGroupTest extends TestCase {
             ZSelectionGroup result = (ZSelectionGroup) FileSavingSimulator.doZSerialize(selection);
             doCompare(result, selection);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
     protected void doCompare(ZSelectionGroup a, ZSelectionGroup b) {
-        assert(a.getBounds().equals(b.getBounds()));
-        assert(a.getPenColor().equals(b.getPenColor()));
+        assertTrue(a.getBounds().equals(b.getBounds()));
+        assertTrue(a.getPenColor().equals(b.getPenColor()));
     }
 }

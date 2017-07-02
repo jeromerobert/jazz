@@ -96,7 +96,7 @@ import edu.umd.cs.jazz.component.*;
  */
 public class ZSelectionGroup extends ZVisualGroup implements ZSerializable, Serializable {
                                 // Default values
-    static public final Color penColor_DEFAULT = Color.magenta;
+    static public Color penColor_DEFAULT = Color.magenta;
 
     static private SelectionComponentFactory componentFactory = new SelectionComponentFactory() {
         public ZVisualComponent createSelectionComponent() {
@@ -270,7 +270,7 @@ public class ZSelectionGroup extends ZVisualGroup implements ZSerializable, Seri
      * @see #setVolatileBounds(boolean)
      * @see #getVolatileBounds()
      */
-    protected void updateVolatility() {
+    /*protected void updateVolatility() {
         ZVisualComponent frontVisualComponent = getFrontVisualComponent();
         ZVisualComponent backVisualComponent = getBackVisualComponent();
 
@@ -296,6 +296,14 @@ public class ZSelectionGroup extends ZVisualGroup implements ZSerializable, Seri
                                 // Update parent's volatility
         if (parent != null) {
             parent.updateVolatility();
+        }
+    }*/
+
+    protected void computeVolatileBounds() {
+        super.computeVolatileBounds();
+
+        if (!volatileBounds) {
+            volatileBounds = visualComponents.collectiveHasVolatileBounds();
         }
     }
 

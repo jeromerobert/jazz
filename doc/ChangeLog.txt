@@ -1,3 +1,67 @@
+Jazz-1.3 ChangeLog
+------------------
+
+  ** This is not an exhaustive list of the changes made between Jazz 1.2 and 1.3, but list the larger
+  	 changes that have been made.
+
+  * Changed implementation of updateBounds. Previous to the change update bounds would 
+    recompute the scene graph objects bounds, and if these bounds were different then the
+    last bounds it would tell its parent to update their bounds and it would fire bounds
+    changed events. This becomes very expensive when adding a large number of children to 
+    a group. Now bounds are computed lazily.
+    
+    UpdateBounds() just sets a invalidBounds bit on the scene graph object being updated and on all that
+    parents to the root of that object. When a scene graph object is asked for its bounds getBoundsReference()
+    it checks this bit, and if the bounds are invalid it computes the bounds and fires bounds
+    changed events before returning them.
+
+    This may effect programs that directly access the bounds variable (instead they should call
+    getBoundsRefernece() to be safe). It also effects the time that boundsChanged events are fired
+    (they may be delayed) but they will always get fired at least once per repaint.
+
+  * Changed the following by reference accessor methods to by value methods
+	- ZTransformGroup.setTransform(AffineTransform)
+	- ZCamera.setViewTransform(AffineTransform)
+	- ZSceneGraphPath.setTransform(AffineTransform)
+	- ZSceneGraphPath..setCameraTransform(AffineTransform)
+	- ZRectangle.setRect(Rectangle2D)
+	- ZEllipse.setEllipse(Ellipse2D)
+	- ZPath.setPath(GeneralPath)
+	- ZArc.setArc(Arc2D)
+	- ZSceneGraphObject.setBounds()
+	- ZArchorGroup.setDestBounds()
+	- ZSpatialIndex.setGroupNodeTransform();
+
+  * Removed all repaint methods of the form:
+	- public void repaint(ZSceneGraphObject obj, AffineTransform at, ZBounds clipBounds);
+    instead public void repaint(ZBounds aBounds) should be used.    	
+
+  * Other changes by package
+  
+	animation
+	
+	- added callback runnables that will get run when ZAnimation starts and stops
+	- added callback runnable to ZAnimationScheduler that will get run when the current frame is finished animating
+	- added method to stop all pending animations in ZAnimationScheduler
+	- added simple audio animation, used to synchronize the start and stop of audio with an animation
+
+	component
+	
+	- added setCoords(point[]) to ZCoordList
+	- removed media-tracker code from ZImage instead use ImageIcon. This fixes memory bug where 
+      images would not get released.
+
+	event
+
+	- added accessors to ZHandleEventHandler for current and highlighted handles
+	- make sure the fListenerList is initialized in ZSelectionDeleteHandler
+
+	jazz
+
+	- added support for "transactions" when manipulating the scenegraph.
+	- added ANIMATE_METHODS_USE_ANIMATION_FRAMEWORK variable to ZTransformGroup. This makes the transform group animate
+	  methods use the animation frameworks timer based animation instead of using a hard loop for animation.
+
 Jazz-1.2 ChangeLog
 ------------------
 

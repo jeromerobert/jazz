@@ -153,4 +153,105 @@ public class ZComponentFactory {
     public static ZNullVisualComponent buildNullVisualComponent() {
         return new ZNullVisualComponent();
     }
+
+    public static ZGroup build10000By1Scenegraph(boolean useNullVisualComponent) {
+        ZGroup result = new ZGroup();
+
+        ZVisualComponent comp = null;
+        if (useNullVisualComponent) {
+            comp = buildNullVisualComponent();
+        } else {
+            comp = buildRectangle();
+        }
+
+        result.startTransaction();
+        for (int i = 0; i < 10000; i++) {
+            result.addChild(new ZVisualLeaf(comp));
+        }
+        result.endTransaction();
+
+        return result;
+    }
+
+    public static ZGroup build10By1000Scenegraph(boolean useNullVisualComponent) {
+        ZGroup result = new ZGroup();
+
+        ZVisualComponent comp = null;
+        if (useNullVisualComponent) {
+            comp = buildNullVisualComponent();
+        } else {
+            comp = buildRectangle();
+        }
+
+
+        result.startTransaction();
+        for (int i = 0; i < 10; i++) {
+            ZGroup group = new ZGroup();
+            result.addChild(group);
+            for (int j = 0; j < 1000; j++) {
+                group.addChild(new ZVisualLeaf(comp));
+            }
+        }
+        result.endTransaction();
+
+        return result;
+    }
+
+    public static ZGroup build10By10By100Scenegraph(boolean useNullVisualComponent) {
+        ZGroup result = new ZGroup();
+
+        ZVisualComponent comp = null;
+        if (useNullVisualComponent) {
+            comp = buildNullVisualComponent();
+        } else {
+            comp = buildRectangle();
+        }
+
+        result.startTransaction();
+        for (int i = 0; i < 10; i++) {
+            ZGroup groupi = new ZGroup();
+            result.addChild(groupi);
+            for (int j = 0; j < 10; j++) {
+                ZGroup groupj = new ZGroup();
+                groupi.addChild(groupj);
+                for (int k = 0; k < 100; k++) {
+                    groupj.addChild(new ZVisualLeaf(comp));
+                }
+            }
+        }
+        result.endTransaction();
+
+        return result;
+    }
+
+    public static ZGroup build10By10By10By10Scenegraph(boolean useNullVisualComponent) {
+        ZGroup result = new ZGroup();
+
+        ZVisualComponent comp = null;
+        if (useNullVisualComponent) {
+            comp = buildNullVisualComponent();
+        } else {
+            comp = buildRectangle();
+        }
+
+        result.startTransaction();
+        for (int i = 0; i < 10; i++) {
+            ZGroup groupi = new ZGroup();
+            result.addChild(groupi);
+            for (int j = 0; j < 10; j++) {
+                ZGroup groupj = new ZGroup();
+                groupi.addChild(groupj);
+                for (int k = 0; k < 10; k++) {
+                    ZGroup groupk = new ZGroup();
+                    groupj.addChild(groupk);
+                    for (int l = 0; l < 10; l++) {
+                        groupk.addChild(new ZVisualLeaf(comp));
+                    }
+                }
+            }
+        }
+        result.endTransaction();
+
+        return result;
+    }
 }

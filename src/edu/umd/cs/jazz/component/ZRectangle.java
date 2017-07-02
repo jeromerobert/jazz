@@ -10,6 +10,7 @@ import java.io.*;
 import java.util.*;
 
 import edu.umd.cs.jazz.*;
+import edu.umd.cs.jazz.event.*;
 import edu.umd.cs.jazz.io.*;
 import edu.umd.cs.jazz.util.*;
 
@@ -90,11 +91,11 @@ public class ZRectangle extends ZShape {
     }
 
     public Collection getHandles() {
-        Collection result = new ArrayList(4);
+        Collection result = new ArrayList(8);
 
         // North
         result.add(new ZHandle(ZBoundsLocator.createNorthLocator(this)) {
-            public void handleDragged(double dx, double dy) {
+            public void handleDragged(double dx, double dy, ZMouseEvent e) {
                 if (rectangle.getHeight() - dy < 0) {
                     dy = dy - Math.abs(rectangle.getHeight() - dy);
                 }
@@ -103,25 +104,25 @@ public class ZRectangle extends ZShape {
                         rectangle.getWidth(),
                         rectangle.getHeight() - dy);
 
-                super.handleDragged(dx, dy);
+                super.handleDragged(dx, dy, e);
             }
         });
 
         // East
         result.add(new ZHandle(ZBoundsLocator.createEastLocator(this)) {
-            public void handleDragged(double dx, double dy) {
+            public void handleDragged(double dx, double dy, ZMouseEvent e) {
                 setRect(rectangle.getX(),
                         rectangle.getY(),
                         rectangle.getWidth() + dx,
                         rectangle.getHeight());
 
-                super.handleDragged(dx, dy);
+                super.handleDragged(dx, dy, e);
             }
         });
 
         // West
         result.add(new ZHandle(ZBoundsLocator.createWestLocator(this)) {
-            public void handleDragged(double dx, double dy) {
+            public void handleDragged(double dx, double dy, ZMouseEvent e) {
                 if (rectangle.getWidth() - dx < 0) {
                     dx = dx - Math.abs(rectangle.getWidth() - dx);
                 }
@@ -130,25 +131,25 @@ public class ZRectangle extends ZShape {
                         rectangle.getWidth() - dx,
                         rectangle.getHeight());
 
-                super.handleDragged(dx, dy);
+                super.handleDragged(dx, dy, e);
             }
         });
 
         // South
         result.add(new ZHandle(ZBoundsLocator.createSouthLocator(this)) {
-            public void handleDragged(double dx, double dy) {
+            public void handleDragged(double dx, double dy, ZMouseEvent e) {
                 setRect(rectangle.getX(),
                         rectangle.getY(),
                         rectangle.getWidth(),
                         rectangle.getHeight() + dy);
 
-                super.handleDragged(dx, dy);
+                super.handleDragged(dx, dy, e);
             }
         });
 
         // North West
         result.add(new ZHandle(ZBoundsLocator.createNorthWestLocator(this)) {
-            public void handleDragged(double dx, double dy) {
+            public void handleDragged(double dx, double dy, ZMouseEvent e) {
                 if (rectangle.getWidth() - dx < 0) {
                     dx = dx - Math.abs(rectangle.getWidth() - dx);
                 }
@@ -160,13 +161,13 @@ public class ZRectangle extends ZShape {
                         rectangle.getWidth() - dx,
                         rectangle.getHeight() - dy);
 
-                super.handleDragged(dx, dy);
+                super.handleDragged(dx, dy, e);
             }
         });
 
         // South West
         result.add(new ZHandle(ZBoundsLocator.createSouthWestLocator(this)) {
-            public void handleDragged(double dx, double dy) {
+            public void handleDragged(double dx, double dy, ZMouseEvent e) {
                 if (rectangle.getWidth() - dx < 0) {
                     dx = dx - Math.abs(rectangle.getWidth() - dx);
                 }
@@ -175,13 +176,13 @@ public class ZRectangle extends ZShape {
                         rectangle.getWidth() - dx,
                         rectangle.getHeight() + dy);
 
-                super.handleDragged(dx, dy);
+                super.handleDragged(dx, dy, e);
             }
         });
 
         // North East
         result.add(new ZHandle(ZBoundsLocator.createNorthEastLocator(this)) {
-            public void handleDragged(double dx, double dy) {
+            public void handleDragged(double dx, double dy, ZMouseEvent e) {
                 if (rectangle.getHeight() - dy < 0) {
                     dy = dy - Math.abs(rectangle.getHeight() - dy);
                 }
@@ -190,19 +191,19 @@ public class ZRectangle extends ZShape {
                         rectangle.getWidth() + dx,
                         rectangle.getHeight() - dy);
 
-                super.handleDragged(dx, dy);
+                super.handleDragged(dx, dy, e);
             }
         });
 
         // South East
         result.add(new ZHandle(ZBoundsLocator.createSouthEastLocator(this)) {
-            public void handleDragged(double dx, double dy) {
+            public void handleDragged(double dx, double dy, ZMouseEvent e) {
                 setRect(rectangle.getX(),
                         rectangle.getY(),
                         rectangle.getWidth() + dx,
                         rectangle.getHeight() + dy);
 
-                super.handleDragged(dx, dy);
+                super.handleDragged(dx, dy, e);
             }
         });
 
@@ -214,6 +215,9 @@ public class ZRectangle extends ZShape {
      * @return rectangle.
      */
     public Rectangle2D getRect() {
+        if (rectangle == null) {
+            rectangle = new Rectangle2D.Double();
+        }
         return rectangle;
     }
 
@@ -250,7 +254,7 @@ public class ZRectangle extends ZShape {
      * @param <code>r</code> The new rectangle coordinates
      */
     public void setRect(Rectangle2D r) {
-        rectangle = r;
+        getRect().setRect(r);
         reshape();
     }
 

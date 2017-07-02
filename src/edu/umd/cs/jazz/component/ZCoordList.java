@@ -255,24 +255,24 @@ public class ZCoordList extends ZShape {
             bounds.add(x - p2, y - p2);
             bounds.add(x + p2, y + p2);
 
-            updateParentBounds();
+            updateBounds();
         }
                                 // Only refresh the portion of the shape that has changed - which is just
                                 // the area between the current and previous point
         ZCoordListShape pl = getCoordListShape();
         if (pl.getVertexCount() > 2) {
-            int previouseIndex = getNumberPoints() - 2;
+            int previousIndex = getNumberPoints() - 2;
             ZBounds tmpBounds = new ZBounds();
             tmpBounds.add(x - p2, y - p2);
             tmpBounds.add(x + p2, y + p2);
-            tmpBounds.add(getX(previouseIndex), getY(previouseIndex));
+            tmpBounds.add(getX(previousIndex), getY(previousIndex));
 
             repaint(tmpBounds);
 
-	    if (isClosed()) {
-		reshape();
-	    }
-	    
+            if (isClosed()) {
+                reshape();
+            }
+
         } else {
             reshape();
         }
@@ -309,6 +309,25 @@ public class ZCoordList extends ZShape {
 
         for (int i = 1; i < xp.length; i++) {
             getCoordListShape().lineTo(xp[i], yp[i]);
+        }
+
+        reshape();
+    }
+
+    /**
+     * Set the coords of this polygon.
+     */
+    public void setCoords(Point2D[] points) {
+        reset();
+
+        if (points.length > 0) {
+            getCoordListShape().moveTo(points[0].getX(),
+                                       points[0].getY());
+        }
+
+        for (int i = 1; i < points.length; i++) {
+            getCoordListShape().lineTo(points[i].getX(),
+                                       points[i].getY());
         }
 
         reshape();

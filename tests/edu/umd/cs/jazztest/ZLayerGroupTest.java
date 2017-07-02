@@ -1,18 +1,20 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest;
 
+import java.util.*;
+
+import junit.framework.*;
+
 import edu.umd.cs.jazz.component.*;
 import edu.umd.cs.jazz.*;
-import junit.framework.*;
 import edu.umd.cs.jazz.event.*;
-import java.util.*;
 import edu.umd.cs.jazztest.iotest.*;
 
 /**
- * Unit test for ZNode.
+ * Unit test for ZLayerGroup.
  * @author: Jesse Grosjean
  */
 public class ZLayerGroupTest extends TestCase {
@@ -34,18 +36,18 @@ public class ZLayerGroupTest extends TestCase {
             ZLayerGroup result = (ZLayerGroup) FileSavingSimulator.doSerialize(layer);
             doCompare(result, layer);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
     public void testZSerialize() {
         try {
             ZLayerGroup result = (ZLayerGroup) FileSavingSimulator.doZSerialize(layer);
-            assert(result.getNumCameras() == 0); // since camera did not get saved.
+            assertTrue(result.getNumCameras() == 0); // since camera did not get saved.
             ZCamera c = (ZCamera) FileSavingSimulator.doZSerialize(camera);
             doCompare(c.getLayersReference()[0], layer);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
@@ -55,7 +57,7 @@ public class ZLayerGroupTest extends TestCase {
 
     public void testDuplicate() {
         ZLayerGroup l = (ZLayerGroup) layer.clone();
-        assert(l.getNumCameras() == 0); // since camera did not get cloned this should not have any.
+        assertTrue(l.getNumCameras() == 0); // since camera did not get cloned this should not have any.
 
         ZCamera c = (ZCamera) camera.clone();
         doCompare(camera.getLayersReference()[0], layer);

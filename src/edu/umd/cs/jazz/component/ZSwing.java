@@ -133,7 +133,8 @@ import edu.umd.cs.jazz.util.*;
  *            newChild.setDoubleBuffered(true);
  *            panel.add(newChild);
  *       </pre>
- *
+ * <p>
+ * NOTE: ZSwing is not properly ZSerializable, but it is java.io.Serializable.
  * <P>
  * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
  * compatible with future Jazz releases. The current serialization support is
@@ -149,7 +150,7 @@ public class ZSwing extends ZVisualComponent implements Serializable, PropertyCh
     /**
      * The cutoff at which the Swing component is rendered greek
      */
-    protected double renderCutoff = 0.3f;
+    protected double renderCutoff = 0.3;
 
     /**
      * The Swing component that this Visual Component wraps
@@ -191,7 +192,7 @@ public class ZSwing extends ZVisualComponent implements Serializable, PropertyCh
         component.putClientProperty(VISUAL_COMPONENT_KEY, this);
         init(component);
         zbc.getSwingWrapper().add(component);
-
+        component.revalidate();
         reshape();
     }
 
@@ -209,11 +210,28 @@ public class ZSwing extends ZVisualComponent implements Serializable, PropertyCh
      */
     public void render(ZRenderContext renderContext) {
         Graphics2D g2 = renderContext.getGraphics2D();
+
+        if (defaultStroke == null) {
+            defaultStroke = new BasicStroke();
+        }
         g2.setStroke(defaultStroke);
+
+        if (defaultFont == null) {
+            defaultFont = new Font("Serif",Font.PLAIN,12);
+        }
+
         g2.setFont(defaultFont);
 
-        if ((renderContext.getCompositeMagnification() < renderCutoff &&
-            renderContext.getDrawingSurface().isInteracting()) ||
+        if (component.getParent() == null && 
+	    renderContext.getDrawingSurface() != null) {
+	    ZCanvas canvas = (ZCanvas) renderContext.getDrawingSurface().getComponent();
+	    canvas.getSwingWrapper().add(component);
+	    component.revalidate();
+        }
+
+	if ((renderContext.getCompositeMagnification() < renderCutoff &&
+	     (renderContext.getDrawingSurface() != null) && 
+	     renderContext.getDrawingSurface().isInteracting()) ||
             (minFontSize*renderContext.getCompositeMagnification() < 0.5)) {
             paintAsGreek(g2);
         }
@@ -340,5 +358,10 @@ public class ZSwing extends ZVisualComponent implements Serializable, PropertyCh
             ((Component)evt.getSource()).getFont() != null) {
             minFontSize = Math.min(minFontSize,((Component)evt.getSource()).getFont().getSize());
         }
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        init(component);
     }
 }

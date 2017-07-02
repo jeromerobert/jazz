@@ -1,5 +1,5 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest.utiltest;
@@ -55,15 +55,15 @@ public class ZListImplTest extends TestCase {
         ZList a = new ZListImpl.ZObjectListImpl(5);
         String h = "Hello";
         a.add(h);
-        assert(a.contains(h));
-        assert(a.size() == 1);
+        assertTrue(a.contains(h));
+        assertTrue(a.size() == 1);
     }
 
     public void testPop() {
         ZList a = new ZListImpl.ZObjectListImpl(1);
         String h = "Hello";
         a.add(h);
-        assert(a.contains(h));
+        assertTrue(a.contains(h));
         a.pop();
     }
 
@@ -95,8 +95,8 @@ public class ZListImplTest extends TestCase {
         ZList a = new ZListImpl.ZNodeListImpl(5);
 
         // size initialized?
-        assert(a.getElementData().length == 5);
-        assert(a.size() == 0);
+        assertTrue(a.getElementData().length == 5);
+        assertTrue(a.size() == 0);
 
         // Add with no exceptions?
         a.add(new ZNode());
@@ -108,7 +108,7 @@ public class ZListImplTest extends TestCase {
         } catch (Exception e) {
             exception = true;
         }
-        assert(exception);
+        assertTrue(exception);
     }
 
     public void testRemoveObject() {
@@ -118,8 +118,8 @@ public class ZListImplTest extends TestCase {
         a.add(h);
 
         a.remove(h);
-        assert(!a.contains(h));
-        assert(a.size() == 0);
+        assertTrue(!a.contains(h));
+        assertTrue(a.size() == 0);
     }
 
     public void testReplaceWith() {
@@ -134,7 +134,7 @@ public class ZListImplTest extends TestCase {
         list.add(a2);
         list.add(a3);
 
-        assert(list.replaceWith(a2, a4));
+        assertTrue(list.replaceWith(a2, a4));
         assertEquals(list.get(1), a4);
     }
 
@@ -229,8 +229,8 @@ public class ZListImplTest extends TestCase {
         for (int i = 0; i < 5; i++) {
             a.add(new Integer(i));
         }
-        assert(a.size() == 5);
+        assertTrue(a.size() == 5);
         a.trimToSize();
-        assert(a.size() == a.getElementData().length);
+        assertTrue(a.size() == a.getElementData().length);
     }
 }

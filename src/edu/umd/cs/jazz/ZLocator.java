@@ -39,6 +39,13 @@ public class ZLocator {
     }
 
     /**
+     * Return the normal of the location.
+     */
+    public double getNormal() {
+        return normal;
+    }
+
+    /**
      * Return the scene graph object that the locator is locating points on.
      */
     public ZSceneGraphObject getSceneGraphObject() {

@@ -60,9 +60,21 @@ public class ZRenderContext implements Serializable {
     private transient Graphics2D g2;
 
     /**
+     * The rendering quality that was requested for this render context
+     */
+    private int qualityRequested;
+
+    /**
      * greekText specifies that text should be rendered as "greek" rather than actual characters
      */
     private boolean    greekText = false;
+
+    /**
+     * Accurate spacing specifies whether jazz should turn on the fractional
+     * metrics bit in text rendering.  Note that this does not work well
+     * with editing in Swing components on the jazz surface
+     */
+    private boolean accurateSpacing = true;
 
     //****************************************************************************
     //
@@ -101,6 +113,8 @@ public class ZRenderContext implements Serializable {
         this.visibleBounds.add(0, visibleBounds);
         g2 = aG2;
         surface = aSurface;
+	this.qualityRequested = qualityRequested;
+	this.accurateSpacing = surface.getUseFractionalMetrics();
         setRenderingHints(g2, qualityRequested);
     }
 
@@ -151,24 +165,21 @@ public class ZRenderContext implements Serializable {
     /**
      * Specify if strings should be rendered one character at a time with
      * slower, but more accurate spacing.
-     * @param <code>b</code> True turns on accurate spacing, false turns it off.
-     *
-     * @deprecated As of Jazz version 1.2,
-     * As of Java 1.3 RenderingHints.KEY_FRACTIONALMETRICS properly spaces text on a floating point scale.
-     */
+     * @param <code>b</code> True turns on accurate spacing, false turns it off.     */
     public void setAccurateSpacing(boolean b) {
+	if (accurateSpacing != b) {
+	    this.accurateSpacing = b;
+	    setRenderingHints(getGraphics2D(),qualityRequested);
+	}
     }
 
     /**
      * Determine if strings should be rendered with accurate (but slower)
      * character spacing.
      * @return true if accurate spacing is on
-     *
-     * @deprecated As of Jazz version 1.2,
-     * As of Java 1.3 RenderingHints.KEY_FRACTIONALMETRICS properly spaces text on a floating point scale.
      */
     public boolean getAccurateSpacing() {
-        return false;
+        return accurateSpacing;
     }
 
     /**
@@ -203,8 +214,15 @@ public class ZRenderContext implements Serializable {
                                             RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
             g2.setRenderingHint(RenderingHints.KEY_RENDERING,
                                             RenderingHints.VALUE_RENDER_SPEED);
-            g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
-                                            RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+
+	    if (accurateSpacing) {
+		g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
+				    RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+	    }
+	    else {
+		g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
+				    RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
+	    }
             setGreekText(true);
             break;
 
@@ -215,8 +233,15 @@ public class ZRenderContext implements Serializable {
                                             RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
             g2.setRenderingHint(RenderingHints.KEY_RENDERING,
                                             RenderingHints.VALUE_RENDER_SPEED);
-            g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
-                                            RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+
+	    if (accurateSpacing) {
+		g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
+				    RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+	    }
+	    else {
+		g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
+				    RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
+	    }
             setGreekText(false);
             break;
 
@@ -227,8 +252,11 @@ public class ZRenderContext implements Serializable {
                                             RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             g2.setRenderingHint(RenderingHints.KEY_RENDERING,
                                             RenderingHints.VALUE_RENDER_QUALITY);
-            g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
-                                            RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+
+	    if (accurateSpacing) {
+		g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
+				    RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+	    }	    
             setGreekText(false);
             break;
         }

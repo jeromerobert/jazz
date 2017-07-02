@@ -6,13 +6,11 @@ package edu.umd.cs.jazz.component;
 
 import java.awt.*;
 import java.awt.image.*;
-import java.awt.event.*;
 import java.awt.geom.*;
 import java.io.*;
 import java.net.*;
 import javax.swing.*;
 import com.sun.image.codec.jpeg.*;
-import com.sun.image.codec.jpeg.JPEGCodec.*;
 
 import edu.umd.cs.jazz.*;
 import edu.umd.cs.jazz.io.*;
@@ -62,9 +60,6 @@ public class ZImage extends ZVisualComponent implements Serializable {
     protected URL url = null;
 
     private static JComponent sComponent = null;
-    private static MediaTracker sTracker = null;
-    private static AffineTransform identityTransform = new AffineTransform();
-    private static int sID = 0;
 
     /**
      * Translation offset X.
@@ -93,17 +88,15 @@ public class ZImage extends ZVisualComponent implements Serializable {
     public ZImage() {
         observer = new ZImageObserver();
 
-	if (sComponent == null) {
-	    JWindow window = new JWindow();
-	    window.setBounds(0, 0, 1, 1);
-	    sComponent = new JPanel();
-	    sComponent.setBounds(0, 0, 1, 1);
-	    window.getContentPane().add(sComponent);
-	    window.setVisible(true);
-	    window.setVisible(false);
-
-	    sTracker = new MediaTracker(sComponent);
-	}
+        if (sComponent == null) {
+            JWindow window = new JWindow();
+            window.setBounds(0, 0, 1, 1);
+            sComponent = new JPanel();
+            sComponent.setBounds(0, 0, 1, 1);
+            window.getContentPane().add(sComponent);
+            window.setVisible(true);
+            window.setVisible(false);
+        }
     }
 
     /**
@@ -198,6 +191,9 @@ public class ZImage extends ZVisualComponent implements Serializable {
             if (fileName.charAt(0) != basePath.charAt(0)) {
                                 // Different PC disks
                 return fileName;
+            } else {
+                basePath = basePath.substring(2);
+                fileName = fileName.substring(2);
             }
         }
         boolean ignoreCase = File.separator.equals("/") ? false : true;
@@ -307,7 +303,7 @@ public class ZImage extends ZVisualComponent implements Serializable {
             setDimension(0, 0);
         } else {
             setDimension(getWidth(), getHeight());
-	    createOptimizedImage();
+            createOptimizedImage();
         }
 
         return isLoaded();
@@ -322,7 +318,7 @@ public class ZImage extends ZVisualComponent implements Serializable {
         Image im = Toolkit.getDefaultToolkit().createImage(bytes);
         loadImage(im);
         boolean success = setImage(im);
-	im.flush();
+        im.flush();
         return success;
     }
 
@@ -336,7 +332,7 @@ public class ZImage extends ZVisualComponent implements Serializable {
         Image im = Toolkit.getDefaultToolkit().createImage(fileName);
         loadImage(im);
         boolean success = setImage(im);
-	im.flush();
+        im.flush();
         return success;
     }
 
@@ -350,45 +346,55 @@ public class ZImage extends ZVisualComponent implements Serializable {
         Image im = Toolkit.getDefaultToolkit().createImage(url);
         loadImage(im);
         boolean success = setImage(im);
-	im.flush();
+        im.flush();
         return success;
     }
 
     /**
      * Internal method to convert image to a type that Java can render fast.
      * For JDK 1.3, Java rendered BufferedImages fastest, so this creates one
-     * of those.  For current the JDK1.4beta (as of 8/3/2001), createImage(w, h)
-     * is optimized.  However, for now, only opaque images are optimized, so
-     * this creates an opaque image.  If you need to use a bitmask or translucent
-     * image, you need to override this method and create the appropriate image
-     * with GraphicsConfiguration.createCompatibleImage(w, h, type).
+     * of those.
      */
     protected void createOptimizedImage() {
-	Image i;
+        Image i;
 
-	String version = System.getProperties().getProperty("java.version");
-	if (version.substring(0, 3).equals("1.3")) {
-	    i = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-	} else {
-	    i = sComponent.createImage(width, height);
-	    // i = ((Graphics2D)sComponent.getGraphics()).getDeviceConfiguration().createCompatibleImage(width, height, Transparency.BITMASK);
-	}
-	i.getGraphics().drawImage(image, 0, 0, sComponent);
-	image = i;
+        try {
+            String version = System.getProperties().getProperty("java.version");
+            if (version.substring(0, 3).equals("1.3")) {
+                i = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                i.getGraphics().drawImage(image, 0, 0, sComponent);
+                image = i;
+            }
+        } catch (java.security.AccessControlException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
      * Utility method to wait until the specified image is loaded, and then return.
      */
-    protected void loadImage(Image im) {
-        MediaTracker tracker = new MediaTracker(staticFrame);
-        tracker.addImage(im, 0);
-        try {
-            tracker.waitForID(0);
-        }
-        catch (InterruptedException exception) {
-            System.out.println("Couldn't load image: " + fileName);
-        }
+    protected static Image loadImage(Image im) {
+    	Image result = null;
+    	
+		ImageIcon imageLoader = new ImageIcon(im);
+		switch (imageLoader.getImageLoadStatus()) {
+			case MediaTracker.LOADING:
+				System.err.println("media tracker still loading image after requested to wait until finished");
+				
+			case MediaTracker.COMPLETE:
+				result = imageLoader.getImage();
+				break;
+							
+			case MediaTracker.ABORTED:
+				System.err.println("media tracker aborted image load");
+				break;
+				
+			case MediaTracker.ERRORED:
+				System.err.println("media tracker errored image load");
+				break;
+		}
+		
+		return result;		
     }
 
     /**
@@ -483,23 +489,19 @@ public class ZImage extends ZVisualComponent implements Serializable {
             boolean translated = false;
 
             // Is the image being rendered transformed?
-            AffineTransform origat = g2.getTransform();
+            AffineTransform origat = null;
 
             if ((translateX != 0.0) || (translateY != 0.0)) {
+                origat = g2.getTransform();
                 g2.translate(translateX, translateY);
                 translated = true;
             }
 
-            AffineTransform at = g2.getTransform();
-	    g2.setTransform(identityTransform);
-            g2.drawImage(image, at, observer);
+            g2.drawImage(image, 0, 0, staticFrame);
 
-	    /*
             if (translated) {
                 g2.setTransform(origat); // restore transform
             }
-	    */
-	    g2.setTransform(origat); // restore transform
         }
     }
 
@@ -615,7 +617,10 @@ public class ZImage extends ZVisualComponent implements Serializable {
                                 // Image filenames should be relative to the directory
                                 // the .jazz file is being saved in. That should be
                                 // the current value of the user.dir property.
-            String cwd = System.getProperty("user.dir") + File.separator;
+            String cwd = System.getProperty("user.dir");
+            if (cwd.charAt(cwd.length() - 1) != File.separatorChar) {
+                cwd = cwd + File.separator;
+            }
             String relFileName = getRelativePath(fileName, cwd);
             out.writeState("String", "fileName", relFileName);
         } else if (url != null) {
@@ -693,8 +698,12 @@ public class ZImage extends ZVisualComponent implements Serializable {
                                 // is a ':', then it is a PC disk.
               if (fn.charAt(1) != ':') {
                                 // Not absolute, so convert relative pathname
-                  String cwd = System.getProperty("user.dir");
-                  fileName = getAbsolutePath(cwd+File.separator+fn);
+                    String cwd = System.getProperty("user.dir");
+                    if (cwd.charAt(cwd.length() - 1) != File.separatorChar) {
+                        cwd = cwd + File.separator;
+                    }
+
+                    fileName = getAbsolutePath(cwd+fn);
               } else {
                                 // Absolute, so don't convert
                   fileName = fn;
@@ -712,7 +721,7 @@ public class ZImage extends ZVisualComponent implements Serializable {
      * Wait while image is loaded.
      * @param image The image.
     */
-    public static boolean waitForImage(Image image) {
+/*  public static boolean waitForImage(Image image) {
         int id;
         synchronized(sComponent) { id = sID++; }
         sTracker.addImage(image, id);
@@ -720,14 +729,14 @@ public class ZImage extends ZVisualComponent implements Serializable {
         catch (InterruptedException ie) { return false; }
         if (sTracker.isErrorID(id)) return false;
         return true;
-    }
+    }*/
 
     /**
      * Creates a BufferedImage from an Image.
      * @param image The image.
     */
     public static BufferedImage makeBufferedImage(Image image) {
-        if (waitForImage(image) == false) return null;
+        if (loadImage(image) == null) return null;
 
         BufferedImage bufferedImage = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_RGB);
         Graphics2D g2 = (Graphics2D)bufferedImage.getGraphics();

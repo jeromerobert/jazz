@@ -1,5 +1,5 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest.eventtest;
@@ -43,28 +43,28 @@ public class ZSelectionManagerTest extends TestCase {
         ZVisualLeaf leaf = new ZVisualLeaf(new ZRectangle(0, 0, 10, 10));
         canvasSimulator.getLayer().addChild(leaf);
 
-        assert(leaf.editor().getTransformGroup().getTranslateX() == 0);
-        assert(leaf.editor().getTransformGroup().getTranslateY() == 0);
+        assertTrue(leaf.editor().getTransformGroup().getTranslateX() == 0);
+        assertTrue(leaf.editor().getTransformGroup().getTranslateY() == 0);
 
-        assert(!ZSelectionManager.isSelected(leaf));
+        assertTrue(!ZSelectionManager.isSelected(leaf));
         canvasSimulator.simulateEvent(MouseEvent.MOUSE_PRESSED, 5, 5, MouseEvent.BUTTON1_MASK);
-        assert(ZSelectionManager.isSelected(leaf));
+        assertTrue(ZSelectionManager.isSelected(leaf));
 
         canvasSimulator.simulateEvent(MouseEvent.MOUSE_DRAGGED, 10, 11, MouseEvent.BUTTON1_MASK);
 
-        assert(leaf.editor().getTransformGroup().getTranslateX() == 5);
-        assert(leaf.editor().getTransformGroup().getTranslateY() == 6);
+        assertTrue(leaf.editor().getTransformGroup().getTranslateX() == 5);
+        assertTrue(leaf.editor().getTransformGroup().getTranslateY() == 6);
     }
 
     public void testSelect() {
         ZVisualLeaf leaf = new ZVisualLeaf(new ZRectangle(0, 0, 10, 10));
         canvasSimulator.getLayer().addChild(leaf);
 
-        assert(!ZSelectionManager.isSelected(leaf));
+        assertTrue(!ZSelectionManager.isSelected(leaf));
         canvasSimulator.simulateEvent(MouseEvent.MOUSE_PRESSED, 5, 5, MouseEvent.BUTTON1_MASK);
-        assert(ZSelectionManager.isSelected(leaf));
+        assertTrue(ZSelectionManager.isSelected(leaf));
 
         canvasSimulator.simulateEvent(MouseEvent.MOUSE_PRESSED, 20, 20, MouseEvent.BUTTON1_MASK);
-        assert(!ZSelectionManager.isSelected(leaf));
+        assertTrue(!ZSelectionManager.isSelected(leaf));
     }
 }

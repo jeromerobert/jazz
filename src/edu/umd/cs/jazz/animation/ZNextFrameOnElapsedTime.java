@@ -35,9 +35,9 @@ public class ZNextFrameOnElapsedTime extends ZNextFrameCondition {
         if (result == 0) {
             ZNextFrameOnElapsedTime condition = (ZNextFrameOnElapsedTime) o;
 
-            if (fTriggerTime > condition.fTriggerTime) {
+            if (fTriggerTime < condition.fTriggerTime) {
                 result = 1;
-            } else if (fTriggerTime < condition.fTriggerTime) {
+            } else if (fTriggerTime > condition.fTriggerTime) {
                 result = -1;
             }
         }

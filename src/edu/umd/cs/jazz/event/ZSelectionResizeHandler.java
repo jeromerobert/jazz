@@ -1023,11 +1023,13 @@ public class ZSelectionResizeHandler implements ZEventHandler, ZGroupListener, S
          * @param <code>e</code> The event.
          */
         public void mouseReleased(ZMouseEvent e) {
-            dragging = false;
             if (((e.getModifiers() & allButton1ButShiftMask) == MouseEvent.BUTTON1_MASK)) {
-                mouseMoved(e);
-                fireResizeEvent(null);
+		if (dragging) {
+		    mouseMoved(e);
+		    fireResizeEvent(null);
+		}
             }
+            dragging = false;
         }
 
         /**
@@ -1239,7 +1241,6 @@ public class ZSelectionResizeHandler implements ZEventHandler, ZGroupListener, S
         if (handles != null) {
             editor.getNode().removeMouseListener(handles);
             editor.getNode().removeMouseMotionListener(handles);
-            editor.getSelectionGroup().removeAuxiliaryVisualComponent(handles);
         }
 
         activeHandles.remove(node);

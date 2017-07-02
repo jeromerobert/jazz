@@ -37,6 +37,15 @@ public class ZHandleGroup extends ZGroup {
     private transient ZHandleEventHandler fHandleInteractor;
 
     /**
+     * Set the default event handler used by ZHandleGroups to dispatch events
+     * to their ZHandles. This can be set on an individual ZHandleGroup basis
+     * by using ZHandleGroup.setEventHandler().
+     */
+    public static void setDefaultEventHandler(ZHandleEventHandler aEventHandler) {
+        DEFAULT_EVENT_HANDLER = aEventHandler;
+    }
+
+    /**
      * Constructs an empty ZHandleGroup.
      */
     public ZHandleGroup() {

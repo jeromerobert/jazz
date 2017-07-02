@@ -1,17 +1,20 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest;
 
-import edu.umd.cs.jazz.component.*;
-import edu.umd.cs.jazz.*;
-import junit.framework.*;
-import edu.umd.cs.jazz.event.*;
 import java.util.*;
-import edu.umd.cs.jazztest.iotest.*;
+import java.awt.geom.*;
 
-import java.awt.geom.*;public class ZCameraTest extends TestCase {
+import junit.framework.*;
+
+import edu.umd.cs.jazz.*;
+import edu.umd.cs.jazz.component.*;
+import edu.umd.cs.jazztest.iotest.*;
+import edu.umd.cs.jazz.event.*;
+
+public class ZCameraTest extends TestCase {
     protected boolean cameraEvent = false;
     protected ZCamera camera = null;
 
@@ -35,15 +38,15 @@ import java.awt.geom.*;public class ZCameraTest extends TestCase {
 
         ZCamera c = new ZCamera();
 
-        assert(!contains(layer1, c.getLayersReference()));
+        assertTrue(!contains(layer1, c.getLayersReference()));
         c.addLayer(layer1);
-        assert(contains(layer1, c.getLayersReference()));
+        assertTrue(contains(layer1, c.getLayersReference()));
         c.addLayer(layer2);
         c.addLayer(layer3);
-        assert(contains(layer2, c.getLayersReference()));
-        assert(contains(layer3, c.getLayers()));
+        assertTrue(contains(layer2, c.getLayersReference()));
+        assertTrue(contains(layer3, c.getLayers()));
         c.removeLayer(layer2);
-        assert(!contains(layer2, c.getLayersReference()));
+        assertTrue(!contains(layer2, c.getLayersReference()));
     }
 
     public void testCameraEvent() {
@@ -61,7 +64,7 @@ import java.awt.geom.*;public class ZCameraTest extends TestCase {
 
         camera.translate(1, 1);
 
-        assert(cameraEvent);
+        assertTrue(cameraEvent);
     }
 
     public void testTrimToSize() {
@@ -78,7 +81,7 @@ import java.awt.geom.*;public class ZCameraTest extends TestCase {
 
         c.trimToSize();
 
-        assert(c.getLayersReference().length == 3);
+        assertTrue(c.getLayersReference().length == 3);
     }
 
     public void testDuplicate() {
@@ -90,7 +93,7 @@ import java.awt.geom.*;public class ZCameraTest extends TestCase {
             ZCamera result = (ZCamera) FileSavingSimulator.doSerialize(camera);
             doCompare(result, camera);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
@@ -99,7 +102,7 @@ import java.awt.geom.*;public class ZCameraTest extends TestCase {
             ZCamera result = (ZCamera) FileSavingSimulator.doZSerialize(camera);
             doCompare(result, camera);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
@@ -107,7 +110,7 @@ import java.awt.geom.*;public class ZCameraTest extends TestCase {
         assertEquals(a.getBounds(), b.getBounds());
         assertEquals(a.getFillColor(), b.getFillColor());
         assertEquals(a.getViewTransform(), b.getViewTransform());
-        assert(a.getMagnification() == b.getMagnification());
+        assertTrue(a.getMagnification() == b.getMagnification());
     }
 
     public void setUp() {

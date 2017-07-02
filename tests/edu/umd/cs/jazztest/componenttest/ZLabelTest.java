@@ -1,5 +1,5 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest.componenttest;
@@ -23,6 +23,7 @@ public class ZLabelTest extends TestCase {
 
     public void setUp() {
         label = new ZLabel("Hello World");
+        label.getBoundsReference();
     }
 
     public void testDuplicate() {
@@ -35,25 +36,25 @@ public class ZLabelTest extends TestCase {
             ZLabel result = (ZLabel) FileSavingSimulator.doSerialize(label);
             doCompare(result, label);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
     public void testTranslate() {
-        assert(label.getTranslateX() == 0);
-        assert(label.getTranslateY() == 0);
+        assertTrue(label.getTranslateX() == 0);
+        assertTrue(label.getTranslateY() == 0);
 
         label.setTranslateX(1);
-        assert(label.getTranslateX() == 1);
-        assert(label.getTranslateY() == 0);
+        assertTrue(label.getTranslateX() == 1);
+        assertTrue(label.getTranslateY() == 0);
 
         label.setTranslateY(1);
-        assert(label.getTranslateX() == 1);
-        assert(label.getTranslateY() == 1);
+        assertTrue(label.getTranslateX() == 1);
+        assertTrue(label.getTranslateY() == 1);
 
         label.setTranslation(new java.awt.geom.Point2D.Double(2, 2));
-        assert(label.getTranslateX() == 2);
-        assert(label.getTranslateY() == 2);
+        assertTrue(label.getTranslateX() == 2);
+        assertTrue(label.getTranslateY() == 2);
     }
     protected void doCompare(ZLabel a, ZLabel b) {
         assertEquals(a.getText(), b.getText());
@@ -67,7 +68,7 @@ public class ZLabelTest extends TestCase {
             ZLabel result = (ZLabel) FileSavingSimulator.doZSerialize(label);
             doCompare(result, label);
         } catch (Exception e) {
-            assert(e.toString(), false);
+            assertTrue(e.toString(), false);
         }
     }
 }

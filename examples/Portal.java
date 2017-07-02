@@ -24,7 +24,7 @@ class Portal extends ZLayerGroup {
     ZCamera camera;
 
     public Portal(ZCanvas canvas, int x, int y, int w, int h) {
-        camera = new ZCamera(canvas.getLayer(), canvas.getDrawingSurface());
+        camera = new ZCamera(canvas.getLayer(), null /*canvas.getDrawingSurface()*/);
 
                                 // Fill in the details of the camera - its bounds, color, border
         camera.setBounds(x, y, w, h);

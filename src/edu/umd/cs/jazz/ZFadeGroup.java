@@ -398,20 +398,17 @@ public class ZFadeGroup extends ZGroup implements ZSerializable, Serializable {
         double maxMagFadeStart;
         double minMagFadeStart;
 
-                                // Assume that there is NO overlap between min and max mag fading...
-                                // beware the assignment inside the first clause of both if conditions
+                                // Beware the assignment inside the first clause of both if conditions
         if ((maxMag >= 0) && (metric > (maxMagFadeStart = maxMag * (1.0 - fadeRange)))) {
-
             newAlpha *= (maxMag - metric)  / (maxMag - maxMagFadeStart);
 
-        } else if ((metric < (minMagFadeStart = minMag * (1.0 + fadeRange)))) {
-
+        } 
+	if ((metric < (minMagFadeStart = minMag * (1.0 + fadeRange)))) {
             newAlpha *= (metric - minMag)  / (minMagFadeStart - minMag);
         }
 
         if ((currentComposite != null) &&
             (currentComposite instanceof AlphaComposite)) {
-
             newAlpha *= ((AlphaComposite)currentComposite).getAlpha();
         }
 

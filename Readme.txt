@@ -1,10 +1,10 @@
-This is the Jazz README file for Jazz Version 1.2
+This is the Jazz README file for Jazz
 
 INTRODUCTION
 	
-Welcome to Jazz! We have just released Jazz version 1.2, a revolutionary 
-way to create robust, full-featured graphical applications in Java, with 
-striking features such as zooming and multiple representation. Jazz is an 
+Welcome to Jazz! Jazz is a revolutionary  way to create robust, 
+full-featured graphical applications in Java, with  striking 
+features such as zooming and multiple representation. Jazz is an 
 extensive toolkit based on the Java2D API.
 
 REQUIRMENTS
@@ -40,7 +40,7 @@ INSTALLATION NOTES
 
 The Java 2 SDK is a development environment for building applications, 
 applets, and components that can be deployed on implementations of the 
-Java 2 Platform. 
+Java 2 Platform.
 
 * Sun's JDK 1.2 on Solaris often gives many warnings about fonts not being
   available when Jazz applications start up.  This appears to be due to

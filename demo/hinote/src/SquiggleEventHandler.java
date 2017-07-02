@@ -24,6 +24,7 @@ public class SquiggleEventHandler implements ZEventHandler, ZMouseListener, ZMou
 
     private HiNoteCore hinote;
     private ZPolyline polyline;
+    private ZVisualLeaf leaf;
     private Point2D pt;
                                                     // Mask out mouse and mouse/key chords
     private int            all_button_mask   = (MouseEvent.BUTTON1_MASK |
@@ -79,11 +80,13 @@ public class SquiggleEventHandler implements ZEventHandler, ZMouseListener, ZMou
             path.screenToGlobal(pt);
 
             polyline = new ZPolyline(pt);
-            ZVisualLeaf leaf = new ZVisualLeaf(polyline);
+            leaf = new ZVisualLeaf(polyline);
 
-            polyline.setPenWidth(hinote.penWidth / camera.getMagnification());
+            //polyline.setPenWidth(hinote.penWidth / camera.getMagnification());
+            polyline.setPenWidth(hinote.penWidth);
             polyline.setPenPaint(hinote.penColor);
             layer.addChild(leaf);
+            leaf.editor().getTransformGroup().scale(1/camera.getMagnification(), pt.getX(), pt.getY());
         }
     }
 
@@ -92,7 +95,7 @@ public class SquiggleEventHandler implements ZEventHandler, ZMouseListener, ZMou
             ZSceneGraphPath path = e.getPath();
             pt.setLocation(e.getX(), e.getY());
             path.screenToGlobal(pt);
-
+            leaf.globalToLocal(pt);
             polyline.add(pt);
         }
     }
@@ -102,6 +105,7 @@ public class SquiggleEventHandler implements ZEventHandler, ZMouseListener, ZMou
             ZSceneGraphPath path = e.getPath();
             path.getTopCamera().getDrawingSurface().setInteracting(false);
             polyline = null;
+            leaf = null;
         }
     }
 

@@ -245,7 +245,16 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
         removeDestinationNodeListeners();
 
         destNode = null;
-        destBounds = bounds;
+
+        if (bounds != null) {
+            if (destBounds == null) {
+                destBounds = new ZBounds();
+            }
+            destBounds.setRect(bounds);
+        } else {
+            destBounds = bounds;
+        }
+
         destPt = null;
         updateLinkComponent(camera);
 

@@ -5,6 +5,7 @@
 package edu.umd.cs.jazz.util;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.*;
 
 import edu.umd.cs.jazz.*;
@@ -30,12 +31,19 @@ public class ZFrame extends JFrame {
     public ZFrame() {
         super();
 
-        setBounds(100, 100, 400, 400);
+        setBounds(getDefaultFrameBounds());
         setBackground(null);
         addListenersToWindow();
-        
+
         fCanvas = new ZCanvas();
-        getContentPane().add(fCanvas);
+
+        if (getShouldHaveScrollPane()) {
+            ZScrollPane scrollPane = new ZScrollPane(fCanvas);
+            getContentPane().add(scrollPane);
+
+        } else {
+            getContentPane().add(fCanvas);
+        }
 
         validate();
         setVisible(true);
@@ -46,7 +54,7 @@ public class ZFrame extends JFrame {
         // Jazz in the initialize() method.
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                initialize();
+                ZFrame.this.initialize();
             }
         });
     }
@@ -61,7 +69,7 @@ public class ZFrame extends JFrame {
                 System.exit(0);
             }
         });
-        
+
         addKeyListener(new KeyAdapter() {
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
@@ -75,7 +83,7 @@ public class ZFrame extends JFrame {
      * Initialize your application from within the event dispatch thread.
      */
     public void initialize() {
-	// Uncoment to display "Hello World".
+    // Uncoment to display "Hello World".
         //ZText text = new ZText("Hello World");
         //ZVisualLeaf textLeaf = new ZVisualLeaf(text);
         //fCanvas.getLayer().addChild(textLeaf);
@@ -85,7 +93,7 @@ public class ZFrame extends JFrame {
      * Enter full screen mode, this requires JDK 1.4 to compile and run. To stay compatible with
      * JDK 1.3 this code is commented out by default, but if JDK 1.4 is being used the code can
      * be uncommented.
-     */ 
+     */
     public void enterFullScreenMode() {
         //GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
         //if (gd.isFullScreenSupported()) {
@@ -99,7 +107,7 @@ public class ZFrame extends JFrame {
      * Exit full screen mode, this requires JDK 1.4 to compile and run. To stay compatible with
      * JDK 1.3 this code is commented out by default, but if JDK 1.4 is being used the code can
      * be uncommented.
-     */ 
+     */
     public void exitFullScreenMode() {
         //GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
         //if (gd.isFullScreenSupported()) {
@@ -108,7 +116,29 @@ public class ZFrame extends JFrame {
         //   setResizable(true);
         //}
     }
-    
+
+    /**
+     * Return the canvas used by this frame.
+     */
+	public ZCanvas getCanvas() {
+		return fCanvas;
+	}
+
+    /**
+     * Return the default size for the Frame.
+     */
+    protected Rectangle getDefaultFrameBounds() {
+        return new Rectangle(100, 100, 400, 400);
+    }
+
+    /**
+     * Return true if the ZCanvas should be wrapped in a ZScrollPane.
+     * The default return value is false.
+     */
+    protected boolean getShouldHaveScrollPane() {
+        return false;
+    }
+
     public static void main(String[] argv) {
         new ZFrame();
     }

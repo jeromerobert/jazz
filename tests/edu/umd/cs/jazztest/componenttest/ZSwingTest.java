@@ -1,5 +1,5 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest.componenttest;
@@ -24,7 +24,7 @@ public class ZSwingTest extends TestCase {
     }
 
     public void setUp() {
-        swing = new ZSwing(new edu.umd.cs.jazz.util.ZCanvas(), new javax.swing.JTextArea());
+        swing = new ZSwing(new edu.umd.cs.jazz.util.ZCanvas(), new javax.swing.JButton());
     }
 
     public void testDuplicate() {
@@ -37,13 +37,13 @@ public class ZSwingTest extends TestCase {
             ZSwing result = (ZSwing) FileSavingSimulator.doSerialize(swing);
             doCompare(result, swing);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
     protected void doCompare(ZSwing a, ZSwing b) {
-        assert(a != null);
-        assert(b != null);
-        assert(a != b);
+        assertTrue(a != null);
+        assertTrue(b != null);
+        assertTrue(a != b);
     }
 }

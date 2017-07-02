@@ -117,11 +117,14 @@ public class PolygonEventHandler implements ZEventHandler, ZMouseListener, ZMous
                                 // a polyline is drawn as the user clicks points building
                                 // a polygon. When the polygon is finished, the polyline
                                 // is removed and a complete polygon created.
-                polyline = new ZPolyline(startPoint);
+                polyline = new ZPolyline();
                 polylineLeaf = new ZVisualLeaf(polyline);
-                polyline.setPenWidth(hinote.penWidth / camera.getMagnification());
+                polyline.setPenWidth(hinote.penWidth);
                 polyline.setPenPaint(hinote.penColor);
                 layer.addChild(polylineLeaf);
+                polylineLeaf.editor().getTransformGroup().scale(1/camera.getMagnification(), pt.getX(), pt.getY());
+                polylineLeaf.globalToLocal(startPoint);
+                polyline.moveTo(startPoint.getX(), startPoint.getY());
 
                                 // A line segment follows the mouse around as the
                                 // user decides where the next point of the polygon goes.
@@ -134,10 +137,10 @@ public class PolygonEventHandler implements ZEventHandler, ZMouseListener, ZMous
             } else {            // subsequent clicks, drawing a polygon
                 pt.setLocation(x, y);
                 path.screenToGlobal(pt);
-
+                polylineLeaf.globalToLocal(pt);
                                 // polygon shape is completed when user
                                 // clicks close to the starting point.
-                if (startPoint.distance(pt) < (MINDISTANCE / camera.getMagnification())) {
+                if (startPoint.distance(pt) < MINDISTANCE) {
                     endPolygon(e);
                     return;
                 }
@@ -166,16 +169,20 @@ public class PolygonEventHandler implements ZEventHandler, ZMouseListener, ZMous
         path.getTopCamera().getDrawingSurface().setInteracting(false);
         drawing = false;
 
-        layer.removeChild(segmentLeaf); // remove tmp segment used while drawing
-        layer.removeChild(polylineLeaf); // remove the polyline
+        AffineTransform at = polylineLeaf.editor().getTransformGroup().getTransform();
+        layer.removeChild(segmentLeaf.editor().getTop()); // remove tmp segment used while drawing
+        layer.removeChild(polylineLeaf.editor().getTop()); // remove the polyline
 
                                 // Create a new polygon from points of polyline
         ZPolygon polygon = new ZPolygon(polyline);
         ZVisualLeaf polygonLeaf = new ZVisualLeaf(polygon);
-        polygon.setPenWidth(hinote.penWidth / camera.getMagnification());
+        //polygon.setPenWidth(hinote.penWidth / camera.getMagnification());
+        polygon.setPenWidth(hinote.penWidth);
         polygon.setPenPaint(hinote.penColor);
         polygon.setFillPaint(hinote.fillColor);
+        polylineLeaf.setVisualComponent(polygon);
         layer.addChild(polygonLeaf);
+        polygonLeaf.editor().getTransformGroup().setTransform(at);
         startNewPolygon = true;
     }
 
@@ -191,6 +198,9 @@ public class PolygonEventHandler implements ZEventHandler, ZMouseListener, ZMous
         path.screenToGlobal(pt);
         int n = polyline.getNumberPoints()-1;
         lastClickPoint.setLocation(polyline.getX(n), polyline.getY(n));
+        polylineLeaf.localToGlobal(lastClickPoint);
+        segmentLeaf.globalToLocal(pt);
+        segmentLeaf.globalToLocal(lastClickPoint);
         segment.setCoords(lastClickPoint, pt);
     }
 
@@ -199,7 +209,7 @@ public class PolygonEventHandler implements ZEventHandler, ZMouseListener, ZMous
             ZSceneGraphPath path = e.getPath();
             pt.setLocation(e.getX(), e.getY());
             path.screenToGlobal(pt);
-
+            polylineLeaf.globalToLocal(pt);
             polyline.add(pt);
         }
     }

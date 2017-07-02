@@ -1,15 +1,17 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest;
 
-import edu.umd.cs.jazz.component.*;
-import edu.umd.cs.jazz.*;
-import junit.framework.*;
-import edu.umd.cs.jazz.event.*;
 import java.util.*;
+
+import junit.framework.*;
+
+import edu.umd.cs.jazz.*;
+import edu.umd.cs.jazz.event.*;
 import edu.umd.cs.jazztest.iotest.*;
+import edu.umd.cs.jazz.component.*;
 
 /**
  * Unit test for ZClipGroup.
@@ -21,8 +23,6 @@ public class ZClipGroupTest extends TestCase {
     public ZClipGroupTest(String name) {
         super(name);
     }
-
-
 
     public void testDuplicate() {
         ZClipGroup copy = (ZClipGroup) clip.clone();
@@ -39,7 +39,7 @@ public class ZClipGroupTest extends TestCase {
             ZClipGroup result = (ZClipGroup) FileSavingSimulator.doSerialize(clip);
             doCompare(result, clip);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
@@ -48,13 +48,15 @@ public class ZClipGroupTest extends TestCase {
             ZClipGroup result = (ZClipGroup) FileSavingSimulator.doZSerialize(clip);
             doCompare(result, clip);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
+
     protected void doCompare(ZClipGroup a, ZClipGroup b) {
         ZRectangle arect = (ZRectangle) a.getClip();
         ZRectangle brect = (ZRectangle) b.getClip();
 
-        assert(arect != brect);
-        assert(arect.getShape().equals(brect.getShape()));
-    }}
+        assertTrue(arect != brect);
+        assertTrue(arect.getShape().equals(brect.getShape()));
+    }
+}

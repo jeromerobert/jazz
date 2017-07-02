@@ -57,7 +57,16 @@ public class ZPerformanceLog {
         System.out.println();
 
         for (int i = 0; i < theHeaderRow.size(); i++) {
+            System.out.println(thePerformanceRow.get(i));
+        }
+
+        System.out.println();
+        System.out.println("Labled test results, see above for simple column \n of times for input into spreadsheet:");
+        System.out.println();
+
+        for (int i = 0; i < theHeaderRow.size(); i++) {
             System.out.println(theHeaderRow.get(i) + ", " + thePerformanceRow.get(i));
         }
+
     }
 }

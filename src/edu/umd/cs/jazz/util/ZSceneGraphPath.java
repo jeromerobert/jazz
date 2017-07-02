@@ -218,7 +218,7 @@ public final class ZSceneGraphPath implements Serializable {
      * Sets the transform for this path.
      * @param tm The new transform
      */
-    public void setTransform(AffineTransform tm) { this.transform = tm; }
+    public void setTransform(AffineTransform tm) { transform.setTransform(tm); }
 
     /**
      * Returns the camera transform for this path.  This is formed by
@@ -249,7 +249,7 @@ public final class ZSceneGraphPath implements Serializable {
      * Sets the camera transform of the bottom camera for this path.
      * @param tm The new camera transform
      */
-    public void setCameraTransform(AffineTransform tm) { this.cameraTransform = tm; }
+    public void setCameraTransform(AffineTransform tm) { cameraTransform.setTransform(tm); }
 
     /**
      * Converts the specified point from screen coordinates to

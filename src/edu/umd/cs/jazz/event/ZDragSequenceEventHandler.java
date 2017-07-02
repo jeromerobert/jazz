@@ -253,7 +253,7 @@ public class ZDragSequenceEventHandler extends ZFilteredEventHandler {
     /**
      * Returns the screen location of the previous filtered mouse event.
      *
-     * @return the previouse filtered mouse position in screen coords.
+     * @return the previous filtered mouse position in screen coords.
      */
     public Point2D getPreviousScreenPoint() {
         if (fPreviousScreenPoint == null) {

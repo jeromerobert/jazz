@@ -1,14 +1,16 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest;
 
+import java.util.*;
+
+import junit.framework.*;
+
 import edu.umd.cs.jazz.component.*;
 import edu.umd.cs.jazz.*;
-import junit.framework.*;
 import edu.umd.cs.jazz.event.*;
-import java.util.*;
 import edu.umd.cs.jazztest.iotest.*;
 
 /**
@@ -53,7 +55,11 @@ public class ZNodeTest extends TestCase {
 
         aNode.addVisualComponent(new ZRectangle(0, 0, 1, 1));
 
-        assert(nodeEventFired);
+        // force the event to get fired, doesn't recompute the bounds and fire the event
+        // until the bounds are asked for.
+        aNode.getBoundsReference();
+
+        assertTrue(nodeEventFired);
     }
 
     public void testTrimToSize() {
@@ -75,8 +81,8 @@ public class ZNodeTest extends TestCase {
         doCompare(node, copy);
 
         node.putClientProperty(node, null);
-        assert(node.getClientProperty(node) == null);
-        assert(copy.getClientProperty(copy) != null);
+        assertTrue(node.getClientProperty(node) == null);
+        assertTrue(copy.getClientProperty(copy) != null);
     }
 
     public void setUp() {
@@ -89,7 +95,7 @@ public class ZNodeTest extends TestCase {
             ZNode result = (ZNode) FileSavingSimulator.doSerialize(node);
             doCompare(result, node);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
@@ -98,7 +104,7 @@ public class ZNodeTest extends TestCase {
             ZNode result = (ZNode) FileSavingSimulator.doZSerialize(node);
             doCompare(result, node);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 }

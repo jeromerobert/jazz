@@ -1,5 +1,5 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest.componenttest;
@@ -26,20 +26,20 @@ public class ZImageTest extends TestCase {
         image = new ZImage();
     }
     public void testTranslate() {
-        assert(image.getTranslateX() == 0);
-        assert(image.getTranslateY() == 0);
+        assertTrue(image.getTranslateX() == 0);
+        assertTrue(image.getTranslateY() == 0);
 
         image.setTranslateX(1);
-        assert(image.getTranslateX() == 1);
-        assert(image.getTranslateY() == 0);
+        assertTrue(image.getTranslateX() == 1);
+        assertTrue(image.getTranslateY() == 0);
 
         image.setTranslateY(1);
-        assert(image.getTranslateX() == 1);
-        assert(image.getTranslateY() == 1);
+        assertTrue(image.getTranslateX() == 1);
+        assertTrue(image.getTranslateY() == 1);
 
         image.setTranslation(new java.awt.geom.Point2D.Double(2, 2));
-        assert(image.getTranslateX() == 2);
-        assert(image.getTranslateY() == 2);
+        assertTrue(image.getTranslateX() == 2);
+        assertTrue(image.getTranslateY() == 2);
     }
     protected void doCompare(ZImage a, ZImage b) {
         assertEquals(a.getBounds(), b.getBounds());
@@ -60,7 +60,7 @@ public class ZImageTest extends TestCase {
             ZImage result = (ZImage) FileSavingSimulator.doSerialize(image);
             doCompare(result, image);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
@@ -69,7 +69,7 @@ public class ZImageTest extends TestCase {
             ZImage result = (ZImage) FileSavingSimulator.doZSerialize(image);
             doCompare(result, image);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 }

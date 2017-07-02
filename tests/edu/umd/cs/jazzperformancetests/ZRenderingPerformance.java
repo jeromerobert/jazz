@@ -51,6 +51,7 @@ public class ZRenderingPerformance extends TestCase {
 
     public double renderSequence() {
         ZTimingCanvas.timeForLastPaint = 0;
+        System.gc();
         //  we know that the leaf is located at 0, 0, and is size 100, 100.
         try {
             SwingUtilities.invokeAndWait(new Runnable() {
@@ -251,5 +252,85 @@ public class ZRenderingPerformance extends TestCase {
 
         ZComponentFactory.leafInstance().setVisualComponent(text);
         ZPerformanceLog.instance().logTest("Render text", renderSequence());
+    }
+
+    public void testRenderScenegraph10000By1() {
+        ZComponentFactory.leafInstance().clearVisualComponents();
+        ZNode aNode = ZComponentFactory.build10000By1Scenegraph(false);
+        ZComponentFactory.canvasInstance().getLayer().addChild(aNode);
+
+        ZPerformanceLog.instance().logTest("Rendering 10000*1 SceneGraph rectangles", renderSequence());
+
+        ZComponentFactory.canvasInstance().getLayer().removeChild(aNode);
+    }
+
+    public void testRenderScenegraph10000By1Null() {
+        ZComponentFactory.leafInstance().clearVisualComponents();
+        ZNode aNode = ZComponentFactory.build10000By1Scenegraph(true);
+        ZComponentFactory.canvasInstance().getLayer().addChild(aNode);
+
+        ZPerformanceLog.instance().logTest("Rendering 10000*1 SceneGraph null", renderSequence());
+
+        ZComponentFactory.canvasInstance().getLayer().removeChild(aNode);
+    }
+
+    public void testRenderScenegraph10By1000() {
+        ZComponentFactory.leafInstance().clearVisualComponents();
+        ZNode aNode = ZComponentFactory.build10By1000Scenegraph(false);
+        ZComponentFactory.canvasInstance().getLayer().addChild(aNode);
+
+        ZPerformanceLog.instance().logTest("Rendering 10*1000 SceneGraph rectangles", renderSequence());
+
+        ZComponentFactory.canvasInstance().getLayer().removeChild(aNode);
+    }
+
+    public void testRenderScenegraph10By1000Null() {
+        ZComponentFactory.leafInstance().clearVisualComponents();
+        ZNode aNode = ZComponentFactory.build10By1000Scenegraph(true);
+        ZComponentFactory.canvasInstance().getLayer().addChild(aNode);
+
+        ZPerformanceLog.instance().logTest("Rendering 10*1000 SceneGraph null", renderSequence());
+
+        ZComponentFactory.canvasInstance().getLayer().removeChild(aNode);
+    }
+
+    public void testRenderScenegraph10By10By100() {
+        ZComponentFactory.leafInstance().clearVisualComponents();
+        ZNode aNode = ZComponentFactory.build10By10By100Scenegraph(false);
+        ZComponentFactory.canvasInstance().getLayer().addChild(aNode);
+
+        ZPerformanceLog.instance().logTest("Rendering 10*10*100 SceneGraph rectangles", renderSequence());
+
+        ZComponentFactory.canvasInstance().getLayer().removeChild(aNode);
+    }
+
+    public void testRenderScenegraph10By10By100Null() {
+        ZComponentFactory.leafInstance().clearVisualComponents();
+        ZNode aNode = ZComponentFactory.build10By10By100Scenegraph(true);
+        ZComponentFactory.canvasInstance().getLayer().addChild(aNode);
+
+        ZPerformanceLog.instance().logTest("Rendering 10*10*100 SceneGraph null", renderSequence());
+
+        ZComponentFactory.canvasInstance().getLayer().removeChild(aNode);
+    }
+
+    public void testRenderScenegraph10By10By10By10() {
+        ZComponentFactory.leafInstance().clearVisualComponents();
+        ZNode aNode = ZComponentFactory.build10By10By10By10Scenegraph(false);
+        ZComponentFactory.canvasInstance().getLayer().addChild(aNode);
+
+        ZPerformanceLog.instance().logTest("Rendering 10*10*10*10 SceneGraph rectangles", renderSequence());
+
+        ZComponentFactory.canvasInstance().getLayer().removeChild(aNode);
+    }
+
+    public void testRenderScenegraph10By10By10By10Null() {
+        ZComponentFactory.leafInstance().clearVisualComponents();
+        ZNode aNode = ZComponentFactory.build10By10By10By10Scenegraph(true);
+        ZComponentFactory.canvasInstance().getLayer().addChild(aNode);
+
+        ZPerformanceLog.instance().logTest("Rendering 10*10*10*10 SceneGraph null", renderSequence());
+
+        ZComponentFactory.canvasInstance().getLayer().removeChild(aNode);
     }
 }

@@ -590,7 +590,7 @@ public abstract class ZListImpl extends AbstractList implements ZList, Serializa
         if (elementData == null) {
             s.writeInt(0);
         } else {
-            s.writeInt(elementData.length);
+            s.writeInt(size);
         }
 
         for (int i=0; i<size; i++)

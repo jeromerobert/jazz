@@ -1,5 +1,5 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest.componenttest;
@@ -40,7 +40,7 @@ public class ZQuadCurveTest extends TestCase {
             ZQuadCurve savedShape = (ZQuadCurve) ((ZVisualLeaf)result.getChild(0)).getVisualComponent(0);
             doCompare(savedShape, curve);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
@@ -49,7 +49,7 @@ public class ZQuadCurveTest extends TestCase {
             ZQuadCurve result = (ZQuadCurve) FileSavingSimulator.doZSerialize(curve);
             doCompare(result, curve);
         } catch (Exception e) {
-            assert(e.toString(), false);
+            assertTrue(e.toString(), false);
         }
     }
 
@@ -59,9 +59,9 @@ public class ZQuadCurveTest extends TestCase {
 
         assertEquals(arcA.getStartPoint(), arcB.getStartPoint());
         assertEquals(arcA.getEndPoint(), arcB.getEndPoint());
-        assert(arcA.getArcType() == arcB.getArcType());
-        assert(arcA.getAngleExtent() == arcB.getAngleExtent());
-        assert(arcA.getAngleStart() == arcB.getAngleStart());
+        assertTrue(arcA.getArcType() == arcB.getArcType());
+        assertTrue(arcA.getAngleExtent() == arcB.getAngleExtent());
+        assertTrue(arcA.getAngleStart() == arcB.getAngleStart());
 
         assertEquals(a.getBounds(), b.getBounds());
     }
@@ -70,10 +70,10 @@ public class ZQuadCurveTest extends TestCase {
         QuadCurve2D curveA = a.getQuadCurve();
         QuadCurve2D curveB = a.getQuadCurve();
 
-        assert(curveA.getX1() == curveB.getX1());
-        assert(curveA.getX2() == curveB.getX2());
-        assert(curveA.getY1() == curveB.getY1());
-        assert(curveA.getY2() == curveB.getY2());
+        assertTrue(curveA.getX1() == curveB.getX1());
+        assertTrue(curveA.getX2() == curveB.getX2());
+        assertTrue(curveA.getY1() == curveB.getY1());
+        assertTrue(curveA.getY2() == curveB.getY2());
         assertEquals(curveA.getCtrlPt(), curveB.getCtrlPt());
     }
 }

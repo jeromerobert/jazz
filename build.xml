@@ -97,14 +97,14 @@ These are the meaningful targets for this build file:
     <tstamp/>
     <property name="Name" value="Jazz"/>
     <property name="name" value="jazz"/>
-    <property name="version" value="1.2"/>
-    <property name="year" value="2001"/>
+    <property name="version" value="1.3"/>
+    <property name="year" value="2003"/>
 
     <echo message="----------- ${Name} ${version} [${year}] ------------"/>
 
     <property name="build.compiler" value="modern"/>
-    <property name="debug" value="off"/>
-    <property name="optimize" value="on"/>
+    <property name="debug" value="on"/>
+    <property name="optimize" value="off"/>
     <property name="deprecation" value="on"/>
     <property name="packages" value="edu.*"/>
 
@@ -603,10 +603,18 @@ These are the meaningful targets for this build file:
   <!-- Converts tabs to Visual Age form                                    -->
   <!-- =================================================================== -->
   <target name="tabToVA">
+    <!-- first convert to spaces -->
     <fixcrlf 
-         srcDir="./tabstospaces"
+         srcdir="./tabstospaces"
          tab="remove"
          tablength="8"
+         includes="**/*.java"
+    />
+    <!-- the convert spaces to tabs -->
+    <fixcrlf 
+         srcDir="./tabstospaces"
+         tab="add"
+         tablength="4"
          includes="**/*.java"
     />
   </target>
@@ -619,6 +627,12 @@ These are the meaningful targets for this build file:
          srcdir="./tabstospaces"
          tab="remove"
          tablength="4"
+         includes="**/*.java"
+    />
+    <fixcrlf 
+         srcdir="./tabstospaces"
+         tab="add"
+         tablength="8"
          includes="**/*.java"
     />
   </target>

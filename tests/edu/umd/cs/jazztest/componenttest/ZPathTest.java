@@ -1,5 +1,5 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest.componenttest;
@@ -43,7 +43,7 @@ public class ZPathTest extends TestCase {
             ZPath savedShape = (ZPath) ((ZVisualLeaf)result.getChild(0)).getVisualComponent(0);
             doCompare(savedShape, path);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
@@ -52,7 +52,7 @@ public class ZPathTest extends TestCase {
             ZPath result = (ZPath) FileSavingSimulator.doZSerialize(path);
             doCompare(result, path);
         } catch (Exception e) {
-            assert(e.toString(), false);
+            assertTrue(e.toString(), false);
         }
     }
 
@@ -69,14 +69,14 @@ public class ZPathTest extends TestCase {
         double[] bPoints = new double[6];
         while (!ia.isDone()) {
 
-            assert(ia.currentSegment(aPoints) == ib.currentSegment(bPoints));
+            assertTrue(ia.currentSegment(aPoints) == ib.currentSegment(bPoints));
 
-            assert(aPoints[0] == bPoints[0]);
-            assert(aPoints[1] == bPoints[1]);
-            assert(aPoints[2] == bPoints[2]);
-            assert(aPoints[3] == bPoints[3]);
-            assert(aPoints[4] == bPoints[4]);
-            assert(aPoints[5] == bPoints[5]);
+            assertTrue(aPoints[0] == bPoints[0]);
+            assertTrue(aPoints[1] == bPoints[1]);
+            assertTrue(aPoints[2] == bPoints[2]);
+            assertTrue(aPoints[3] == bPoints[3]);
+            assertTrue(aPoints[4] == bPoints[4]);
+            assertTrue(aPoints[5] == bPoints[5]);
 
             ia.next();
             ib.next();

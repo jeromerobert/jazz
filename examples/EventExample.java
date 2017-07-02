@@ -57,12 +57,14 @@ public class EventExample extends AbstractExample {
                 ZVisualLeaf leaf1 = (ZVisualLeaf)node1;
                 ZRectangle rect1 = (ZRectangle)leaf1.getFirstVisualComponent();
                 rect1.setPenPaint(Color.blue);
+                canvas.setCursor(new Cursor(Cursor.MOVE_CURSOR));
             }
             public void mouseExited(ZMouseEvent e) {
                 ZNode node1 = e.getNode();
                 ZVisualLeaf leaf1 = (ZVisualLeaf)node1;
                 ZRectangle rect1 = (ZRectangle)leaf1.getFirstVisualComponent();
                 rect1.setPenPaint(Color.red);
+            	canvas.setCursor(new Cursor(Cursor.HAND_CURSOR));
             }
             public void mousePressed(ZMouseEvent e) {
                 ZNode node = e.getNode();

@@ -141,11 +141,14 @@ public class ZClipGroup extends ZGroup {
     public void render(ZRenderContext renderContext) {
         Graphics2D g2 = renderContext.getGraphics2D();
 
-        if (isClipVisible && clip != null) {
+        if (clip != null) {
             Shape currentClip = g2.getClip();
             g2.clip(clip.getShape());
 
-            clip.render(renderContext);
+            if (isClipVisible) {
+                clip.render(renderContext);
+            }
+
             super.render(renderContext);
 
             g2.setClip(currentClip);

@@ -1,18 +1,32 @@
 /**
- * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz;
 
-import java.awt.*;
-import java.awt.geom.*;
-import java.io.*;
-import java.util.*;
-import javax.swing.event.*;
+import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 
-import edu.umd.cs.jazz.io.*;
-import edu.umd.cs.jazz.util.*;
-import edu.umd.cs.jazz.event.*;
+import edu.umd.cs.jazz.animation.ZAlpha;
+import edu.umd.cs.jazz.animation.ZTransformAnimation;
+import edu.umd.cs.jazz.event.ZNodeEvent;
+import edu.umd.cs.jazz.event.ZNodeListener;
+import edu.umd.cs.jazz.event.ZTransformEvent;
+import edu.umd.cs.jazz.event.ZTransformListener;
+import edu.umd.cs.jazz.io.ZObjectOutputStream;
+import edu.umd.cs.jazz.io.ZSerializable;
+import edu.umd.cs.jazz.util.ZBounds;
+import edu.umd.cs.jazz.util.ZDebug;
+import edu.umd.cs.jazz.util.ZLerp;
+import edu.umd.cs.jazz.util.ZNoninvertibleTransformException;
+import edu.umd.cs.jazz.util.ZRenderContext;
+import edu.umd.cs.jazz.util.ZSceneGraphPath;
 
 /**
  * <b>ZTransformGroup</b> is a group node that specifies an arbitrary affine transform.
@@ -124,6 +138,18 @@ import edu.umd.cs.jazz.event.*;
  * @author  Benjamin B. Bederson
  */
 public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransformable, Serializable {
+	
+	/**
+	 * Jazz animation framework was added after ZTransformGroups animate methods
+	 * were coded. This flag lets you specify that the animate methods should
+	 * use the animation framework, by default they will still use the original
+	 * implementation. These two methods differ in a significant way, the old
+	 * implementation animates in a hard loop that blocks until the animation
+	 * finished, while the animation framework is timer based so it is non-
+	 * blocking.
+	 */
+	public static boolean ANIMATE_METHODS_USE_ANIMATION_FRAMEWORK = false;
+	
                                 // The transform that this node represents.
     private AffineTransform transform;
                                 // The inverse of the transform
@@ -264,7 +290,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
         else if (node instanceof ZGroup) {
             ZGroup group = (ZGroup) node;
 
-            if (group.hasLisenerOfType(ZNodeListener.class)) {
+            if (group.hasListenerOfType(ZNodeListener.class)) {
                 group.fireEvent(ZNodeEvent.createGlobalBoundsChangedEvent(group));
             }
             ZNode[] childrenRef = group.getChildrenReference();
@@ -276,7 +302,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
         }
         // Any other non-group nodes - just fire the event for the node
         else {
-            if (node.hasLisenerOfType(ZNodeListener.class)) {
+            if (node.hasListenerOfType(ZNodeListener.class)) {
                 node.fireEvent(ZNodeEvent.createGlobalBoundsChangedEvent(node));
             }
         }
@@ -294,34 +320,29 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
             System.out.println("ZNode.repaint(ZBounds): bounds = " + repaintBounds);
         }
 
-        if (parent != null) {
+        if (!inTransaction && parent != null) {
             transform(repaintBounds, transform);
             parent.repaint(repaintBounds);
         }
     }
 
     /**
-     * Method to pass repaint methods up the tree.  Repaints only the sub-
-     * portion of this object specified by the given ZBounds.
-     * Note that the transform and clipBounds parameters may be modified as a result of this call.
-     * @param obj The object to repaint
-     * @param at  The affine transform
-     * @param clipBounds The bounds to clip to when repainting
+     * Overrides ZSceneGraphObject.reshape to invert the transform on the
+     * when the this ZTransformGroup is volatile
      */
-    public void repaint(ZSceneGraphObject obj, AffineTransform at, ZBounds clipBounds) {
-        if (ZDebug.debug && ZDebug.debugRepaint) {
-            System.out.println("ZTransformGroup.repaint(obj, at, bounds): this = " + this);
-            System.out.println("ZTransformGroup.repaint(obj, at, bounds): obj = " + obj);
-            System.out.println("ZTransformGroup.repaint(obj, at, bounds): at = " + at);
+    public void reshape() {
+        // Fix suggested by David Wang.
+        // Directly repaints the bounds when volatile
+        if (!inTransaction && getVolatileBounds()) {
+            ZBounds tBounds = (ZBounds)bounds.clone();
+            transform(tBounds,getInverseTransform());
+            repaint(tBounds);
+        } else {
+            repaint();
         }
 
-        if (parent != null) {
-            at.preConcatenate(transform);
-            if (clipBounds != null) {
-                transform(clipBounds, transform);
-            }
-            parent.repaint(obj, at, clipBounds);
-        }
+        updateBounds();
+        repaint();
     }
 
     //****************************************************************************
@@ -447,10 +468,14 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
     public void setTransform(AffineTransform newTransform) {
         AffineTransform origTransform = transform;
 
-        transform = newTransform;
+        if (transform == null) {
+            transform = new AffineTransform();
+        }
+
+        transform.setTransform(newTransform);
         inverseTransformDirty = true;
 
-        if (hasLisenerOfType(ZTransformListener.class)) {
+        if (hasListenerOfType(ZTransformListener.class)) {
             fireEvent(ZTransformEvent.createTransformChangedEvent(this, origTransform));
         }
 
@@ -470,6 +495,19 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
         tmpTransform.setTransform(m00, m10, m01, m11, m02, m12);
         setTransform(tmpTransform);
     }
+
+	/**
+	 * Sets the transform reference associated with this node. This is
+	 * different then the other setTransform methods because they set the
+	 * transform using this.transform.setTransform(newTransform). This
+	 * method uses this.transform = newTransform, and can be useful if
+	 * you want the ZTransformGroup to use your own subclass of AffineTransform
+	 * internally.
+	 */
+	public void setTransformReference(AffineTransform newTransform) {
+		transform = newTransform;
+		setTransform(newTransform);
+	}
 
     /**
      * Concatenates an AffineTransform <code>at</code> to this node's transform in
@@ -1229,19 +1267,32 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * @param lerpTimeFunction The function that determines how the timing of the animation should be calculated
      */
     static public void animate(ZTransformable[] nodes, AffineTransform[] txs, int millis, ZDrawingSurface surface, ZLerp lerpTimeFunction) {
+    	
         int i;
         int len = Math.min(nodes.length, txs.length);
         double[][] srcTx = new double[len][6];
         double[][] currTx = new double[len][6];
         double[][] destTx = new double[len][6];
 
-        surface.setAnimating(true);
-
+		if (millis != 0) {
+        	surface.setAnimating(true);
+		}
                                 // Extract initial transforms
         for (i=0; i<len; i++) {
             nodes[i].getMatrix(srcTx[i]);
             txs[i].getMatrix(destTx[i]);
         }
+
+		// hack for the mac, might be useful in other cases as well. This 
+    	if (millis > 0 && ANIMATE_METHODS_USE_ANIMATION_FRAMEWORK) {
+    		for (i = 0; i < len; i++) {
+    			ZTransformAnimation animation = new ZTransformAnimation(srcTx[i], destTx[i]);
+    			animation.setTransformTarget(nodes[i]);
+    			animation.setAlpha(ZAlpha.createStandardSlowInSlowOutAlpha(millis));    
+    			animation.play();			
+    		}
+    		return;
+    	}
 
         if (millis > 0) {
             double lerp;
@@ -1296,11 +1347,10 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
                                   destTx[i][3], destTx[i][4], destTx[i][5]);
         }
                                 // Only paint surface immediately if non-zero animation time specified
-        if (millis > 0) {
+        if (millis != 0) {
             surface.paintImmediately();
-        }
-
-        surface.setAnimating(false);
+	        surface.setAnimating(false);
+        }	
     }
 
     /**

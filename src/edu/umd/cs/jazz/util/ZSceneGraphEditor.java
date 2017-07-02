@@ -121,7 +121,7 @@ public class ZSceneGraphEditor implements Serializable {
 
     // Iterates up from the first edit group above the edit node. The last
     // object returned by the iterator will be the "top" edit group.
-    protected class ZEditGroupIterator implements Iterator {
+    public class ZEditGroupIterator implements Iterator {
         protected ZNode currentEditor = editNode;
 
         public boolean hasNext() {
@@ -645,7 +645,7 @@ public class ZSceneGraphEditor implements Serializable {
         return anInteger.intValue();
     }
 
-    private ZGroup createEditGroupInstance(Class aType) {
+    protected ZGroup createEditGroupInstance(Class aType) {
         ZGroup result = null;
 
         try {

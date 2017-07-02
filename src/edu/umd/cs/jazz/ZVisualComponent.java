@@ -29,6 +29,7 @@ import edu.umd.cs.jazz.util.*;
  * @author Britt McAlister
  */
 public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable, Serializable {
+
     /**
      * The parents of this visual component.
      * This is guaranteed to point to a valid array,
@@ -108,21 +109,6 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
     //***************************************************************************
 
     /**
-     * Internal method to compute and cache the volatility of a component,
-     * to recursively call the parents to compute volatility.
-     * All parents of this component are also volatile when this is volatile.
-     * @see #setVolatileBounds(boolean)
-     * @see #getVolatileBounds()
-     */
-    protected void updateVolatility() {
-                                // Update parent's volatility
-        ZNode[] parentsRef = parents.getNodesReference();
-        for (int i = 0; i < parents.size(); i++) {
-            parentsRef[i].updateVolatility();
-        }
-    }
-
-    /**
      * Returns the root of the scene graph that this component is in.
      * Actually returns the root of the first node this is a child of.
      */
@@ -167,10 +153,10 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * Method to add a node to be a new parent of this component.  The new node
      * is added to the end of the list of this node's parents;
      *
-     * These methods are used primarily by the implementation of node objects 
-     * that need to update the internal scenegraph hierarchy, and should be 
-     * used with caution.  For example, instead consider using 
-     * {@link ZVisualLeaf#addVisualComponent} instead.                      
+     * These methods are used primarily by the implementation of node objects
+     * that need to update the internal scenegraph hierarchy, and should be
+     * used with caution.  For example, instead consider using
+     * {@link ZVisualLeaf#addVisualComponent} instead.
      * @param parent The new parent node.
      */
     public void addParent(ZNode parent) {
@@ -185,9 +171,9 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * If the specified node wasn't a parent of this node,
      * then nothing happens.
      *
-     * These methods are used primarily by the implementation of node objects 
-     * that need to update the internal scenegraph hierarchy, and should be 
-     * used with caution.  For example, instead consider using 
+     * These methods are used primarily by the implementation of node objects
+     * that need to update the internal scenegraph hierarchy, and should be
+     * used with caution.  For example, instead consider using
      * {@link ZVisualLeaf#addVisualComponent} instead.
      * @param parent The parent to be removed.
      */
@@ -290,7 +276,9 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * @see #reshape()
      */
     public void repaint() {
-        parents.collectiveRepaint(null);
+        if (!inTransaction) {
+            parents.collectiveRepaint(getBounds());
+        }
     }
 
     /**
@@ -300,27 +288,37 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * @see #repaint()
      */
     public void repaint(ZBounds repaintBounds) {
-        parents.collectiveRepaint(repaintBounds);
+        if (!inTransaction) {
+            parents.collectiveRepaint(repaintBounds);
+        }
     }
 
     /**
      * Internal method that causes this node and all of its ancestors
-     * to recompute their bounds. Calls computeBounds(), followed by
-     * updateParentBounds().
+     * to invalidate their bounds.
      */
     protected void updateBounds() {
-        computeBounds();
-        updateParentBounds();
-    }
+        super.updateBounds();
 
-    /**
-     * Internal method that causes all the ancestors of this component
-     * to recompute their bounds.
-     */
-    protected void updateParentBounds() {
         ZNode[] parentsRef = parents.getNodesReference();
         for (int i = 0; i < parents.size(); i++) {
             parentsRef[i].updateBounds();
+        }
+    }
+
+    /**
+     * Internal method invalidate the volatility of a component. This will also
+     * invalidate the volatility of all the parents of this component.
+     * All parents of this component are also volatile when this is volatile.
+     * @see #setVolatileBounds(boolean)
+     * @see #getVolatileBounds()
+     */
+    protected void updateVolatility() {
+        super.updateVolatility();
+                                // Update parent's volatility
+        ZNode[] parentsRef = parents.getNodesReference();
+        for (int i = 0; i < parents.size(); i++) {
+            parentsRef[i].updateVolatility();
         }
     }
 

@@ -23,6 +23,7 @@ public class EllipseEventHandler implements ZEventHandler, ZMouseListener, ZMous
     private ZNode   node = null;           // The node the event handlers are attached to
     private HiNoteCore hinote;
     private ZEllipse ellipse;
+    private ZVisualLeaf leaf;
     private Point2D pt;
     private Point2D pressObjPt; // Event coords of mouse press (in object space)
                                            // Mask out mouse and mouse/key chords
@@ -79,11 +80,14 @@ public class EllipseEventHandler implements ZEventHandler, ZMouseListener, ZMous
             pressObjPt = (Point2D)pt.clone();
 
             ellipse = new ZEllipse(pt.getX(), pt.getY(), 0.0, 0.0);
-            ZVisualLeaf leaf = new ZVisualLeaf(ellipse);
-            ellipse.setPenWidth(hinote.penWidth  / camera.getMagnification());
+            leaf = new ZVisualLeaf(ellipse);
+            ellipse.setPenWidth(hinote.penWidth);
+//          ellipse.setPenWidth(hinote.penWidth  / camera.getMagnification());
             ellipse.setPenPaint(hinote.penColor);
             ellipse.setFillPaint(hinote.fillColor);
             layer.addChild(leaf);
+
+            leaf.editor().getTransformGroup().scale(1/camera.getMagnification(), pt.getX(), pt.getY());
         }
     }
 
@@ -92,7 +96,9 @@ public class EllipseEventHandler implements ZEventHandler, ZMouseListener, ZMous
             ZSceneGraphPath path = e.getPath();
             ZGroup layer = hinote.getDrawingLayer();
             pt.setLocation(e.getX(), e.getY());
+
             path.screenToGlobal(pt);
+            leaf.globalToLocal(pt);
 
             double x, y, width, height;
             x = Math.min(pressObjPt.getX(), pt.getX());
@@ -109,6 +115,7 @@ public class EllipseEventHandler implements ZEventHandler, ZMouseListener, ZMous
             ZSceneGraphPath path = e.getPath();
             path.getTopCamera().getDrawingSurface().setInteracting(false);
             ellipse = null;
+            leaf = null;
         }
     }
 

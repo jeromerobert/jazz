@@ -1,14 +1,16 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest;
 
-import edu.umd.cs.jazz.component.*;
-import edu.umd.cs.jazz.*;
-import junit.framework.*;
-import edu.umd.cs.jazz.event.*;
 import java.util.*;
+
+import junit.framework.*;
+
+import edu.umd.cs.jazz.*;
+import edu.umd.cs.jazz.component.*;
+import edu.umd.cs.jazz.event.*;
 import edu.umd.cs.jazztest.iotest.*;
 
 /**
@@ -45,12 +47,14 @@ public class ZTransformGroupTest extends TestCase {
             }
         });
 
-        // this should start the recursive call down the tree. and aNode
-        // should here about the global change, but not the local.
         t.translate(0, 1);
 
-        assert(!localChangeEvent);
-        assert(globalChangeEvent);
+        // this should start the recursive call down the tree. and aNode
+        // should here about the global change, but not the local.
+        t.getBoundsReference();
+
+        assertTrue(!localChangeEvent);
+        assertTrue(globalChangeEvent);
     }
 
     public void testFireTransformEvent() {
@@ -65,7 +69,7 @@ public class ZTransformGroupTest extends TestCase {
 
         t.translate(1, 1);
 
-        assert(transformEvent);
+        assertTrue(transformEvent);
     }
 
     protected void doCompare(ZTransformGroup a, ZTransformGroup b) {
@@ -88,7 +92,7 @@ public class ZTransformGroupTest extends TestCase {
             ZTransformGroup result = (ZTransformGroup) FileSavingSimulator.doSerialize(transformGroup);
             doCompare(result, transformGroup);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
@@ -97,7 +101,7 @@ public class ZTransformGroupTest extends TestCase {
             ZTransformGroup result = (ZTransformGroup) FileSavingSimulator.doZSerialize(transformGroup);
             doCompare(result, transformGroup);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 }

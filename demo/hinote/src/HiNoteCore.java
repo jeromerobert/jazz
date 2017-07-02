@@ -688,13 +688,25 @@ public class HiNoteCore implements ClipboardOwner {
      */
     public void loadToolbarImageCursors() {
         URL resource;
-        resource = this.getClass().getClassLoader().getResource("resources/crosshair.gif");
-        Image crosshairImage = canvas.getToolkit().getImage(resource);
-        setCrossHairCursorImage(crosshairImage);
 
-        resource = this.getClass().getClassLoader().getResource("resources/colorpickercursor.gif");
-        Image colorpickerImage = canvas.getToolkit().getImage(resource);
-        setColorPickerCursorImage(colorpickerImage);
+        // XXX try catch blocks added because under OSX exceptions will be thrown and
+        // hinote will fail to load otherwise.
+
+        try {
+            resource = this.getClass().getClassLoader().getResource("resources/crosshair.gif");
+            Image crosshairImage = canvas.getToolkit().getImage(resource);
+            setCrossHairCursorImage(crosshairImage);
+        } catch (IndexOutOfBoundsException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            resource = this.getClass().getClassLoader().getResource("resources/colorpickercursor.gif");
+            Image colorpickerImage = canvas.getToolkit().getImage(resource);
+            setColorPickerCursorImage(colorpickerImage);
+        } catch (IndexOutOfBoundsException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -1004,11 +1016,11 @@ public class HiNoteCore implements ClipboardOwner {
      */
     public void fullScreen() {
 
-	// find parent for the new JWindow.
-	Container p = canvas.getParent();
-	while (!(p instanceof JFrame) && p != null) {
-	    p = p.getParent();
-	}
+    // find parent for the new JWindow.
+    Container p = canvas.getParent();
+    while (!(p instanceof JFrame) && p != null) {
+        p = p.getParent();
+    }
 
         final JWindow window = new JWindow((JFrame)p);
         ZCanvas canvas = new ZCanvas(getRoot(), getLayer());
@@ -1020,7 +1032,6 @@ public class HiNoteCore implements ClipboardOwner {
         final ZCamera camera = canvas.getCamera();
 
         window.setVisible(true);
-	window.requestFocus();
         canvas.requestFocus();
 
                     // Make camera in new window look at same place as current window
@@ -1246,8 +1257,32 @@ public class HiNoteCore implements ClipboardOwner {
     }
 
     public void save() {
-        linkEventHandler.hideVisibleLinksAndHighlight();
         ZSelectionManager.unselectAll(getRoot());
+        linkEventHandler.hideVisibleLinksAndHighlight();
+
+        // hack, make sure to clean up any arrows. This need to be done since
+        // the Hinote pan event handler adds these arrows.
+        Iterator linkedNodes = canvas.getCamera().findNodes(new ZFindFilter () {
+            public boolean accept(ZNode node) {
+                if ((node instanceof ZGroup) && (((ZGroup)node).hasOneChild())) {
+                    return false;
+                } else {
+                    return node.editor().hasAnchorGroup();
+                }
+            }
+
+            public boolean childrenFindable(ZNode node) {
+                return true;
+            }
+        }).iterator();
+
+        while (linkedNodes.hasNext()) {
+            ZNode each = (ZNode) linkedNodes.next();
+            ZAnchorGroup link = each.editor().getAnchorGroup();
+            if (link != null) {
+                link.setVisible(false, null);
+            }
+        }
 
         if (currentFileName == null) {
             ExtensionFileFilter filter[] = new ExtensionFileFilter[2];
@@ -1378,7 +1413,7 @@ public class HiNoteCore implements ClipboardOwner {
                 fileChooser.setFileFilter(filter[0]);
             }
         }
-        if (approveText.equals("Save")) {
+        /*if (approveText.equals("Save")) {
             JPanel cb = new JPanel();
             cb.setLayout(new FlowLayout(FlowLayout.LEFT));
 
@@ -1392,9 +1427,11 @@ public class HiNoteCore implements ClipboardOwner {
             }
             cb.add(embed);
             fileChooser.add(cb);
+            fileChooser.invalidate();
+            fileChooser.revalidate();
 
             fileChooser.addPropertyChangeListener(cmdTable.lookupPropertyListener("fileChooserSaveSelection"));
-        }
+        }*/
 
         int retval = fileChooser.showDialog(getCanvas(), approveText);
         if (retval == JFileChooser.APPROVE_OPTION) {
@@ -1444,6 +1481,11 @@ public class HiNoteCore implements ClipboardOwner {
         for ( int i = 0; i < numMergeChildren; i++ ) {
             if (mergeChildren[i] instanceof ZLayerGroup) {
                 mergeLayer = (ZLayerGroup) mergeChildren[i];
+                ZNode[] newChildren = mergeLayer.getChildren();
+                for (int j = 0; j < newChildren.length; j++) {
+                    getDrawingLayer().addChild(newChildren[j].editor().getTop());
+                }
+                /*
                 if (mergeLayer.getNumChildren() != 0 ) {
 
                     // Set transform of merged Layers
@@ -1452,10 +1494,11 @@ public class HiNoteCore implements ClipboardOwner {
 
                     // Add another merge layer under the current layer
                     getDrawingLayer().addChild(transform);
-                }
+                }*/
             }
         }
 
+        /*
                     // Get the merge layers the merge camera looked at
         ZVisualLeaf mergeCameraNode = (ZVisualLeaf) mergeChildren[1];
         ZCamera mergeCamera = (ZCamera) mergeCameraNode.getFirstVisualComponent();
@@ -1469,7 +1512,7 @@ public class HiNoteCore implements ClipboardOwner {
                 if (mergeLayer.getNumChildren() != 0 )
                     camera.addLayer(mergeLayer);
             }
-        }
+        }*/
 
         canvas.getDrawingSurface().repaint();
     }
@@ -1479,7 +1522,12 @@ public class HiNoteCore implements ClipboardOwner {
         // current jazz save directory. Do a temporary 'set cwd'
         // so the readObject methods can change filenames to
         // be relative to this new cwd
+
+        // XXX hack to get around getJazzFile side effect
+        // that sets the currentFileName. (Other code seems to rely on this effect).
+        String savedCurrentFileName = currentFileName;
         File file = getJazzFile();
+
         if (file != null) {
             String cwd = System.getProperty("user.dir");
             System.setProperty("user.dir",file.getParent());
@@ -1504,8 +1552,8 @@ public class HiNoteCore implements ClipboardOwner {
                         parser = new ZParser();
                     }
                     try {
-                        root = (ZRoot)parser.parse(inStream);
-                        mergeScene(root);
+                        ZRoot aRoot = (ZRoot)parser.parse(inStream);
+                        mergeScene(aRoot);
                     } catch (ParseException e) {
                         System.out.println(e.getMessage());
                         System.out.println("Invalid file format");
@@ -1513,8 +1561,8 @@ public class HiNoteCore implements ClipboardOwner {
                 } else if (extension.equals(jazzbExtension)) {
                     try {
                         ObjectInputStream ois = new ObjectInputStream(inStream);
-                        root = (ZRoot)ois.readObject();
-                        mergeScene(root);
+                        ZRoot aRoot = (ZRoot)ois.readObject();
+                        mergeScene(aRoot);
                         ois.close();
                     } catch (Exception e) {
                         System.out.println(e.getMessage());
@@ -1532,6 +1580,7 @@ public class HiNoteCore implements ClipboardOwner {
 
             // restore the cwd
             System.setProperty("user.dir", cwd);
+            currentFileName = savedCurrentFileName;
         }
     }
 
@@ -1643,11 +1692,16 @@ public class HiNoteCore implements ClipboardOwner {
         AffineTransform currentTransform = camera.getViewTransform();
         if (pasteViewTransform.equals(currentTransform)) {
                     // Update paste delta
-            pasteDelta.translate(10.0, 10.0);
+            double scale = 1 / Math.max(pasteDelta.getScaleX(), pasteDelta.getScaleY());
+            pasteDelta.translate(scale * ((1 / camera.getScale()) * 10.0),
+                                 scale * ((1 / camera.getScale()) * 10.0));
         } else {
                     // Update paste position relative to current camera if it has changed
             try {
                 AffineTransform newDelta = currentTransform.createInverse();
+                double oldScale = pasteViewTransform.getScaleX();
+                double newScale = newDelta.getScaleX();
+
                 newDelta.concatenate(pasteViewTransform);
                 newDelta.concatenate(pasteDelta);
                 pasteDelta = newDelta;

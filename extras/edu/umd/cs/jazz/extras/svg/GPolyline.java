@@ -72,7 +72,7 @@ public class GPolyline extends GNode {
     }
 
     protected void readPoints(String s) {
-        StringTokenizer st = new StringTokenizer(s, ",");
+        StringTokenizer st = new StringTokenizer(s, ", ");
         int iteration = (int)(st.countTokens()/2);
 
         for(int i=0;i<iteration;i++) {

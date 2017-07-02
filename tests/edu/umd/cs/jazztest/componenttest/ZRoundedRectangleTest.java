@@ -1,5 +1,5 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest.componenttest;
@@ -40,7 +40,7 @@ public class ZRoundedRectangleTest extends TestCase {
             ZRoundedRectangle savedShape = (ZRoundedRectangle) ((ZVisualLeaf)result.getChild(0)).getVisualComponent(0);
             doCompare(savedShape, rect);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
@@ -49,7 +49,7 @@ public class ZRoundedRectangleTest extends TestCase {
             ZRoundedRectangle result = (ZRoundedRectangle) FileSavingSimulator.doZSerialize(rect);
             doCompare(result, rect);
         } catch (Exception e) {
-            assert(e.toString(), false);
+            assertTrue(e.toString(), false);
         }
     }
 
@@ -57,12 +57,12 @@ public class ZRoundedRectangleTest extends TestCase {
         RoundRectangle2D rectA = a.getRounedRect();
         RoundRectangle2D rectB = a.getRounedRect();
 
-        assert(rectA.getX() == rectB.getX());
-        assert(rectA.getY() == rectB.getY());
-        assert(rectA.getWidth() == rectB.getWidth());
-        assert(rectA.getHeight() == rectB.getHeight());
-        assert(rectA.getArcHeight() == rectB.getArcHeight());
-        assert(rectA.getArcWidth() == rectB.getArcWidth());
+        assertTrue(rectA.getX() == rectB.getX());
+        assertTrue(rectA.getY() == rectB.getY());
+        assertTrue(rectA.getWidth() == rectB.getWidth());
+        assertTrue(rectA.getHeight() == rectB.getHeight());
+        assertTrue(rectA.getArcHeight() == rectB.getArcHeight());
+        assertTrue(rectA.getArcWidth() == rectB.getArcWidth());
 
         assertEquals(a.getBounds(), b.getBounds());
     }

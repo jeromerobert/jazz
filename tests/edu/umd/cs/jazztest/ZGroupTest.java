@@ -4,12 +4,15 @@
  */
 package edu.umd.cs.jazztest;
 
-import edu.umd.cs.jazz.component.*;
-import edu.umd.cs.jazz.*;
-import junit.framework.*;
-import edu.umd.cs.jazz.event.*;
 import java.util.*;
+
+import junit.framework.*;
+
+import edu.umd.cs.jazz.*;
+import edu.umd.cs.jazz.component.*;
+import edu.umd.cs.jazz.event.*;
 import edu.umd.cs.jazztest.iotest.*;
+
 
 /**
  * Unit test for ZGroup.
@@ -44,21 +47,21 @@ public class ZGroupTest extends TestCase {
 
         ZGroup g = new ZGroup();
 
-        assert(!contains(child1, g.getChildrenIterator()));
+        assertTrue(!contains(child1, g.getChildrenIterator()));
         g.addChild(child1);
-        assert(contains(child1, g.getChildrenIterator()));
+        assertTrue(contains(child1, g.getChildrenIterator()));
 
         g.addChild(child2);
         g.addChild(child3);
 
-        assert(contains(child3, g.getChildrenIterator()));
+        assertTrue(contains(child3, g.getChildrenIterator()));
 
         g.removeChild(child2);
 
-        assert(!contains(child2, g.getChildrenIterator()));
+        assertTrue(!contains(child2, g.getChildrenIterator()));
 
-        assert(contains(child1, g.getChildrenIterator()));
-        assert(contains(child3, g.getChildrenIterator()));
+        assertTrue(contains(child1, g.getChildrenIterator()));
+        assertTrue(contains(child3, g.getChildrenIterator()));
 
     }
 
@@ -86,8 +89,8 @@ public class ZGroupTest extends TestCase {
 
         g1.addChild(n);
 
-        assert(groupEventFired);
-        assert(parentGroupEventFired);
+        assertTrue(groupEventFired);
+        assertTrue(parentGroupEventFired);
     }
 
     public void testTrimToSize() {
@@ -105,7 +108,7 @@ public class ZGroupTest extends TestCase {
 
         g.trimToSize();
 
-        assert(g.getChildrenReference().length == 3);
+        assertTrue(g.getChildrenReference().length == 3);
     }
     public void testDuplicateObject() {
         ZGroup group = new ZGroup();
@@ -117,9 +120,9 @@ public class ZGroupTest extends TestCase {
 
         ZGroup group2 = (ZGroup) group.clone();
 
-        assert(group.getChildrenReference() != group2.getChildrenReference());
-        assert(group.getChildrenReference()[0] != group2.getChildrenReference()[0]);
-        assert(group.getChildrenReference()[1] != group2.getChildrenReference()[1]);
+        assertTrue(group.getChildrenReference() != group2.getChildrenReference());
+        assertTrue(group.getChildrenReference()[0] != group2.getChildrenReference()[0]);
+        assertTrue(group.getChildrenReference()[1] != group2.getChildrenReference()[1]);
 
     }
     public void testExtract() {
@@ -132,11 +135,11 @@ public class ZGroupTest extends TestCase {
 
         g2.extract();
 
-        assert(g2.getParent() == null);
-        assert(g2.getNumChildren() == 0);
+        assertTrue(g2.getParent() == null);
+        assertTrue(g2.getNumChildren() == 0);
 
-        assert(g1.getChildrenReference()[0] == g3);
-        assert(g3.getParent() == g1);
+        assertTrue(g1.getChildrenReference()[0] == g3);
+        assertTrue(g3.getParent() == g1);
     }
 
     public void testInsertAbove() {
@@ -149,10 +152,10 @@ public class ZGroupTest extends TestCase {
 
         g3.insertAbove(g2);
 
-        assert(g3.getParent() == g1);
-        assert(g1.getChildrenReference()[0] == g3);
-        assert(g3.getChildrenReference()[0] == g2);
-        assert(g2.getParent() == g3);
+        assertTrue(g3.getParent() == g1);
+        assertTrue(g1.getChildrenReference()[0] == g3);
+        assertTrue(g3.getChildrenReference()[0] == g2);
+        assertTrue(g2.getParent() == g3);
     }
 
     public void testRaiseToLowerTo() {
@@ -165,27 +168,27 @@ public class ZGroupTest extends TestCase {
         g1.addChild(b);
         g1.addChild(c);
 
-        assert(g1.getChildrenReference()[0] == a);
-        assert(g1.getChildrenReference()[1] == b);
-        assert(g1.getChildrenReference()[2] == c);
+        assertTrue(g1.getChildrenReference()[0] == a);
+        assertTrue(g1.getChildrenReference()[1] == b);
+        assertTrue(g1.getChildrenReference()[2] == c);
 
         g1.raise(a);
 
-        assert(g1.getChildrenReference()[2] == a);
+        assertTrue(g1.getChildrenReference()[2] == a);
 
         g1.raiseTo(b, a);
 
-        assert(g1.getChildrenReference()[2] == b);
+        assertTrue(g1.getChildrenReference()[2] == b);
 
         c.raise();
 
-        assert(g1.getChildrenReference()[2] == c);
+        assertTrue(g1.getChildrenReference()[2] == c);
 
         g1.lowerTo(c, a);
 
-        assert(g1.getChildrenReference()[0] == c);
-        assert(g1.getChildrenReference()[1] == a);
-        assert(g1.getChildrenReference()[2] == b);
+        assertTrue(g1.getChildrenReference()[0] == c);
+        assertTrue(g1.getChildrenReference()[1] == a);
+        assertTrue(g1.getChildrenReference()[2] == b);
     }
 
     protected void doCompare(ZGroup a, ZGroup b) {
@@ -202,7 +205,7 @@ public class ZGroupTest extends TestCase {
             ZGroup result = (ZGroup) FileSavingSimulator.doSerialize(group);
             doCompare(result, group);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
@@ -211,7 +214,7 @@ public class ZGroupTest extends TestCase {
             ZGroup result = (ZGroup) FileSavingSimulator.doZSerialize(group);
             doCompare(result, group);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
@@ -229,7 +232,7 @@ public class ZGroupTest extends TestCase {
         g2.editor().getTransformGroup().scale(0.5);
         g2.addChild(leaf);
 
-        assert(!g1.getBoundsReference().equals(leaf.getBoundsReference()));
+        assertTrue(!g1.getBoundsReference().equals(leaf.getBoundsReference()));
     }
 
     public void testUpdateBounds() {

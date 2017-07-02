@@ -1,12 +1,13 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest;
 
-import edu.umd.cs.jazz.component.*;
-import edu.umd.cs.jazz.*;
 import junit.framework.*;
+
+import edu.umd.cs.jazz.*;
+import edu.umd.cs.jazz.component.*;
 import edu.umd.cs.jazztest.iotest.*;
 
 /**
@@ -33,13 +34,13 @@ public class ZVisualLeafTest extends TestCase {
         ZVisualLeaf lclone = (ZVisualLeaf) leaf.clone();
         doCompare(leaf, lclone);
 
-        assert(leaf.getFirstVisualComponent() == rect1);
-        assert(leaf.getVisualComponent(1) == rect2);
+        assertTrue(leaf.getFirstVisualComponent() == rect1);
+        assertTrue(leaf.getVisualComponent(1) == rect2);
 
         // Make sure that when an ZVisualGroup gets cloned
         // its visual components are not cloned.
-        assert(lclone.getFirstVisualComponent() != rect1);
-        assert(lclone.getVisualComponent(1) != rect2);
+        assertTrue(lclone.getFirstVisualComponent() != rect1);
+        assertTrue(lclone.getVisualComponent(1) != rect2);
 
     }
 
@@ -48,7 +49,7 @@ public class ZVisualLeafTest extends TestCase {
             ZVisualLeaf result = (ZVisualLeaf) FileSavingSimulator.doZSerialize(leaf);
             doCompare(result, leaf);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
@@ -57,7 +58,7 @@ public class ZVisualLeafTest extends TestCase {
             ZVisualLeaf result = (ZVisualLeaf) FileSavingSimulator.doSerialize(leaf);
             doCompare(result, leaf);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 

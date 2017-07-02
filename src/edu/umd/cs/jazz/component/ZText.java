@@ -843,11 +843,18 @@ public class ZText extends ZVisualComponent implements ZPenColor, ZPenPaint, Ser
 
         for (Iterator i = lines.iterator() ; i.hasNext() ; ) {
             line = (String)i.next();
+
+	    // ADDED BY LEG ON 2/25/03 - BUG CAUSING PROBLEMS AT CERTAIN
+	    // SCALES WHEN LINE WAS EMPTY
+	    line = (line.equals("")) ? " " : line;
+
             lm = font.getLineMetrics(line, frc);
             y = lm.getAscent() + (lineNum * lm.getHeight());
 
-            g2.drawString(line, 0, (float)y);
-
+			if (line.length() > 0) {
+            	g2.drawString(line, 0, (float)y);
+			}
+			
             lineNum++;
         }
                                 // Draw the caret

@@ -58,7 +58,8 @@ public class ZPath extends ZShape {
      * Set the path.
      */
     public void setPath(GeneralPath aPath) {
-        path = aPath;
+        getPath().reset();
+        getPath().append(aPath, false);
         reshape();
     }
 
@@ -132,6 +133,9 @@ public class ZPath extends ZShape {
      * @return the GeneralPath.
      */
     public GeneralPath getPath() {
+        if (path == null) {
+            path = new GeneralPath();
+        }
         return path;
     }
 

@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<attributes version="1.0">
-   <fileobject name="ZImage.java">
-      <attr name="class_dependency_java.io.Serializable" stringvalue="ZImage;ZImage.ZImageObserver"/>
-      <attr name="class_dependency_java.awt.image.ImageObserver" stringvalue="ZImage.ZImageObserver"/>
-   </fileobject>
-</attributes>

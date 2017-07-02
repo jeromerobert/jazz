@@ -224,6 +224,16 @@ public class ZPolyline extends ZCoordList {
     }
 
     /**
+     * Set the coords of this polygon.
+     */
+    public void setCoords(Point2D[] points) {
+        super.setCoords(points);
+        if (updateArrowHeads()) {       // Update arrowheads to reflect new polyline state
+            reshape();
+        }
+    }
+
+    /**
      * Return the append the given vertex onto the end of the list of points
      * that define this polygon.
      */

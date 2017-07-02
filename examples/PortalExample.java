@@ -96,5 +96,13 @@ public class PortalExample extends AbstractExample {
             }
         });
         getContentPane().add(toolBar,BorderLayout.NORTH);
+
+        ZLayerGroup selectionLayer = new ZLayerGroup();
+        canvas.getRoot().addChild(selectionLayer);
+        canvas.getCamera().addLayer(selectionLayer);
+        ZEventHandler selectionHandler = new ZCompositeSelectionHandler(canvas.getCameraNode(), canvas, selectionLayer, ZCompositeSelectionHandler.MOVE | ZCompositeSelectionHandler.MODIFY | ZCompositeSelectionHandler.SCALE);
+        selectionHandler.setActive(true);
+
+        canvas.getPanEventHandler().setActive(false);
     }
 }

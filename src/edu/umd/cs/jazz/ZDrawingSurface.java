@@ -18,11 +18,11 @@ import edu.umd.cs.jazz.io.*;
 import edu.umd.cs.jazz.util.*;
 
 /**
- * <b>ZDrawingSurface</b>  represents the thing the camera renders onto. Typically, a 
+ * <b>ZDrawingSurface</b>  represents the thing the camera renders onto. Typically, a
  * drawing surface will be associated with a ZCanvas window. However,
  * a drawing surface can also represent a printer, and thus rendering to a window
  * and printer is implemented in the same way. The drawing surface is
- * associated with a window or printer by specifying which Graphics2D to render onto. 
+ * associated with a window or printer by specifying which Graphics2D to render onto.
  * <P>
  * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
  * compatible with future Jazz releases. The current serialization support is
@@ -37,7 +37,7 @@ import edu.umd.cs.jazz.util.*;
  */
 
 public class ZDrawingSurface implements Printable, Serializable {
-				// Default values
+                                // Default values
     static public final int RENDER_QUALITY_LOW = 1;
     static public final int RENDER_QUALITY_MEDIUM = 2;
     static public final int RENDER_QUALITY_HIGH = 3;
@@ -47,35 +47,38 @@ public class ZDrawingSurface implements Printable, Serializable {
      */
     static public final int DEFAULT_HALO = 2;
 
-				// The camera this surface is associated with.
+                                // The camera this surface is associated with.
     private transient ZCamera camera = null;
 
-				// The camera this surface is associated with.
+                                // The camera this surface is associated with.
     private transient ZNode   cameraNode = null;
 
-				// The optional component this surface is associated with.
+                                // The optional component this surface is associated with.
     private JComponent            component = null;
 
-				// True when user interacting with surface
+                                // True when user interacting with surface
     private boolean               interacting;
 
-				// True when items within this view are being animated
+                                // True when items within this view are being animated
     private boolean               animating;
 
-				// The render quality to use when painting this surface.
+                                // True if fractional font metrics should be used
+    private boolean               useFractionalMetrics = true;
+
+                                // The render quality to use when painting this surface.
     private int                   currentRenderQuality = RENDER_QUALITY_LOW;
 
-				// The render quality when not interacting or animating
+                                // The render quality when not interacting or animating
     private int                   normalRenderQuality = RENDER_QUALITY_LOW;
 
-				// The render quality when interacting with surface.
+                                // The render quality when interacting with surface.
     private int                   interactingRenderQuality = RENDER_QUALITY_LOW;
 
-				// Rectangle used for calculating repaint region.
-				// Defined once per surface, and reused for efficiency.
+                                // Rectangle used for calculating repaint region.
+                                // Defined once per surface, and reused for efficiency.
     private Rectangle             tmpRepaintRect = null;
 
-				// Only allow paintingImmediately to be called once at a time
+                                // Only allow paintingImmediately to be called once at a time
     private boolean               paintingImmediately = false;
 
     //****************************************************************************
@@ -89,7 +92,7 @@ public class ZDrawingSurface implements Printable, Serializable {
      * as the surface onto which the camera projects.
      */
     public ZDrawingSurface() {
-	this(null, null);
+        this(null, null);
     }
 
     /**
@@ -102,8 +105,8 @@ public class ZDrawingSurface implements Printable, Serializable {
      * @param cameraNode The node the camera is attached to
      */
     public ZDrawingSurface(ZCamera camera, ZNode cameraNode) {
-	tmpRepaintRect = new Rectangle();
-	setCamera(camera, cameraNode);
+        tmpRepaintRect = new Rectangle();
+        setCamera(camera, cameraNode);
     }
 
     /**
@@ -116,9 +119,9 @@ public class ZDrawingSurface implements Printable, Serializable {
      * @param aComponent The component this surface is connected to
      */
     public ZDrawingSurface(ZCamera camera, ZNode cameraNode, JComponent aComponent) {
-	tmpRepaintRect = new Rectangle();
-	component = aComponent;
-	setCamera(camera, cameraNode);
+        tmpRepaintRect = new Rectangle();
+        component = aComponent;
+        setCamera(camera, cameraNode);
     }
 
     /**
@@ -131,15 +134,15 @@ public class ZDrawingSurface implements Printable, Serializable {
      * <code>RENDER_QUALITY_MEDIUM</code> or <code>RENDER_QUALITY_HIGH</code>.
      */
     public void setRenderQuality(int qualityRequested) {
-	normalRenderQuality = qualityRequested;
-	if (!isInteracting()) {
-	    if (qualityRequested > currentRenderQuality) {
-		currentRenderQuality = qualityRequested;
-		repaint();
-	    } else {
-		currentRenderQuality = qualityRequested;
-	    }
-	}
+        normalRenderQuality = qualityRequested;
+        if (!isInteracting()) {
+            if (qualityRequested > currentRenderQuality) {
+                currentRenderQuality = qualityRequested;
+                repaint();
+            } else {
+                currentRenderQuality = qualityRequested;
+            }
+        }
     }
 
     /**
@@ -148,7 +151,7 @@ public class ZDrawingSurface implements Printable, Serializable {
      * <code>RENDER_QUALITY_MEDIUM</code> or <code>RENDER_QUALITY_HIGH</code>.
      */
     public int getRenderQuality() {
-	return normalRenderQuality;
+        return normalRenderQuality;
     }
 
     /**
@@ -158,22 +161,45 @@ public class ZDrawingSurface implements Printable, Serializable {
      * <code>RENDER_QUALITY_MEDIUM</code> or <code>RENDER_QUALITY_HIGH</code>.
      */
     public void setInteractingRenderQuality(int qualityRequested) {
-	interactingRenderQuality = qualityRequested;
-	if (isInteracting()) {
-	    if (qualityRequested > currentRenderQuality) {
-		currentRenderQuality = qualityRequested;
-		repaint();
-	    } else {
-		currentRenderQuality = qualityRequested;
-	    }
-	}
+        interactingRenderQuality = qualityRequested;
+        if (isInteracting()) {
+            if (qualityRequested > currentRenderQuality) {
+                currentRenderQuality = qualityRequested;
+                repaint();
+            } else {
+                currentRenderQuality = qualityRequested;
+            }
+        }
     }
 
     /**
      * Determine the render quality that is used during interaction and animation.
      */
     public int getInteractingRenderQuality() {
-	return interactingRenderQuality;
+        return interactingRenderQuality;
+    }
+
+    /**
+     * If set to true, then the fractional font metrics rendering hint is
+     * turned on.  Note that this causes problems with editing Swing text
+     * components on the jazz surface since these components rely on integer
+     * math (as of JDK 1.4.0)
+     * @param useFractionalMetrics Are fractional metrics requested
+     */
+    public void setUseFractionalMetrics(boolean useFractionalMetrics) {
+	if (this.useFractionalMetrics != useFractionalMetrics) {
+	    this.useFractionalMetrics = useFractionalMetrics; 
+	    repaint();
+	}
+    }
+
+
+    /**
+     * Get whether fraction metrics will be used
+     * @return Get whether fractional metrics will be used
+     */
+    public boolean getUseFractionalMetrics() {
+	return useFractionalMetrics;
     }
 
     /**
@@ -181,15 +207,15 @@ public class ZDrawingSurface implements Printable, Serializable {
      * @return The component this surface is attached to, or null if none.
      */
     public JComponent getComponent() {
-	return component;
+        return component;
     }
-    
+
     /**
      * Set the component that this surface is attached to, or null if none.
      * @param aComponent The component this surface is attached to, or null if none.
      */
     public void setComponent(JComponent aComponent) {
-	component = aComponent;
+        component = aComponent;
     }
 
     /**
@@ -198,12 +224,14 @@ public class ZDrawingSurface implements Printable, Serializable {
      * @param camNode The camera's node
      */
     public void setCamera(ZCamera cam, ZNode camNode) {
-	if (camera != null) {
-	    camera.setDrawingSurface(null);
-	}
-	camera = cam;
-	cameraNode = camNode;
-	camera.setDrawingSurface(this);
+        if (camera != null) {
+            camera.setDrawingSurface(null);
+        }
+        camera = cam;
+        cameraNode = camNode;
+        if (camera != null) {
+            camera.setDrawingSurface(this);
+        }
     }
 
     /**
@@ -211,7 +239,7 @@ public class ZDrawingSurface implements Printable, Serializable {
      * @return the camera this surface is associated with.
      */
     public ZCamera getCamera() {
-	return camera;
+        return camera;
     }
 
     /**
@@ -219,7 +247,7 @@ public class ZDrawingSurface implements Printable, Serializable {
      * @return the camera node this surface is associated with.
      */
     public ZNode getCameraNode() {
-	return cameraNode;
+        return cameraNode;
     }
 
     /**
@@ -227,7 +255,7 @@ public class ZDrawingSurface implements Printable, Serializable {
      * @return true if the user is interacting with the surface, false otherwise.
      */
     public boolean isInteracting() {
-	return interacting;
+        return interacting;
     }
 
     /**
@@ -240,23 +268,23 @@ public class ZDrawingSurface implements Printable, Serializable {
      * @param v true if the user is interacting with the surface, false otherwise.
      */
     public void setInteracting(boolean v) {
-	if (v && !interacting) {
-	    interacting = true;
-	    if (interactingRenderQuality > currentRenderQuality) {
-		currentRenderQuality = interactingRenderQuality;
-		repaint();
-	    } else {
-		currentRenderQuality = interactingRenderQuality;
-	    }
-	} else if (!v && interacting) {
-	    interacting = false;
-	    if (normalRenderQuality > currentRenderQuality) {
-		currentRenderQuality = normalRenderQuality;
-		repaint();
-	    } else {
-		currentRenderQuality = normalRenderQuality;
-	    }
-	}
+        if (v && !interacting) {
+            interacting = true;
+            if (interactingRenderQuality > currentRenderQuality) {
+                currentRenderQuality = interactingRenderQuality;
+                repaint();
+            } else {
+                currentRenderQuality = interactingRenderQuality;
+            }
+        } else if (!v && interacting) {
+            interacting = false;
+            if (normalRenderQuality >= currentRenderQuality) {
+                currentRenderQuality = normalRenderQuality;
+                repaint();
+            } else {
+                currentRenderQuality = normalRenderQuality;
+            }
+        }
     }
 
     /**
@@ -265,30 +293,30 @@ public class ZDrawingSurface implements Printable, Serializable {
      * @param v true when animating
      */
     void setAnimating(boolean v) {
-	if (v && !animating) {
-	    animating = true;
-	    if (interactingRenderQuality > currentRenderQuality) {
-		currentRenderQuality = interactingRenderQuality;
-		repaint();
-	    } else {
-		currentRenderQuality = interactingRenderQuality;
-	    }
-	} else if (!v && animating) {
-	    animating = false;
-	    if (normalRenderQuality > currentRenderQuality) {
-		currentRenderQuality = normalRenderQuality;
-		repaint();
-	    } else {
-		currentRenderQuality = normalRenderQuality;
-	    }
-	}
-    }	
+        if (v && !animating) {
+            animating = true;
+            if (interactingRenderQuality > currentRenderQuality) {
+                currentRenderQuality = interactingRenderQuality;
+                repaint();
+            } else {
+                currentRenderQuality = interactingRenderQuality;
+            }
+        } else if (!v && animating) {
+            animating = false;
+            if (normalRenderQuality > currentRenderQuality) {
+                currentRenderQuality = normalRenderQuality;
+                repaint();
+            } else {
+                currentRenderQuality = normalRenderQuality;
+            }
+        }
+    }
 
     /**
      * Determine if view is currently being animated.
      */
     boolean getAnimating() {
-	return animating;
+        return animating;
     }
 
     /**
@@ -298,9 +326,9 @@ public class ZDrawingSurface implements Printable, Serializable {
      * request comes to the head of the Swing event queue and is fired.
      */
     public void repaint() {
-	if (camera != null) {
-	    camera.repaint();
-	}
+        if (camera != null) {
+            camera.repaint();
+        }
     }
 
     /**
@@ -310,22 +338,22 @@ public class ZDrawingSurface implements Printable, Serializable {
      * @param repaintBounds The bounds that need to be redrawn (in global coordinates).
      */
     void repaint(ZBounds repaintBounds) {
-	if (ZDebug.debug && ZDebug.debugRepaint) {
-	    System.out.println("ZDrawingSurface.repaint: repaintBounds = " + repaintBounds);
-	}
+        if (ZDebug.debug && ZDebug.debugRepaint) {
+            System.out.println("ZDrawingSurface.repaint: repaintBounds = " + repaintBounds);
+        }
 
-	if (component != null) {
-				// We need to round conservatively so the repainted area is big enough
-	    tmpRepaintRect.setRect((int)(repaintBounds.getX() - 1.0),
-				   (int)(repaintBounds.getY() - 1.0),
-				   (int)(repaintBounds.getWidth() + 3.0),
-				   (int)(repaintBounds.getHeight() + 3.0));
-	    component.repaint(tmpRepaintRect);
-	}
+        if (component != null) {
+                                // We need to round conservatively so the repainted area is big enough
+            tmpRepaintRect.setRect((int)(repaintBounds.getX() - 1.0),
+                                   (int)(repaintBounds.getY() - 1.0),
+                                   (int)(repaintBounds.getWidth() + 3.0),
+                                   (int)(repaintBounds.getHeight() + 3.0));
+            component.repaint(tmpRepaintRect);
+        }
 
-	if (ZDebug.debug && ZDebug.debugRepaint) {
-	    System.out.println();
-	}
+        if (ZDebug.debug && ZDebug.debugRepaint) {
+            System.out.println();
+        }
     }
 
     /**
@@ -333,32 +361,33 @@ public class ZDrawingSurface implements Printable, Serializable {
      * @param Graphics The graphics to use for rendering.
      */
     public void paint(Graphics g) {
-	Graphics2D g2 = (Graphics2D)g;
+        Graphics2D g2 = (Graphics2D)g;
 
-	Rectangle rectSrc = g2.getClipBounds();
-	ZBounds paintBounds;
-	if (rectSrc == null) {
-	    paintBounds = camera.getBounds();
-	} else {
-	    paintBounds = new ZBounds(rectSrc);
-	}
+        Rectangle rectSrc = g2.getClipBounds();
+        ZBounds paintBounds;
+        if (rectSrc == null) {
+            paintBounds = camera.getBounds();
+        } else {
+            paintBounds = new ZBounds(rectSrc);
+        }
 
-	if (ZDebug.debug && ZDebug.debugRender) {
-	    System.out.println("ZDrawingSurface.paint(ZRenderContext): transform   = " + g2.getTransform());
-	    System.out.println("ZDrawingSurface.paint(ZRenderContext): clip bounds = " + g2.getClipBounds());
-	    System.out.println("ZDrawingSurface.paint(ZRenderContext): paint bounds = " + paintBounds);
-	    ZDebug.clearPaintCount();
-	}
+        if (ZDebug.debug && ZDebug.debugRender) {
+            System.out.println("ZDrawingSurface.paint(ZRenderContext): transform   = " + g2.getTransform());
+            System.out.println("ZDrawingSurface.paint(ZRenderContext): clip bounds = " + g2.getClipBounds());
+            System.out.println("ZDrawingSurface.paint(ZRenderContext): paint bounds = " + paintBounds);
+            ZDebug.clearPaintCount();
+        }
 
-	ZRenderContext rc = camera.createRenderContext(g2, paintBounds, this, currentRenderQuality);
-	camera.getRoot().setCurrentRenderContext(rc);
-	camera.render(rc);
-	camera.getRoot().setCurrentRenderContext(null);
+        ZRenderContext rc = camera.createRenderContext(g2, paintBounds, this, currentRenderQuality);
+	rc.setAccurateSpacing(useFractionalMetrics);
+        camera.getRoot().setCurrentRenderContext(rc);
+        camera.render(rc);
+        camera.getRoot().setCurrentRenderContext(null);
 
-	if (ZDebug.debug && ZDebug.debugRender) {
-	    System.out.println("ZDrawingSurface.paint: Rendered " + ZDebug.getPaintCount() + " objects this pass");
-	    System.out.println("");
-	}
+        if (ZDebug.debug && ZDebug.debugRender) {
+            System.out.println("ZDrawingSurface.paint: Rendered " + ZDebug.getPaintCount() + " objects this pass");
+            System.out.println("");
+        }
     }
 
     /**
@@ -366,16 +395,16 @@ public class ZDrawingSurface implements Printable, Serializable {
      * and marked for future repainting.
      */
     public void paintImmediately() {
-	if (paintingImmediately) {
-				// Stop recursion or paintDirtyRegions will throw an exception
-	    return;
-	}
+        if (paintingImmediately) {
+                                // Stop recursion or paintDirtyRegions will throw an exception
+            return;
+        }
 
-	paintingImmediately = true;
-	if (component != null) {
-	    RepaintManager.currentManager(component).paintDirtyRegions();
-	}
-	paintingImmediately = false;
+        paintingImmediately = true;
+        if (component != null) {
+            RepaintManager.currentManager(component).paintDirtyRegions();
+        }
+        paintingImmediately = false;
     }
 
     /**
@@ -387,7 +416,7 @@ public class ZDrawingSurface implements Printable, Serializable {
      * @return The ZSceneGraphPath to the picked object.
      */
     public ZSceneGraphPath pick(int x, int y) {
-	return pick(x, y, DEFAULT_HALO);
+        return pick(x, y, DEFAULT_HALO);
     }
 
     /**
@@ -400,30 +429,30 @@ public class ZDrawingSurface implements Printable, Serializable {
      * @return The ZSceneGraphPath to the picked object.
      */
     public ZSceneGraphPath pick(int x, int y, int halo) {
-	ZSceneGraphPath path = new ZSceneGraphPath();
+        ZSceneGraphPath path = new ZSceneGraphPath();
 
-	if (camera != null) {
-	    long startTime = 0, pickTime = 0;
-	    if (ZDebug.debug && ZDebug.debugTiming) {
-		startTime = System.currentTimeMillis();
-	    }
+        if (camera != null) {
+            long startTime = 0, pickTime = 0;
+            if (ZDebug.debug && ZDebug.debugTiming) {
+                startTime = System.currentTimeMillis();
+            }
 
-	    ZBounds rect = new ZBounds(x-halo, y-halo, halo+halo, halo+halo);
-	    path.setRoot(camera.getRoot());
-	    path.setTopCamera(camera);
-	    path.setTopCameraNode(cameraNode);
-	    camera.pick(rect, path);
+            ZBounds rect = new ZBounds(x-halo, y-halo, halo+halo, halo+halo);
+            path.setRoot(camera.getRoot());
+            path.setTopCamera(camera);
+            path.setTopCameraNode(cameraNode);
+            camera.pick(rect, path);
 
-	    if (ZDebug.debug && ZDebug.debugTiming) {
-		pickTime = System.currentTimeMillis();
-		System.out.println("ZDrawingSurface.pick: pickTime = " + (pickTime - startTime));
-	    }
-	}
-	if (ZDebug.debug && ZDebug.debugPick) {
-	    System.out.println("ZDrawingSurface.pick: " + path);
-	}
+            if (ZDebug.debug && ZDebug.debugTiming) {
+                pickTime = System.currentTimeMillis();
+                System.out.println("ZDrawingSurface.pick: pickTime = " + (pickTime - startTime));
+            }
+        }
+        if (ZDebug.debug && ZDebug.debugPick) {
+            System.out.println("ZDrawingSurface.pick: " + path);
+        }
 
-	return path;
+        return path;
     }
 
     /**
@@ -439,11 +468,11 @@ public class ZDrawingSurface implements Printable, Serializable {
      * @see ZFindFilter
      */
     public ArrayList findNodes(ZFindFilter filter) {
-	ArrayList nodes = new ArrayList();
-	if (camera != null) {
-	    camera.findNodes(filter, nodes);
-	}
-	return nodes;
+        ArrayList nodes = new ArrayList();
+        if (camera != null) {
+            camera.findNodes(filter, nodes);
+        }
+        return nodes;
     }
 
     /**
@@ -451,22 +480,22 @@ public class ZDrawingSurface implements Printable, Serializable {
      * to print to, and prints the surface.
      */
     public void printSurface() {
-	PrinterJob printJob = PrinterJob.getPrinterJob();
+        PrinterJob printJob = PrinterJob.getPrinterJob();
 
-				// Set up a new book so we can specify the numbe of pages (1)
-	PageFormat pageFormat = printJob.defaultPage();
-	Book book = new Book();
-	book.append(this, pageFormat);
-	printJob.setPageable(book);
+                                // Set up a new book so we can specify the numbe of pages (1)
+        PageFormat pageFormat = printJob.defaultPage();
+        Book book = new Book();
+        book.append(this, pageFormat);
+        printJob.setPageable(book);
 
-	if (printJob.printDialog()) {   // Open up a print dialog
-	    try {
-		printJob.print();	// Then, start the print
-	    } catch (Exception e) {
-		System.out.println("Error Printing");
-		e.printStackTrace();
-	    }
-	}
+        if (printJob.printDialog()) {   // Open up a print dialog
+            try {
+                printJob.print();       // Then, start the print
+            } catch (Exception e) {
+                System.out.println("Error Printing");
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -481,29 +510,29 @@ public class ZDrawingSurface implements Printable, Serializable {
      * @param pageIndex   the zero based index of the page to be drawn
      */
     public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) {
-	if (pageIndex != 0) {
-	    return NO_SUCH_PAGE;
-	}
-	Graphics2D g2 = (Graphics2D)graphics;
+        if (pageIndex != 0) {
+            return NO_SUCH_PAGE;
+        }
+        Graphics2D g2 = (Graphics2D)graphics;
 
-				// translate the graphics to the printable bounds on the page
-	g2.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+                                // translate the graphics to the printable bounds on the page
+        g2.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
 
-				// scale the graphics to the printable bounds on the page
-	ZBounds cameraBounds = camera.getBounds();
-	double scaleFactor = pageFormat.getImageableWidth()/cameraBounds.getWidth();
-	if (pageFormat.getImageableHeight()/cameraBounds.getHeight() < scaleFactor) {
-	    scaleFactor = pageFormat.getImageableHeight()/cameraBounds.getHeight();
-	}
-	g2.scale(scaleFactor, scaleFactor);
+                                // scale the graphics to the printable bounds on the page
+        ZBounds cameraBounds = camera.getBounds();
+        double scaleFactor = pageFormat.getImageableWidth()/cameraBounds.getWidth();
+        if (pageFormat.getImageableHeight()/cameraBounds.getHeight() < scaleFactor) {
+            scaleFactor = pageFormat.getImageableHeight()/cameraBounds.getHeight();
+        }
+        g2.scale(scaleFactor, scaleFactor);
 
-				// paint onto the printer graphics
-	ZRenderContext rc = camera.createRenderContext(g2, new ZBounds(cameraBounds), this, RENDER_QUALITY_HIGH);
-	camera.getRoot().setCurrentRenderContext(rc);
-	camera.render(rc);
-	camera.getRoot().setCurrentRenderContext(null);
+                                // paint onto the printer graphics
+        ZRenderContext rc = camera.createRenderContext(g2, new ZBounds(cameraBounds), this, RENDER_QUALITY_HIGH);
+        camera.getRoot().setCurrentRenderContext(rc);
+        camera.render(rc);
+        camera.getRoot().setCurrentRenderContext(null);
 
-	return PAGE_EXISTS;
+        return PAGE_EXISTS;
     }
 
     /**
@@ -512,8 +541,8 @@ public class ZDrawingSurface implements Printable, Serializable {
      * @see ZDebug#dump
      */
     public String dump() {
-	String str = toString();
-	str += "\n Camera: " + camera;
-	return str;
+        String str = toString();
+        str += "\n Camera: " + camera;
+        return str;
     }
 }

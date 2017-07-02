@@ -1,5 +1,5 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest.utiltest;
@@ -98,25 +98,25 @@ public class ZSceneGraphEditorTest extends TestCase {
         ZAnchorGroup agroup = editor.getAnchorGroup();
         ZFadeGroup fgroup = editor.getFadeGroup();
 
-        assert(editor.hasAnchorGroup());
-        assert(editor.hasFadeGroup());
-        assert(!editor.hasTransformGroup());
+        assertTrue(editor.hasAnchorGroup());
+        assertTrue(editor.hasFadeGroup());
+        assertTrue(!editor.hasTransformGroup());
         editor.removeAnchorGroup();
-        assert(!editor.hasAnchorGroup());
+        assertTrue(!editor.hasAnchorGroup());
     }
 
     public void testRemove() {
         ZAnchorGroup agroup = editor.getAnchorGroup();
         ZFadeGroup fgroup = editor.getFadeGroup();
 
-        assert(editor.hasAnchorGroup());
-        assert(editor.hasFadeGroup());
+        assertTrue(editor.hasAnchorGroup());
+        assertTrue(editor.hasFadeGroup());
 
         editor.removeAnchorGroup();
         editor.removeFadeGroup();
 
-        assert(!editor.hasAnchorGroup());
-        assert(!editor.hasFadeGroup());
+        assertTrue(!editor.hasAnchorGroup());
+        assertTrue(!editor.hasFadeGroup());
     }
 
     public void testCustomEditGroup() {
@@ -128,9 +128,9 @@ public class ZSceneGraphEditorTest extends TestCase {
         node.editor().getAnchorGroup();
         node.editor().getFadeGroup();
         node.editor().getTransformGroup();
-        assert(node.editor().hasTransformGroup());
-        assert(node.editor().hasAnchorGroup());
-        assert(node.editor().hasFadeGroup());
+        assertTrue(node.editor().hasTransformGroup());
+        assertTrue(node.editor().hasAnchorGroup());
+        assertTrue(node.editor().hasFadeGroup());
 
         assertEquals(node.editor().getEditGroup(ZVisualGroup.class), eg);
         assertEquals(node.editor().getEditGroup(ZGroup.class), g);
@@ -141,9 +141,9 @@ public class ZSceneGraphEditorTest extends TestCase {
         ZSceneGraphEditor newEditor = new ZSceneGraphEditor(n);
 
         ZTransformGroup g = newEditor.getTransformGroup();
-        assert(newEditor.hasTransformGroup());
+        assertTrue(newEditor.hasTransformGroup());
         newEditor.removeTransformGroup();
-        assert(!newEditor.hasTransformGroup());
+        assertTrue(!newEditor.hasTransformGroup());
 
         g = newEditor.getTransformGroup();
         assertEquals(g, (new ZSceneGraphEditor(newEditor.getTransformGroup())).getTransformGroup());
@@ -154,12 +154,12 @@ public class ZSceneGraphEditorTest extends TestCase {
         assertEquals(newEditor.getTop(), g);
 
         ZFadeGroup fg = newEditor.getFadeGroup();
-        assert(newEditor.hasTransformGroup());
-        assert(newEditor.hasFadeGroup());
+        assertTrue(newEditor.hasTransformGroup());
+        assertTrue(newEditor.hasFadeGroup());
         newEditor.removeFadeGroup();
-        assert(newEditor.hasTransformGroup());
-        assert(!newEditor.hasFadeGroup());
-        assert(newEditor.getFadeGroup() != fg);
+        assertTrue(newEditor.hasTransformGroup());
+        assertTrue(!newEditor.hasFadeGroup());
+        assertTrue(newEditor.getFadeGroup() != fg);
 
     }
 }

@@ -297,7 +297,11 @@ public class ZBasicVisualComponent extends ZVisualComponent implements ZStroke,
     public void setPenWidth(double width) {
         penWidth = width;
         absPenWidth = false;
-        setVolatileBounds(false);
+
+        if (volatileBounds) {
+            setVolatileBounds(false);
+        }
+
         stroke = new BasicStroke((float)penWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
         reshape();
     }

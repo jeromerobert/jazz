@@ -1,7 +1,3 @@
-/**
- * Copyright (C) 2001-@year@ by University of Maryland, College Park, MD 20742, USA
- * All rights reserved.
- */
 package edu.umd.cs.jazz.animation;
 
 import java.util.*;
@@ -85,6 +81,8 @@ public abstract class ZAnimation {
     private boolean hasSeenFirstFrameOfPlaySequence = false;
     private int fAnimationRateMode = ANIMATION_RATE_BY_NEXT_FRAME;
     private long fAnimationRateValue = 0;
+    private Runnable fStartedRunnable;
+    private Runnable fStoppedRunnable;
 
     /**
      * Construct a new ZAnimation.
@@ -92,7 +90,6 @@ public abstract class ZAnimation {
     public ZAnimation() {
         super();
     }
-
     /**
      * Construct a new ZAnimation.
      *
@@ -102,92 +99,6 @@ public abstract class ZAnimation {
     public ZAnimation(ZAlpha aAlpha) {
         super();
     }
-
-    /**
-     * Return the alpha object used to determine the animations start and finish time,
-     * and to generate any alpha values that it needs when interpolating between values.
-     *
-     * @return the animations alpha object, the default value is null.
-     */
-    public ZAlpha getAlpha() {
-        return fAlpha;
-    }
-
-    /**
-     * Set the alpha object used to determine the animations start and finish time,
-     * and to generate alpha values that it needs when interpolating between values.
-     *
-     * @param aAlpha the alpha
-     */
-    public void setAlpha(ZAlpha aAlpha) {
-        fAlpha = aAlpha;
-    }
-
-    /**
-     * Schedule this animation with the ZAnimationScheduler. Once an animation is constructed it
-     * is necessary to call this method to so that the animation is scheduled.
-     */
-    public void play() {
-        if (isStopped()) {
-            isStopped = false;
-            hasSeenFirstFrameOfPlaySequence = false;
-            scheduleNextFrame();
-        }
-    }
-
-    /**
-     * Temporarily or permanently stop the animation. This will stop any animation frames
-     * that have been scheduled with the ZAnimationScheduler from playing. The animation can
-     * be restarted with <code>play</code> method.
-     */
-    public void stop() {
-        if (!isStopped()) {
-            isStopped = true;
-            animationStopped();
-        }
-    }
-
-    /**
-     * Return true if the animation has been stopped. It can be restarted with
-     * the <code>play</code> method.
-     */
-    public boolean isStopped() {
-        return isStopped;
-    }
-
-    /**
-     * This method makes the animation schedule its frames by elapsed time. For example this
-     * code would make the animation animate one frame per seconds.
-     * <code>animation.animationRateByElapsedTime(1000)</code>.
-     *
-     * @param aElapsedTime the amount of time to wait before animating the next frame of the animation,
-     *                     specified in milliseconds.
-     */
-    public void animationRateByElapsedTime(long aElapsedTime) {
-        fAnimationRateMode = ANIMATION_RATE_BY_ELAPSED_TIME;
-        fAnimationRateValue = aElapsedTime;
-    }
-
-    /**
-     * This method makes the animation schedule its frames by elapsed frames. For example this
-     * code would make the animation animate on every 5th frame.
-     * <code>animation.animationRateByElapsedFrames(5)</code>.
-     *
-     * @param aFramesCount the number of frames to wait until the next frame of this animation is animated.
-     */
-    public void animationRateByElapsedFrames(long aFramesCount) {
-        fAnimationRateMode = ANIMATION_RATE_BY_ELAPSED_FRAMES;
-        fAnimationRateValue = aFramesCount;
-    }
-
-    /**
-     * Make it so that that this animation will be animated on every frame that
-     * the ZAnimationScheduler runs.
-     */
-    public void animationRateByNextFrame() {
-        fAnimationRateMode = ANIMATION_RATE_BY_NEXT_FRAME;
-    }
-
     /**
      * Animate one frame of this animation at the specified time, and
      * schedule a new frame to be animated if the alpha object that is
@@ -211,21 +122,81 @@ public abstract class ZAnimation {
 
         scheduleNextFrame();
     }
-
+    /**
+     * This method makes the animation schedule its frames by elapsed frames. For example this
+     * code would make the animation animate on every 5th frame.
+     * <code>animation.animationRateByElapsedFrames(5)</code>.
+     *
+     * @param aFramesCount the number of frames to wait until the next frame of this animation is animated.
+     */
+    public void animationRateByElapsedFrames(long aFramesCount) {
+        fAnimationRateMode = ANIMATION_RATE_BY_ELAPSED_FRAMES;
+        fAnimationRateValue = aFramesCount;
+    }
+    /**
+     * This method makes the animation schedule its frames by elapsed time. For example this
+     * code would make the animation animate one frame per seconds.
+     * <code>animation.animationRateByElapsedTime(1000)</code>.
+     *
+     * @param aElapsedTime the amount of time to wait before animating the next frame of the animation,
+     *                     specified in milliseconds.
+     */
+    public void animationRateByElapsedTime(long aElapsedTime) {
+        fAnimationRateMode = ANIMATION_RATE_BY_ELAPSED_TIME;
+        fAnimationRateValue = aElapsedTime;
+    }
+    /**
+     * Make it so that that this animation will be animated on every frame that
+     * the ZAnimationScheduler runs.
+     */
+    public void animationRateByNextFrame() {
+        fAnimationRateMode = ANIMATION_RATE_BY_NEXT_FRAME;
+    }
     /**
      * Template method that is called when the first frame of the animation is
      * animated after <code>play</code> has been called.
      */
     protected void animationStarted() {
+        if (fStartedRunnable != null) {
+            fStartedRunnable.run();
+        }
     }
-
     /**
      * Template method that is called when the animation is temporarily stopped with
      * the <code>stop</code> method or when the animation finishes.
      */
     protected void animationStopped() {
+        if (fStoppedRunnable != null) {
+            fStoppedRunnable.run();
+        }
     }
-
+    /**
+     * Return the alpha object used to determine the animations start and finish time,
+     * and to generate any alpha values that it needs when interpolating between values.
+     *
+     * @return the animations alpha object, the default value is null.
+     */
+    public ZAlpha getAlpha() {
+        return fAlpha;
+    }
+    /**
+     * Return true if the animation has been stopped. It can be restarted with
+     * the <code>play</code> method.
+     */
+    public boolean isStopped() {
+        return isStopped;
+    }
+    /**
+     * Schedule this animation with the ZAnimationScheduler. Once an animation is constructed it
+     * is necessary to call this method to so that the animation is scheduled.
+     */
+    public void play() {
+        if (isStopped()) {
+            isStopped = false;
+            hasSeenFirstFrameOfPlaySequence = false;
+            scheduleNextFrame();
+        }
+    }
     /**
      * Schedule the next frame of the animation. This is normaly called as the last statement in
      * <code>animateFrameForTime</code>. It creates a new ZNextFrameCondition and schedules this
@@ -250,11 +221,44 @@ public abstract class ZAnimation {
         }
         scheduleNextFrame(aCondition);
     }
-
     /**
      * Schedules this animation with the given condition with the ZAnimationScheduler.
      */
     protected void scheduleNextFrame(ZNextFrameCondition aCondition) {
         ZAnimationScheduler.instance().scheduleAnimation(this, aCondition);
+    }
+    /**
+     * Set the alpha object used to determine the animations start and finish time,
+     * and to generate alpha values that it needs when interpolating between values.
+     *
+     * @param aAlpha the alpha
+     */
+    public void setAlpha(ZAlpha aAlpha) {
+        fAlpha = aAlpha;
+    }
+    /**
+     * Temporarily or permanently stop the animation. This will stop any animation frames
+     * that have been scheduled with the ZAnimationScheduler from playing. The animation can
+     * be restarted with <code>play</code> method.
+     */
+    public void stop() {
+        if (!isStopped()) {
+            isStopped = true;
+            animationStopped();
+        }
+    }
+
+    /**
+     * Specify a Runnable that will be executed when the animation is started..
+     */
+    public void setStartedRunnable(Runnable aRunnable) {
+        fStartedRunnable = aRunnable;
+    }
+
+    /**
+     * Specify a Runnable that will be executed when the animation is stopped..
+     */
+    public void setStoppedRunnable(Runnable aRunnable) {
+        fStoppedRunnable = aRunnable;
     }
 }

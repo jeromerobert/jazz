@@ -92,9 +92,11 @@ import edu.umd.cs.jazz.component.*;
 
 public class ZCamera extends ZVisualComponent implements ZFillColor, ZTransformable, Serializable {
     /**
-     * The default fill color.
+     * The default fill color. For top level cameras the preferred way of setting
+     * the ZCanvas background color is to set it directly with ZCanvas.setBackground().
+     * This is why the default fill for cameras is set to null.
      */
-    static public final Color  fillColor_DEFAULT = Color.white;
+    static public final Color  fillColor_DEFAULT = null;
 
                                 // The transform that specifies where in space this camera looks.
     private AffineTransform viewTransform;
@@ -370,6 +372,9 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, ZTransforma
 
     /**
      * Set the value of fillColor.
+     * For top level cameras the preferred way of setting the ZCanvas background 
+     * color is to set it directly with ZCanvas.setBackground() instead of setting
+     * the ZCameras fill color.
      * @param v  Value to assign to fillColor.
      */
     public void setFillColor(Color aColor) {
@@ -392,6 +397,7 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, ZTransforma
      * @param x,y,w,h The new bounds of this camera
      */
     public void setBounds(int x, int y, int w, int h) {
+        repaint();
         super.setBounds(new ZBounds(x, y, w, h));
         reshape();
     }
@@ -401,6 +407,7 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, ZTransforma
      * @param newBounds The new bounds of this camera
      */
     public void setBounds(Rectangle2D newBounds) {
+		repaint();
         super.setBounds(new ZBounds(newBounds));
         reshape();
     }
@@ -436,7 +443,7 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, ZTransforma
         super.repaint();        // First pass repaint request up the tree
 
                                 // And then pass it on to the surface looking at this if there is one.
-        if (surface != null) {
+        if (!inTransaction && surface != null) {
             surface.repaint(getBoundsReference());
         }
     }
@@ -454,10 +461,17 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, ZTransforma
             System.out.println("ZCamera.repaint(bounds): this = " + this);
         }
 
-        if (repaintBounds.isEmpty()) {
+        if (inTransaction || repaintBounds.isEmpty()) {
             return;
         }
 
+                                // Set render context based on this camera so that
+                                // context-sensitive objects can compute bounds dependent on it
+        ZRoot root = getRoot();
+
+        if (root != null) {
+            root.setCurrentRenderContext(renderContext);
+        }
                                 // First, map global coords backwards through the camera's view
         tmpBounds.setRect(repaintBounds);
         ZTransformGroup.transform(tmpBounds, viewTransform);
@@ -473,73 +487,19 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, ZTransforma
             return;
         }
         tmpBounds.setRect(x1, y1, x2 - x1, y2 - y1);
-
+        repaintBounds.setRect(tmpBounds);
                                 // Then, pass repaint up the tree
-        parents.collectiveRepaint(tmpBounds);
+        //tmpBounds.setRect(repaintBounds);
+        parents.collectiveRepaint(repaintBounds);
 
                                 // Finally, if this camera is attached to a surface, repaint it.
         if (surface != null) {
             surface.repaint(tmpBounds);
         }
-    }
 
-    /**
-     * This is an internal form of repaint that is only intended to be
-     * used by calls from within Jazz.  It passes repaint requests
-     * up through the camera to other interested camera, and the surface (if there is one).
-     * Note that the transform and clipBounds parameters may be modified as a result of this call.
-     *
-     * @param obj The object to repaint
-     * @param at  The affine transform
-     * @param clipBounds The bounds to clip to when repainting
-     */
-    public void repaint(ZSceneGraphObject obj, AffineTransform at, ZBounds clipBounds) {
-        if (ZDebug.debug && ZDebug.debugRepaint) {
-            System.out.println("ZCamera.repaint(obj, at, bounds): this = " + this);
+        if (root != null) {
+            root.setCurrentRenderContext(null);
         }
-
-                                // Set render context based on this camera so that
-                                // context-sensitive objects can compute bounds dependent on it
-        getRoot().setCurrentRenderContext(renderContext);
-
-        at.preConcatenate(viewTransform);
-
-                                // Now, intersect clip bounds with the camera's bounds
-                                // Note that Rectangle2D.intersect doesn't handle empty intersections properly
-        if (clipBounds == null) {
-            clipBounds = getBounds();
-        } else {
-            ZBounds bounds = getBoundsReference();
-            ZTransformGroup.transform(clipBounds, viewTransform);
-            double x1 = Math.max(clipBounds.getMinX(), bounds.getMinX());
-            double y1 = Math.max(clipBounds.getMinY(), bounds.getMinY());
-            double x2 = Math.min(clipBounds.getMaxX(), bounds.getMaxX());
-            double y2 = Math.min(clipBounds.getMaxY(), bounds.getMaxY());
-            clipBounds.setRect(x1, y1, x2 - x1, y2 - y1);
-        }
-
-                                // Then, pass repaint up the tree
-        ZNode[] parentsRef = parents.getNodesReference();
-        for (int i = 0; i < parents.size(); i++) {
-            parentsRef[i].repaint(obj, at, clipBounds);
-        }
-                                // Finally, if this camera is attached to a surface, repaint it.
-        if (surface != null) {
-            tmpBounds.setRect(obj.getBoundsReference());
-            ZTransformGroup.transform(tmpBounds, at);
-
-                                // Now, intersect those bounds with the camera's bounds
-                                // Note that Rectangle2D.intersect doesn't handle empty intersections properly
-            float x1 = Math.max((float)tmpBounds.getMinX(), (float)clipBounds.getMinX());
-            float y1 = Math.max((float)tmpBounds.getMinY(), (float)clipBounds.getMinY());
-            float x2 = Math.min((float)tmpBounds.getMaxX(), (float)clipBounds.getMaxX());
-            float y2 = Math.min((float)tmpBounds.getMaxY(), (float)clipBounds.getMaxY());
-            if ((x1 < x2) && (y1 < y2)) {
-                tmpBounds.setRect(x1, y1, x2 - x1, y2 - y1);
-                surface.repaint(tmpBounds);
-            }
-        }
-        getRoot().setCurrentRenderContext(null);
     }
 
     /**
@@ -562,9 +522,10 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, ZTransforma
         Shape           saveClip = g2.getClip();
 
                                 // Determine if we are painting the entire camera, or a sub-region
-        if (visibleBounds.contains(cameraBounds)) {
-            paintingWholeCamera = true;
-        }
+								// Blocked to show changes even for painting the entire camera
+//        if (visibleBounds.contains(cameraBounds)) {
+//            paintingWholeCamera = true;
+//        }
 
         renderContext.pushCamera(this);
 
@@ -581,6 +542,11 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, ZTransforma
         paintBounds.reset();
         paintBounds.add(visibleBounds);
         paintBounds.transform(getInverseViewTransformReference());
+
+                                // Added to fix repaint bug in JDK1.4beta 3 when hardware
+                                // acceleration is left on. JG
+        paintBounds.inset(-1, -1);
+
         renderContext.pushVisibleBounds(paintBounds);
 
                                 // Apply the camera view transform
@@ -869,9 +835,9 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, ZTransforma
      */
     public void setViewTransform(AffineTransform transform) {
         originalViewTransform.setTransform(viewTransform);
-        viewTransform = transform;
+        viewTransform.setTransform(transform);
         inverseViewTransformDirty = true;
-        if (hasLisenerOfType(ZCameraListener.class)) {
+        if (hasListenerOfType(ZCameraListener.class)) {
             fireEvent(ZCameraEvent.createViewChangedEvent(this, originalViewTransform));
         }
         repaint();
@@ -891,7 +857,7 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, ZTransforma
         viewTransform.setTransform(m00, m10, m01, m11, m02, m12);
         inverseViewTransformDirty = true;
 
-        if (hasLisenerOfType(ZCameraListener.class)) {
+        if (hasListenerOfType(ZCameraListener.class)) {
             fireEvent(ZCameraEvent.createViewChangedEvent(this, originalViewTransform));
         }
         repaint();
@@ -1628,7 +1594,7 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, ZTransforma
      */
     private void updateViewTransform() {
         inverseViewTransformDirty = true;
-        if (hasLisenerOfType(ZCameraListener.class)) {
+        if (hasListenerOfType(ZCameraListener.class)) {
             fireEvent(ZCameraEvent.createViewChangedEvent(this, originalViewTransform));
         }
 

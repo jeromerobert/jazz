@@ -177,39 +177,20 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
     }
 
     /**
-     * Internal method to compute and cache the volatility of a node,
-     * to recursively call the parents to compute volatility.
-     * All parents of this node are also volatile when this is volatile.
-     * A visual group is volatile if either the node or any of it's visual components
-     * or any of its children are volatile.
-     * @see #setVolatileBounds(boolean)
-     * @see #getVolatileBounds()
+     * Compute the volatileBoundsCache, taking into consideration the front and
+     * back visual components.
      */
-    protected void updateVolatility() {
-                                // If this node set to volatile, then it is volatile
-        cacheVolatile = volatileBounds;
+    protected void computeVolatileBounds() {
+        super.computeVolatileBounds();
 
-                                // Else, if either visual component is volatile, then it is volatile
-        if (!cacheVolatile && frontVisualComponent != null) {
-            cacheVolatile = frontVisualComponent.getVolatileBounds();
-        }
-        if (!cacheVolatile && backVisualComponent != null) {
-            cacheVolatile = backVisualComponent.getVolatileBounds();
-        }
-        if (!cacheVolatile) {
-                                // Else, if any of its children are volatile, then it is volatile
-            ZNode[] childrenRef = getChildrenReference();
-            for (int i=0; i<children.size(); i++) {
-                if (childrenRef[i].getVolatileBounds()) {
-                    cacheVolatile = true;
-                    break;
-                }
+        if (!childrenVolatileBoundsCache) {
+            if (frontVisualComponent != null) {
+                childrenVolatileBoundsCache = frontVisualComponent.getVolatileBounds();
             }
-        }
 
-                                // Update parent's volatility
-        if (parent != null) {
-            parent.updateVolatility();
+            if (!childrenVolatileBoundsCache && backVisualComponent != null) {
+                childrenVolatileBoundsCache = backVisualComponent.getVolatileBounds();
+            }
         }
     }
 
@@ -316,6 +297,34 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
         }
         if (backVisualComponent != null) {
             bounds.add(backVisualComponent.getBoundsReference());
+        }
+    }
+
+    /**
+     * Mark the scenegraph rooted at this node as being in a transaction.
+     */
+    protected void markInTransaction() {
+        super.markInTransaction();
+
+        if (frontVisualComponent != null) {
+            frontVisualComponent.markInTransaction();
+        }
+        if (backVisualComponent != null) {
+            backVisualComponent.markInTransaction();
+        }
+    }
+
+    /**
+     * Mark the scenegraph rooted at this node as not being in a transaction.
+     */
+    protected void markNotInTransaction() {
+        super.markNotInTransaction();
+
+        if (frontVisualComponent != null) {
+            frontVisualComponent.markNotInTransaction();
+        }
+        if (backVisualComponent != null) {
+            backVisualComponent.markNotInTransaction();
         }
     }
 

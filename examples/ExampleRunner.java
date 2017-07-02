@@ -166,6 +166,7 @@ class ExampleRunner extends JFrame {
         v.add(new PortalExample());
         v.add(new RTreeExample());
 	v.add(new ScrollingExample());
+        v.add(new SemanticZoomingExample());
         v.add(new ShapeExample());
         v.add(new SVGExample());
         v.add(new SwingJazzExample());

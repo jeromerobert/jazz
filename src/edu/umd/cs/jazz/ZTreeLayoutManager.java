@@ -94,7 +94,7 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serial
     /**
      * The Current Orientation.
      */
-    protected static int currentOrientation = ORIENT_VERTICAL;
+    protected int currentOrientation = ORIENT_VERTICAL;
 
     /**
      * The Current X Spacing.

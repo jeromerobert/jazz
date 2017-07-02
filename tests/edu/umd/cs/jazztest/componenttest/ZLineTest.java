@@ -1,5 +1,5 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest.componenttest;
@@ -40,7 +40,7 @@ public class ZLineTest extends TestCase {
             ZLine savedLine = (ZLine) ((ZVisualLeaf)result.getChild(0)).getVisualComponent(0);
             doCompare(savedLine, line);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
     }
 
@@ -51,7 +51,7 @@ public class ZLineTest extends TestCase {
             ZLine savedLine = (ZLine) ((ZVisualLeaf)result.getChild(0)).getVisualComponent(0);
             doCompare(savedLine, line);
         } catch (Exception e) {
-            assert(e.toString(), false);
+            assertTrue(e.toString(), false);
         }
     }
 

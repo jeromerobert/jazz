@@ -7,6 +7,7 @@ package edu.umd.cs.jazz;
 import java.awt.*;
 import java.awt.geom.*;
 
+import edu.umd.cs.jazz.event.*;
 import edu.umd.cs.jazz.util.*;
 
 /**
@@ -111,9 +112,9 @@ public class ZHandle extends ZSceneGraphObject {
     }
 
     /**
-     * Return true if the handle is highlighted.
+     * Mark this handles as highlighted if true, not highlighted if false.
      */
-    public void isHighlighted(boolean aBoolean) {
+    public void setIsHighlighted(boolean aBoolean) {
         isHighlighted = aBoolean;
 
         if (handleGroup != null) {
@@ -181,28 +182,67 @@ public class ZHandle extends ZSceneGraphObject {
     }
 
     /**
-     * The handle group that is managing this handle in the scene graph is responsible
-     * for calling this method when appropriate. When creating a custom handle you can
+     * Called by the managing ZHandleGroup when appropriate. Customs handles can
      * override this method to learn when a drag has started.
+     *
+     * @deprecated As of Jazz version 1.3,
+     * replaced by <code>ZHandle.handleStartDrag(double x, double y, ZMouseEvent aEvent)</code>.
      */
     public void handleStartDrag(double x, double y) {
     }
 
     /**
-     * The handle group that is managing this handle in the scene graph is responsible
-     * for calling this method when appropriate. When overriding this method you should remember
-     * to call <code>super.handleDragged</code> so that other handles have a chance to update
-     * their positions.
+     * Called by the managing ZHandleGroup when appropriate. Customs handles can
+     * override this method to learn when a drag has occurred.
+     *
+     * @deprecated As of Jazz version 1.3,
+     * replaced by <code>ZHandle.handleDragged(double x, double y, ZMouseEvent aEvent)</code>.
      */
     public void handleDragged(double dx, double dy) {
         getHandleGroup().relocateHandles();
     }
 
     /**
-     * The handle group that is managing this handle in the scene graph is responsible
-     * for calling this method when appropriate. When creating a custom handle you can
+     * Called by the managing ZHandleGroup when appropriate. Customs handles can
      * override this method to learn when a drag has ended.
+     *
+     * @deprecated As of Jazz version 1.3,
+     * replaced by <code>ZHandle.handleEndDrag(double x, double y, ZMouseEvent aEvent)</code>.
      */
     public void handleEndDrag(double x, double y) {
+    }
+
+    /**
+     * Called by the managing ZHandleGroup when appropriate. Customs handles can
+     * override this method to learn when a drag has started.
+     *
+     * @param x The x coord of the drag start in local coords of the ZHandleGroup.
+     * @param y The y coord of the drag start in local coords of the ZHandleGroup.
+     * @param aEvent The source mouse event that caused the start drag.
+     */
+    public void handleStartDrag(double x, double y, ZMouseEvent aEvent) {
+    }
+
+    /**
+     * Called by the managing ZHandleGroup when appropriate. Customs handles can
+     * override this method to learn when a drag has occurred.
+     *
+     * @param dx The change in the x coord of the drag in local coords of the ZHandleGroup.
+     * @param dy The change in the y coord of the drag in local coords of the ZHandleGroup.
+     * @param aEvent The source mouse event that caused the drag.
+     */
+    public void handleDragged(double dx, double dy, ZMouseEvent aEvent) {
+        getHandleGroup().relocateHandles();
+    }
+
+    /**
+     * Called by the managing ZHandleGroup when appropriate. Customs handles can
+     * override this method to learn when a drag has ended.
+     *
+     * @param x The x coord of the end drag in local coords of the ZHandleGroup.
+     * @param y The y coord of the end drag in local coords of the ZHandleGroup.
+     * @param aEvent The source mouse event that caused the end drag.
+     */
+    public void handleEndDrag(double x, double y, ZMouseEvent aEvent) {
     }
 }

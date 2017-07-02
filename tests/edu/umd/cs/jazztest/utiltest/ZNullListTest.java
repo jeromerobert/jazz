@@ -1,5 +1,5 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest.utiltest;
@@ -37,13 +37,13 @@ public class ZNullListTest extends TestCase {
             in.close();
 
             listIn.getElementData();
-            assert(listIn instanceof ZNullList);
+            assertTrue(listIn instanceof ZNullList);
 
         } catch (IOException e) {
             e.printStackTrace();
-            assert(false);
+            assertTrue(false);
         } catch (ClassNotFoundException e) {
-            assert(false);
+            assertTrue(false);
         }
 
         f.delete();

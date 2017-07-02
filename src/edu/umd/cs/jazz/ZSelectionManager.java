@@ -256,8 +256,9 @@ public class ZSelectionManager {
     public static void unselect(ZNode node) {
         ZSceneGraphEditor editor = node.editor();
         if (editor.hasSelectionGroup()) {
-            fireGroupEvent(ZGroupEvent.NODE_REMOVED,editor.getSelectionGroup(),node);
+	    ZSelectionGroup selectGroup = editor.getSelectionGroup();
             editor.removeSelectionGroup();
+            fireGroupEvent(ZGroupEvent.NODE_REMOVED,selectGroup,node);
         }
     }
 

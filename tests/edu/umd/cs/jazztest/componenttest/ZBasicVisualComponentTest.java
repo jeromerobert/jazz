@@ -1,5 +1,5 @@
 /**
- * Copyright 2000 by University of Maryland, College Park, MD 20742, USA
+ * Copyright 2000-@year@ by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazztest.componenttest;
@@ -12,7 +12,6 @@ import junit.framework.*;
 import edu.umd.cs.jazz.component.*;
 import edu.umd.cs.jazztest.iotest.*;
 import edu.umd.cs.jazz.io.*;
-
 
 /**
  * Unit test for ZBasicVisualComponent.
@@ -36,8 +35,8 @@ public class ZBasicVisualComponentTest extends TestCase {
     public void testAbsPenWidthWithNoRoot() {
         ZRectangle rect = new ZRectangle();
         rect.setAbsPenWidth(3.3);
-        assert(rect.getAbsPenWidth() == 3.3);
-        assert(rect.getPenWidth() == 0);
+        assertTrue(rect.getAbsPenWidth() == 3.3);
+        assertTrue(rect.getPenWidth() == 0);
     }
 
     public void testSaveNoFill() {
@@ -45,17 +44,17 @@ public class ZBasicVisualComponentTest extends TestCase {
 
         try {
             ZPath result = (ZPath) FileSavingSimulator.doSerialize(path);
-            assert(result.getPenPaint() == null);
+            assertTrue(result.getPenPaint() == null);
         } catch (Exception e) {
-            assert(e.getMessage(), false);
+            assertTrue(e.getMessage(), false);
         }
 
         try {
             ZPath result = (ZPath) FileSavingSimulator.doZSerialize(path);
-            assert(result.getPenPaint() == null);
+            assertTrue(result.getPenPaint() == null);
         } catch (Exception e) {
             e.printStackTrace();
-            assert(false);
+            assertTrue(false);
         }
     }
 }

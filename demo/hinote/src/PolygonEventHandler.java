@@ -46,11 +46,20 @@ public class PolygonEventHandler implements ZEventHandler, ZMouseListener, ZMous
     private ZVisualLeaf segmentLeaf; // visual leaf of above
 
     private Point2D  startPoint; // initial start point of polygon. Close polygon to this point.
-    private Point2D  lastClickPoint = new Point2D.Float(); // last point of polygon drawn so far
-    private Point2D pt = new Point2D.Float();	// point clicked
-    private float x, y;	// MouseEvent X,Y coordinates clicked on.
+    private Point2D  lastClickPoint = new Point2D.Double(); // last point of polygon drawn so far
+    private Point2D pt = new Point2D.Double();	// point clicked
+    private double x, y;	// MouseEvent X,Y coordinates clicked on.
     private boolean drawing = false; // true if user is currently drawing a polygon.
     private boolean startNewPolygon = true; // if true, next click will start a new polygon
+				           // Mask out mouse and mouse/key chords
+    private int     all_button_mask   = (MouseEvent.BUTTON1_MASK | 
+					 MouseEvent.BUTTON2_MASK | 
+					 MouseEvent.BUTTON3_MASK | 
+					 MouseEvent.ALT_GRAPH_MASK | 
+					 MouseEvent.CTRL_MASK | 
+					 MouseEvent.META_MASK | 
+					 MouseEvent.SHIFT_MASK | 
+					 MouseEvent.ALT_MASK);
 
     public PolygonEventHandler(HiNoteCore hinote, ZNode node) {
 	this.hinote = hinote;
@@ -76,19 +85,33 @@ public class PolygonEventHandler implements ZEventHandler, ZMouseListener, ZMous
 	}
     }
 
+    /**
+     * Determines if this event handler is active.
+     * @return True if active
+     */
+    public boolean isActive() {
+	return active;
+    }
+
     public void mousePressed(ZMouseEvent e) {
-	if ((e.getModifiers() & MouseEvent.BUTTON1_MASK) == MouseEvent.BUTTON1_MASK) {   // Left button only
+	if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
 	    ZSceneGraphPath path = e.getPath();
 	    ZCamera camera = path.getTopCamera();
 	    camera.getDrawingSurface().setInteracting(true);
 	    
-	    x = (float)e.getX();
-	    y = (float)e.getY();
+				// End polyline at last point if user double-clicks
+	    if  (e.getClickCount() > 1) {
+		endPolyline(e);
+		return;
+	    }
+
+	    x = e.getX();
+	    y = e.getY();
 
 	    if (startNewPolygon) { // first click of a new polygon
 		startNewPolygon = false;
 		drawing = true;
-		startPoint = new Point2D.Float(x, y);
+		startPoint = new Point2D.Double(x, y);
 		path.screenToGlobal(startPoint);
 
 				// a polyline is drawn as the user clicks points building
@@ -116,12 +139,6 @@ public class PolygonEventHandler implements ZEventHandler, ZMouseListener, ZMous
 				// clicks close to the starting point.
 		if (startPoint.distance(pt) < (MINDISTANCE / camera.getMagnification())) {
 		    endPolygon(e);
-		    return;
-		}
-
-				// End polyline at last point if user double-clicks
-		if  (e.getClickCount() > 1) {
-		    endPolyline(e);
 		    return;
 		}
 
@@ -178,7 +195,7 @@ public class PolygonEventHandler implements ZEventHandler, ZMouseListener, ZMous
     }
 
     public void mouseDragged(ZMouseEvent e) {
-	if ((e.getModifiers() & MouseEvent.BUTTON1_MASK) == MouseEvent.BUTTON1_MASK) {   // Left button only
+	if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
 	    ZSceneGraphPath path = e.getPath();
 	    pt.setLocation(e.getX(), e.getY());
 	    path.screenToGlobal(pt);

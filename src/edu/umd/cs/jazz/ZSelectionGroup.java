@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz;
@@ -15,12 +15,23 @@ import edu.umd.cs.jazz.event.*;
 import edu.umd.cs.jazz.component.*;
 
 /**
- * <b>ZSelectionGroup</b> is a group node that represents the selection of
- * a node.
- * It shows it is selected by surrounding its children with a
- * 1 pixel wide line.
- * It provides utility methods of selecting, unselected nodes, and
- * for determining the selected nodes in a sub-tree.
+ * <b>ZSelectionGroup</b> is a visual group node that provides functionality for specifying 
+ * selection. Inserting a selection group in the scenegraph will visually
+ * select its subtree. It has utility methods for selecting and unselecting nodes,
+ * and for determining the selected nodes in a sub-tree.
+ * It manages a visual component that actually represents the selection, and shows
+ * a selected node by surrounding its children with a 1 pixel wide line.
+ * This class could be extended to replace the visual component if an application wants
+ * to define a different visual look.  
+ * <P>
+ * {@link edu.umd.cs.jazz.util.ZSceneGraphEditor} provides a convenience mechanism to locate, create 
+ * and manage nodes of this type.
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
  * @author Ben Bederson
  */
@@ -46,17 +57,6 @@ public class ZSelectionGroup extends ZVisualGroup implements ZSerializable, Seri
     static class SelectionRect extends ZVisualComponent {
 
     	public SelectionRect() { }
-
-	public Object clone() {
-	    SelectionRect copy = new SelectionRect();
-
-	    objRefTable.reset();
-	    copy.duplicateObject(this);
-	    objRefTable.addObject(this, copy);
-	    objRefTable.updateObjectReferences();
-
-	    return copy;
-	}
 
 	public boolean pick(Rectangle2D pickRect, ZSceneGraphPath path) {
 	    return false; // pick handled by SelectionGroup
@@ -119,7 +119,7 @@ public class ZSelectionGroup extends ZVisualGroup implements ZSerializable, Seri
 
     /**
      * Constructs a new ZSelectionGroup.  The node must be attached to a live scenegraph (a scenegraph that is
-     * currently visible) order for it to be visible.
+     * currently visible) in order for it to be visible.
      */
     public ZSelectionGroup () {
 	setFrontVisualComponentPickable(false);
@@ -136,44 +136,6 @@ public class ZSelectionGroup extends ZVisualGroup implements ZSerializable, Seri
 	addChild(child);
     }
 
-    /**
-     * Copies all object information from the reference object into the current
-     * object. This method is called from the clone method.
-     * All ZSceneGraphObjects objects contained by the object being duplicated
-     * are duplicated, except parents which are set to null.  This results
-     * in the sub-tree rooted at this object being duplicated.
-     *
-     * @param refNode The reference node to copy
-     */
-    public void duplicateObject(ZSelectionGroup refNode) {
-	super.duplicateObject(refNode);
-
-	penColor = refNode.penColor;
-    }
-
-
-    /**
-     * Duplicates the current node by using the copy constructor.
-     * The portion of the reference node that is duplicated is that necessary to reuse the node
-     * in a new place within the scenegraph, but the new node is not inserted into any scenegraph.
-     * The node must be attached to a live scenegraph (a scenegraph that is currently visible)
-     * or be registered with a camera directly in order for it to be visible.
-     *
-     * @return A copy of this node.
-     * @see #updateObjectReferences
-     */
-    public Object clone() {
-	ZSelectionGroup copy;
-
-	objRefTable.reset();
-	copy = new ZSelectionGroup();
-	copy.duplicateObject(this);
-	objRefTable.addObject(this, copy);
-	objRefTable.updateObjectReferences();
-
-	return copy;
-    }
-
 
     //****************************************************************************
     //
@@ -185,7 +147,7 @@ public class ZSelectionGroup extends ZVisualGroup implements ZSerializable, Seri
      * Return a list of the selected nodes in the subtree rooted
      * at the specified node (including the root if it is selected).
      * Note that the nodes returned are the nodes at the bottom of
-     * the "decorator chain".  See @link{ZSceneGraphEditor} for
+     * the "decorator chain".  See {@link ZSceneGraphEditor} for
      * more information.
      * @param node The subtree to check for selection
      * @return The list of selected nodes.
@@ -201,7 +163,7 @@ public class ZSelectionGroup extends ZVisualGroup implements ZSerializable, Seri
      * Return a list of the selected nodes in the portion of the
      * scenegraph visible from the specified camera.
      * Note that the nodes returned are the nodes at the bottom of
-     * the "decorator chain".  See @link{ZSceneGraphEditor} for
+     * the "decorator chain".  See {@link ZSceneGraphEditor} for
      * more information.
      * @param camera The camera to look through for selected nodes.
      * @return The list of selected nodes.
@@ -219,7 +181,7 @@ public class ZSelectionGroup extends ZVisualGroup implements ZSerializable, Seri
     /**
      * Select the specified node.
      * If the node is already selected, then do nothing.
-     * This manages the selection as a decorator as described in @link{ZSceneGraphEditor}.
+     * This manages the selection as a decorator as described in {@link ZSceneGraphEditor}.
      * @param node the node to select
      * @return the ZSelectionGroup that represents the selection
      */
@@ -230,7 +192,7 @@ public class ZSelectionGroup extends ZVisualGroup implements ZSerializable, Seri
     /**
      * Unselect the specified node.
      * If the node is not already selected, then do nothing.
-     * This manages the selection as a decorator as described in @link{ZNode}.
+     * This manages the selection as a decorator as described in {@link ZNode}.
      * @param node the node to unselect
      */
     static public void unselect(ZNode node) {
@@ -240,7 +202,7 @@ public class ZSelectionGroup extends ZVisualGroup implements ZSerializable, Seri
     /**
      * Unselect all currently selected nodes in the subtree rooted
      * at the specified node (including the root if it is selected).
-     * This manages the selection as a decorator as described in @link{ZNode}.
+     * This manages the selection as a decorator as described in {@link ZNode}.
      * @param node The subtree to check for selection
      */
     static public void unselectAll(ZNode node) {
@@ -254,7 +216,7 @@ public class ZSelectionGroup extends ZVisualGroup implements ZSerializable, Seri
     /**
      * Unselect all currently selected nodes in the portion of the
      * scenegraph visible from the specified camera.
-     * This manages the selection as a decorator as described in @link{ZNode}.
+     * This manages the selection as a decorator as described in {@link ZNode}.
      * @param camera The camera to look through for selected nodes.
      */
     static public void unselectAll(ZCamera camera) {

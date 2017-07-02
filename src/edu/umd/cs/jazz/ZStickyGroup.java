@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz;
@@ -13,8 +13,9 @@ import edu.umd.cs.jazz.util.*;
 import edu.umd.cs.jazz.event.*;
 
 /**
- * <b>ZStickyGroup</b> is a constraint node that forces the child to always be rendered
- * at a place dependent on the camera view.  There are two types of sticky constraints:
+ * <b>ZStickyGroup</b>  is a constraint group that moves its children inversely to the 
+ * camera view, so that the children stay visually on the same place on
+ * the screen, even as the camera view changes. There are two types of sticky constraints:
  * <ul>
  * <li><b>Sticky</b> constrains the children to be at the same place and size,
  * independent of the camera view.  Thus, as a particular
@@ -32,15 +33,25 @@ import edu.umd.cs.jazz.event.*;
  * a constraint group over a sub-tree that should be sticky.
  * The following code creates a sticky rectangle using this node.
  * <pre>
- *	ZRectangle rect;
- *	ZVisualLeaf leaf;
- *	ZStickyGroup sticky;
+ *     ZRectangle rect;
+ *     ZVisualLeaf leaf;
+ *     ZStickyGroup sticky;
  *
- *	rect = new ZRectangle(0, 0, 50, 50);
- *      leaf = new ZVisualLeaf(rect);
- *	sticky = new ZStickyGroup(camera, leaf);
- *	layer.addChild(sticky);
+ *     rect = new ZRectangle(0, 0, 50, 50);
+ *     leaf = new ZVisualLeaf(rect);
+ *     sticky = new ZStickyGroup(camera, leaf);
+ *     layer.addChild(sticky);
  * </pre>
+ *
+ * <P>
+ * {@link edu.umd.cs.jazz.util.ZSceneGraphEditor} provides a convenience mechanism to locate, create 
+ * and manage nodes of this type.
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
  * @author  Benjamin B. Bederson
  */
@@ -56,8 +67,8 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
     static public final int STICKYZ       = 2;
 
 				// Default values
-    static public float stickyPointX_DEFAULT = 0.5f;
-    static public float stickyPointY_DEFAULT = 0.5f;
+    static public double stickyPointX_DEFAULT = 0.5;
+    static public double stickyPointY_DEFAULT = 0.5;
     static public int constraintType_DEFAULT = STICKY;
 
     /**
@@ -68,17 +79,17 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
     /**
      * The X coord of the point of the child that will be fixed.
      */
-    private float stickyPointX = stickyPointX_DEFAULT;
+    private double stickyPointX = stickyPointX_DEFAULT;
 
     /**
      * The Y coord of the point of the child that will be fixed.
      */
-    private float stickyPointY = stickyPointY_DEFAULT;
+    private double stickyPointY = stickyPointY_DEFAULT;
 
     /**
      * Internal point used for temporary storage.
      */
-    private transient Point2D pt = new Point2D.Float();
+    private transient Point2D pt = new Point2D.Double();
 
     /**
      * Constructs a new sticky group.
@@ -113,44 +124,6 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
 	setCamera(camera);   // Need to set the camera after initialization so that internal defaults are set
     }
 
-    /**
-     * Copies all object information from the reference object into the current
-     * object. This method is called from the clone method.
-     * All ZSceneGraphObjects objects contained by the object being duplicated
-     * are duplicated, except parents which are set to null.  This results
-     * in the sub-tree rooted at this object being duplicated.
-     *
-     * @param refNode The reference node to copy
-     */
-    public void duplicateObject(ZStickyGroup refNode) {
-	super.duplicateObject(refNode);
-
-	constraintType = refNode.constraintType;
-	stickyPointX = refNode.stickyPointX;
-	stickyPointY = refNode.stickyPointY;
-    }
-
-    /**
-     * Duplicates the current node by using the copy constructor.
-     * The portion of the reference node that is duplicated is that necessary to reuse the node
-     * in a new place within the scenegraph, but the new node is not inserted into any scenegraph.
-     * The node must be attached to a live scenegraph (a scenegraph that is currently visible)
-     * or be registered with a camera directly in order for it to be visible.
-     *
-     * @return A copy of this node.
-     * @see #updateObjectReferences
-     */
-    public Object clone() {
-	ZStickyGroup copy;
-
-	objRefTable.reset();
-	copy = new ZStickyGroup();
-	copy.duplicateObject(this);
-	objRefTable.addObject(this, copy);
-	objRefTable.updateObjectReferences();
-
-	return copy;
-    }
 
     //****************************************************************************
     //
@@ -163,7 +136,7 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
      * It also inserts a transform node between the primary node and the sticky node,
      * since a sticky node's transform needs to be under the sticky node.
      * If the node is already sticky, then do nothing.
-     * This manages the sticky node as a decorator as described in @link{ZGroup#setHasOneChild}.
+     * This manages the sticky node as a decorator as described in {@link ZGroup#setHasOneChild}.
      * <p>
      * If the node has a transform decorator, then the sticky node is added above the transform node.
      * @param node The node to make sticky
@@ -202,7 +175,7 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
     /**
      * Make the specified node unsticky.
      * If the node is not already sticky, then do nothing.
-     * This manages the sticky node as a decorator as described in @link{ZNode}.
+     * This manages the sticky node as a decorator as described in {@link ZNode}.
      * @param node The node to make unsticky
      */
     static public void makeUnSticky(ZNode node) {
@@ -243,7 +216,7 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
      * @param x X coordinate of the sticky point of the sticky object.
      * @param y Y coordinate of the sticky point of the sticky object.
      */
-    public void setStickyPoint(float x, float y) {
+    public void setStickyPoint(double x, double y) {
 	stickyPointX = x;
 	stickyPointY = y;
 	updateTransform();
@@ -346,7 +319,7 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
 	AffineTransform at = new AffineTransform();
 
 	if (camera != null) {
-	    float iscale = 1.0f / camera.getMagnification();
+	    double iscale = 1.0 / camera.getMagnification();
 	    ZBounds childrenBounds = new ZBounds();
 	    for (int i=0; i<numChildren; i++) {
 		childrenBounds.add(children[i].getBoundsReference());
@@ -359,8 +332,8 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
 				// This is computed by getting the "fixed" point that is not
 				// supposed to move, and creating a transform that scales
 				// around that point by the inverse of the current camera magnification.
-	    pt.setLocation((float)(childrenBounds.getX() + (stickyPointX * childrenBounds.getWidth())),
-			    (float)(childrenBounds.getY() + (stickyPointY * childrenBounds.getHeight())));
+	    pt.setLocation((childrenBounds.getX() + (stickyPointX * childrenBounds.getWidth())),
+			    (childrenBounds.getY() + (stickyPointY * childrenBounds.getHeight())));
 
 	    at.translate(pt.getX(), pt.getY());
 	    at.scale(iscale, iscale);
@@ -407,10 +380,10 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
 	    out.writeState("int", "constraintType", constraintType);
 	}
 	if (stickyPointX != stickyPointX_DEFAULT) {
-	    out.writeState("float", "stickyPointX", stickyPointX);
+	    out.writeState("double", "stickyPointX", stickyPointX);
 	}
 	if (stickyPointY != stickyPointY_DEFAULT) {
-	    out.writeState("float", "stickyPointY", stickyPointY);
+	    out.writeState("double", "stickyPointY", stickyPointY);
 	}
     }
 
@@ -430,14 +403,14 @@ public class ZStickyGroup extends ZConstraintGroup implements Serializable {
 	if (fieldName.compareTo("constraintType") == 0) {
 	    constraintType = ((Integer)fieldValue).intValue();
 	} else if (fieldName.compareTo("stickyPointX") == 0) {
-	    stickyPointX = ((Float)fieldValue).floatValue();
+	    stickyPointX = ((Double)fieldValue).doubleValue();
 	} else if (fieldName.compareTo("stickyPointY") == 0) {
-	    stickyPointY = ((Float)fieldValue).floatValue();
+	    stickyPointY = ((Double)fieldValue).doubleValue();
 	}
     }
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 	in.defaultReadObject();
-	pt = new Point2D.Float();
+	pt = new Point2D.Double();
     }
 }

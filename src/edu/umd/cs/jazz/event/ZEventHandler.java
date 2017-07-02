@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.event;
@@ -38,5 +38,11 @@ public interface ZEventHandler {
      * @param active True to make this event handler active
      */
     public void setActive(boolean active);
+
+    /**
+     * Determines if this event handler is active.
+     * @return True if active
+     */
+    public boolean isActive();
 }
 

@@ -23,7 +23,7 @@ import edu.umd.cs.jazz.io.*;
 public class PenSelector extends JButton implements Serializable {
 
     protected JPopupMenu popupMenu;
-    protected float penWidth = -1;
+    protected double penWidth = -1;
     protected ToolTipManager toolTipManager;
 
     public PenSelector(JPopupMenu aPopupMenu, ImageIcon icon) {
@@ -32,7 +32,7 @@ public class PenSelector extends JButton implements Serializable {
 	toolTipManager = ToolTipManager.sharedInstance();
     }
 
-    public float getPenWidth() {
+    public double getPenWidth() {
 	return penWidth;
     }
 
@@ -76,7 +76,7 @@ public class PenSelector extends JButton implements Serializable {
 				// Convert label from string "#pt" to int #
 		    if (spt != null) {
 			try {
-			    float pt = Integer.parseInt(spt);
+			    double pt = Integer.parseInt(spt);
 			    if (pt > 0) {
 				penWidth = pt;
 				firePropertyChange("penComponentSelection", -1, penWidth);

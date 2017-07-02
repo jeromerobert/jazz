@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 
@@ -62,6 +62,13 @@ import edu.umd.cs.jazz.util.*;
  * <li>Image
  * </ul>
  * 
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
+ *
  * @author Ben Bederson
  * @author Britt McAlister
  */
@@ -369,8 +376,8 @@ public class ZObjectOutputStream extends OutputStream implements Serializable {
 	    AffineTransform at = (AffineTransform)obj;
 	    double[] matrix = new double[6];
 	    at.getMatrix(matrix);
-	    dos.writeBytes("[" + (float)matrix[0] + " " + (float)matrix[1] + " " + (float)matrix[2] + " " + 
-			   (float)matrix[3] + " " + (float)matrix[4] + " " + (float)matrix[5] + "]");
+	    dos.writeBytes("[" + matrix[0] + " " + matrix[1] + " " + matrix[2] + " " + 
+			   matrix[3] + " " + matrix[4] + " " + matrix[5] + "]");
 	} else if (obj instanceof Image) {
 	    Image image = (Image)obj;
 	    BufferedImage bufferedImage;

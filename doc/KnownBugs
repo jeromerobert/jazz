@@ -49,7 +49,7 @@ This file describes known bugs in Jazz, or bugs in Java that affect Jazz.
     a font that is 0.1 pixels high, you should create a font that is 10
     pixels high, but then set the scale of the corresponding node to 0.01.
 
-    This bug existed as of Sun JDK 1.2.2
+    This bug existed as of Sun JDK 1.3
 
   * 05/07/1999: BBB - Jazz doesn't run within components with Borders.
     It probably never will for various efficiency reasons.  For a workaround,

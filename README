@@ -1,4 +1,4 @@
-This is the Jazz README file for Jazz Version 0.6
+This is the Jazz README file for Jazz Version 1.0
 
 INSTALLATION NOTES
 
@@ -13,7 +13,7 @@ INSTALLATION NOTES
 * The standard 'unzip' utility on Solaris does not respect filename case,
   and leaves files in MS-DOS file format.  If you use unzip on Solaris
   (and possibly other Unix systems), you must specify the -U and -a options.
-  I.e: unzip -U -a jazz-0.6.zip
+  i.e: unzip -U -a jazz-1.0b.zip
  
 INTELLECTUAL PROPERTY NOTES
 
@@ -40,14 +40,6 @@ Notes about Jazz and Open Source:
   License (MPL). Please note that we are using MPL only as a legal
   framework for Jazz to be released as Open Source code. It has nothing
   to do with Netscape or Netscape code.
-
-* This is "pre-release" software, meaning: 
-    - the terms of the license may change; 
-    - the baseline for what constitutes the "Original Code" will 
-      definitely change;
-    - and we don't have all the open source "infrastructure" in place 
-      (such as discussion groups and FTP servers for public posting of
-      modifications).
 
 * We are releasing this code only to the "interested development
   community," meaning that if you download the code, we really want your
@@ -77,13 +69,13 @@ basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See
 the License for the specific language governing rights and limitations
 under the License.
 
-The Original Code is the Jazz Java Zooming Interface v0.5. 
+The Original Code is the Jazz Java Zooming Interface v1.0. 
 
 The Initial Developer of the Original Code is Ben Bederson. Portions
 created by Ben Bederson are Copyright (C) University of Maryland. All
 Rights Reserved.
 
-Contributor(s): Ben Bederson; Britt McAlister; Jim Mokwa; Lance Good" 
+Contributor(s): Ben Bederson; Britt McAlister; Jim Mokwa; Lance Good; Jon Meyer" 
 
 --------------------------------------------------------------------------------
 

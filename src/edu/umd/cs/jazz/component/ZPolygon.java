@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.component;
@@ -16,8 +16,16 @@ import edu.umd.cs.jazz.io.*;
 import edu.umd.cs.jazz.util.*;
 
 /**
- * <b>ZPolygon</b> is a visual component that represents a line
- * with one or more segments.
+ * <b>ZPolygon</b> is a visual component for displaying a polygonal
+ * shape. It has both a pen color (used for the outline) and a fill
+ * color (used to fill the shape).
+ *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
  * @author  Benjamin B. Bederson
  */
@@ -57,7 +65,7 @@ public class ZPolygon extends ZCoordList implements ZFillColor, Serializable {
      * Constructs a new ZPolygon with a single point.
      * @param <code>x,y</code> Initial point
      */
-    public ZPolygon(float x, float y) {
+    public ZPolygon(double x, double y) {
 	super(x, y);
 	setClosed(true);
     }
@@ -67,59 +75,23 @@ public class ZPolygon extends ZCoordList implements ZFillColor, Serializable {
      * @param <code>x,y</code> First point
      * @param <code>x,y</code> Second point
      */
-    public ZPolygon(float x1, float y1, float x2, float y2) {
+    public ZPolygon(double x1, double y1, double x2, double y2) {
 	super(x1, y1, x2, y2);
 	setClosed(true);
     }
 
     /**
-     * Constructs a new ZPolygon.
+     * Constructs a new ZPolygon from an array of points.
      * The xp, yp parameters are stored within this polygon, so the caller
      * must not modify them after passing them in.
      * @param <code>xp</code> Array of X points
      * @param <code>yp</code> Array of Y points
      */
-    public ZPolygon(float[] xp, float[] yp) {
+    public ZPolygon(double[] xp, double[] yp) {
 	super(xp, yp);
 	setClosed(true);
     }
 
-    /**
-     * Copies all object information from the reference object into the current
-     * object. This method is called from the clone method.
-     * All ZSceneGraphObjects objects contained by the object being duplicated
-     * are duplicated, except parents which are set to null.  This results
-     * in the sub-tree rooted at this object being duplicated.
-     *
-     * @param refPoly The reference visual component to copy
-     */
-    public void duplicateObject(ZPolygon refPoly) {
-	super.duplicateObject(refPoly);
-
-	fillColor = refPoly.fillColor;
-    }
-
-    /**
-     * Duplicates the current object by using the copy constructor.
-     * The portion of the reference object that is duplicated is that necessary to reuse the object
-     * in a new place within the scenegraph, but the new object is not inserted into any scenegraph.
-     * The object must be attached to a live scenegraph (a scenegraph that is currently visible)
-     * or be registered with a camera directly in order for it to be visible.
-     *
-     * @return A copy of this visual component.
-     * @see #updateObjectReferences
-     */
-    public Object clone() {
-	ZPolygon copy;
-
-	objRefTable.reset();
-	copy = new ZPolygon();
-	copy.duplicateObject(this);
-	objRefTable.addObject(this, copy);
-	objRefTable.updateObjectReferences();
-
-	return copy;
-    }
 
     //****************************************************************************
     //
@@ -173,6 +145,10 @@ public class ZPolygon extends ZCoordList implements ZFillColor, Serializable {
 
 				// Then, draw pen
 	if (penColor != null) {
+	    if (absPenWidth) {
+		double pw = penWidth / renderContext.getCompositeMagnification();
+		stroke = new BasicStroke((float)pw, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
+	    }
 	    g2.setStroke(stroke);
 	    g2.setColor(penColor);
 	    g2.draw(path);
@@ -180,47 +156,9 @@ public class ZPolygon extends ZCoordList implements ZFillColor, Serializable {
     }
 
     /**
-     * Notifies this object that it has changed and that it should update
-     * its notion of its bounding box.  Note that this should not be called
-     * directly.  Instead, it is called by <code>updateBounds</code> when needed.
-     */
-    protected void computeBounds() {
-	int i;
-	float[] coords = new float[6];
-	float xmin, ymin, xmax, ymax;
-
-	bounds.reset();
-	if (np == 0) {
-	    return;
-	}
-
-	xmin = xp[0];
-	ymin = yp[0];
-	xmax = xp[0];
-	ymax = yp[0];
-	for (i=1; i<np; i++) {
-	    if (xp[i] < xmin) xmin = xp[i];
-	    if (yp[i] < ymin) ymin = yp[i];
-	    if (xp[i] > xmax) xmax = xp[i];
-	    if (yp[i] > ymax) ymax = yp[i];
-	}
-
-				// Expand the bounds to accomodate the pen width
-	if (penColor != null) {
-	    float p2;
-	    p2 = 0.5f * penWidth;
-	    xmin -= p2;
-	    ymin -= p2;
-	    xmax += p2;
-	    ymax += p2;
-	}
-
-	bounds.setRect(xmin, ymin, xmax - xmin, ymax - ymin);
-    }
-
-    /**
      * Returns true if the specified rectangle is on the polygon.
-     * @param <code>rect</code> Pick rectangle of object coordinates.
+     * @param rect Pick rectangle of object coordinates.
+     * @param path The path through the scenegraph to the picked node. Modified by this call.
      * @return True if rectangle overlaps object.
      * @see ZDrawingSurface#pick(int, int)
      */
@@ -229,90 +167,22 @@ public class ZPolygon extends ZCoordList implements ZFillColor, Serializable {
 
 	if (pickBounds(rect)) {
 	    if (fillColor != null) {
-		picked = intersectsPolygon(rect);
+		picked = ZUtil.intersectsPolygon(rect, xp, yp);
 	    }
 	    if (!picked && (penColor != null)) {
-		picked = ZUtil.rectIntersectsPolyline(rect, xp, yp, penWidth);
+		double p;
+		if (absPenWidth) {
+		    ZRenderContext rc = getRoot().getCurrentRenderContext();
+		    double mag = (rc == null) ? 1.0f : rc.getCameraMagnification();
+		    p = penWidth / mag;
+		} else {
+		    p = penWidth;
+		}
+		picked = ZUtil.rectIntersectsPolyline(rect, xp, yp, p);
 	    }
 	}
 
 	return picked;
-    }
-
-    /**
-     * Determines if any part of the rectangle is inside this polygon.
-     * @param rect The rectangle being tested for intersecting this polygon
-     * @return true if the rectangle intersects the polygon
-     */
-    protected boolean intersectsPolygon(Rectangle2D rect) {
-	boolean inside = false;
-
-	// we check each vertix of the rectangle to see if it's inside the polygon
-
-	// check upper left corner
-	inside = isInsidePolygon(new Point2D.Double(rect.getX(), rect.getY()));
-	if (!inside) {
-	    // check upper right corner
-	    inside = isInsidePolygon(new Point2D.Double(rect.getX() + rect.getWidth(), rect.getY()));
-	    if (!inside) {
-		// check lower right corner
-		inside = isInsidePolygon(new Point2D.Double(rect.getX() + rect.getWidth(),
-							   rect.getY() + rect.getHeight()));
-		if (!inside) {
-		    // check lower left corner
-		    inside = isInsidePolygon(new Point2D.Double(rect.getX(),
-							       rect.getY() + rect.getHeight()));
-		    if (!inside) {
-			// if none of the corners are inside of the polygon
-			// we check to see if any of the edges go through the rectangle
-			int i = 0;
-			while (!inside && (i < (np - 1))) {
-			    // for each edge
-			    inside = rect.intersectsLine(new Line2D.Double(xp[i], yp[i],
-									  xp[i + 1], yp[i + 1]));
-
-			    i++;
-			}
-			inside = rect.intersectsLine(new Line2D.Double(xp[np - 1], yp[np - 1],
-								      xp[0], yp[0]));
-		    }
-		}
-	    }
-	}
-
-	return inside;
-    }
-
-    /**
-     * Determines if point is inside this polygon.
-     * @param pt The point being tested for containment within polygon
-     * @return true if the point is inside the polygon
-     */
-    protected boolean isInsidePolygon(Point2D pt) {
-	int i;
-	double angle = 0.0;
-	boolean inside = false;
-	Point2D p1 = new Point2D.Float();
-	Point2D p2 = new Point2D.Float();
-
-	for (i = 0; i < (np - 1); i++) {
-	    p1.setLocation(xp[i], yp[i]);
-	    p2.setLocation(xp[i + 1], yp[i + 1]);
-	    angle += ZUtil.angleBetweenPoints(pt, p1, p2);
-	}
-	p1.setLocation(xp[np - 1], yp[np - 1]);
-	p2.setLocation(xp[0], yp[0]);
-	angle += ZUtil.angleBetweenPoints(pt, p1, p2);
-
-				// Allow for a bit of rounding
-				// Ideally, angle should be 2*pi.
-	if (java.lang.Math.abs(angle) > 6.2) {
-	    inside = true;
-	} else {
-	    inside = false;
-	}
-
-	return inside;
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -331,9 +201,6 @@ public class ZPolygon extends ZCoordList implements ZFillColor, Serializable {
 	if ((fillColor != null) && (fillColor != DEFAULT_FILL_COLOR)) {
 	    out.writeState("java.awt.Color", "fillColor", fillColor);
 	}
-	if (getPenWidth() != DEFAULT_PEN_WIDTH) {
-	    out.writeState("float", "penWidth", getPenWidth());
-	}
     }
 
     /**
@@ -351,8 +218,6 @@ public class ZPolygon extends ZCoordList implements ZFillColor, Serializable {
 
 	if (fieldName.compareTo("fillColor") == 0) {
 	    setFillColor((Color)fieldValue);
-	} else if (fieldName.compareTo("penWidth") == 0) {
-	    setPenWidth(((Float)fieldValue).floatValue());
 	}
     }
 }

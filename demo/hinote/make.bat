@@ -18,17 +18,26 @@ GOTO end
 :all
 ECHO Compiling HiNote...
 
-xcopy /S /Q resources\*.* src\classes\resources\
+REM Compile HiNote source .java files, importing jazz classes above
 cd src
 javac -d classes -classpath ..\..\..\src\classes *.java
+
+REM Create demo/hinote/hinote.jar, including hinote manifest file
 cd classes
-jar -cfm ..\..\hinote.jar ..\..\resources\hinote.manifest *.class resources\*.gif
-cd ..\..\..\..\src\classes
+jar -cfm ..\..\hinote.jar ..\..\resources\hinote.manifest *.class
+
+REM Add resources to hinote.jar
+cd ..\..
+jar -uf hinote.jar resources\*.gif
+
+REM Add jazz classes to demo/hinote/hinote.jar
+cd ..\..\src\classes
 jar -uf ..\..\demo\hinote\hinote.jar edu
+
+REM Create demo/hinote/resources/help.jar containing "about.jazz" and "using.jazz"
 cd ..\..\demo\hinote\resources
 jar -cfm help.jar help.manifest about.jazz using.jazz
-copy help.jar ..\src\classes\resources
-copy help.jar ..
+
 cd ..
 ECHO Build Finished
 GOTO end
@@ -42,7 +51,7 @@ ECHO Clean Finished
 GOTO end
 
 :rundemo
-java -classpath "..\..\src\classes;src\classes" HiNote
+java -classpath "..\..\src\classes;src\classes;." HiNote
 GOTO end
 
 :end

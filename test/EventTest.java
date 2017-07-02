@@ -48,22 +48,22 @@ public class EventTest extends JFrame {
 	    public void mouseEntered(ZMouseEvent e) {
 		ZNode node1 = e.getNode();
 		ZVisualLeaf leaf1 = (ZVisualLeaf)node1;
-		ZRectangle rect1 = (ZRectangle)leaf1.getVisualComponent();
+		ZRectangle rect1 = (ZRectangle)leaf1.getFirstVisualComponent();
 		rect1.setPenColor(Color.blue);
 	    }
 	    public void mouseExited(ZMouseEvent e) {
 		ZNode node1 = e.getNode();
 		ZVisualLeaf leaf1 = (ZVisualLeaf)node1;
-		ZRectangle rect1 = (ZRectangle)leaf1.getVisualComponent();
+		ZRectangle rect1 = (ZRectangle)leaf1.getFirstVisualComponent();
 		rect1.setPenColor(Color.red);
 	    }
 	    public void mousePressed(ZMouseEvent e) {
 		ZNode node = e.getNode();
-		node.editor().getFadeGroup().setAlpha(0.5f);
+		node.editor().getFadeGroup().setAlpha(0.5);
 	    }
 	    public void mouseReleased(ZMouseEvent e) {
 		ZNode node = e.getNode();
-		node.editor().getFadeGroup().setAlpha(1.0f);
+		node.editor().getFadeGroup().setAlpha(1.0);
 	    }
 	});
 	leaf.addMouseMotionListener(new ZMouseMotionAdapter() {

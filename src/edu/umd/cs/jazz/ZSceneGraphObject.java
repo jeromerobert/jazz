@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz;
@@ -7,6 +7,7 @@ package edu.umd.cs.jazz;
 import java.io.*;
 import java.io.IOException;
 import java.awt.geom.AffineTransform;
+import java.util.Iterator;
 
 import edu.umd.cs.jazz.io.*;
 import edu.umd.cs.jazz.util.*;
@@ -26,36 +27,50 @@ import edu.umd.cs.jazz.util.*;
  * of the local coordinate system to the global coordinate system is determined by the
  * series of transforms between that object, and the root of the scenegraph.
  * <P>
- * All Jazz operations occur in local coordinates.  For instance, coordinates and rectangles
- * object receiving those parameters.  In addition, objects cache their bounds within in
- * their local coordinates.  This is efficient because it means that if an object changes
- * itself, none of its ancestors need to be notified in any way.
+ * All Jazz operations occur in local coordinates.  For instance, coordinates of rectangles
+ * are specified in local coordinates.  In addition, objects maintain a bounding box which is
+ * stored in local coordinates. 
+ * <P> See the Jazz Tutorial for a more complete description of the scene graph.
+ *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
  * @author  Ben Bederson
  * @see     ZNode
  * @see     ZVisualComponent
  */
-public abstract class ZSceneGraphObject implements ZSerializable, Serializable {
+public abstract class ZSceneGraphObject implements ZSerializable, Serializable, Cloneable {
 				// Default values
     static public final boolean volatileBounds_DEFAULT = false;    // True if this node has volatile bounds (shouldn't be cached)
 
     /**
      * The single instance of the object reference table used for cloning scenegraph trees.
      */
-    static protected ZObjectReferenceTable objRefTable = ZObjectReferenceTable.getInstance();
+    private static ZObjectReferenceTable objRefTable = ZObjectReferenceTable.getInstance();
+    
+    /**
+     * Used to detect recursive calls to clone.
+     */
+    private static boolean inClone;
 
     /**
-     * The bounds occupied by this object in its own local coordinate system.
-     * These bounds are not affected by this node's parents.
-     * These bounds represent any content that this node contains
-     * (including any elements stored by subtypes).
+     * The bounding rectangle occupied by this object in its own local coordinate system.
+     * Conceptually, the bounding rectangle is defined as the minimum rectangle that
+     * would surround all of the geometry drawn by the node and its children. The bounding
+     * rectangle's coordinates are in the node's local coordinates. That is, they are 
+     * independant of any viewing transforms, or of transforms performed by parents 
+     * of the node.
      */
     protected ZBounds bounds;
 
     /**
      *  True if this node is specifically set to have volatile bounds
      */
-    private boolean volatileBounds = volatileBounds_DEFAULT;
+    protected boolean volatileBounds = volatileBounds_DEFAULT;
 
     //****************************************************************************
     //
@@ -76,28 +91,17 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable {
 	bounds = new ZBounds();
     }
 
-    /**
-     * Copies all object information from the reference object into the current
-     * object. This method is called from the clone method.
-     * All ZSceneGraphObjects objects contained by the object being duplicated
-     * are duplicated, except parents which are set to null.  This results
-     * in the sub-tree rooted at this object being duplicated.
-     *
-     * @param refObj The reference object to copy
-     */
-    public void duplicateObject(ZSceneGraphObject refObj) {
-	if (refObj.bounds != null) {
-	    bounds = (ZBounds)(refObj.bounds.clone());
-	}
-	volatileBounds = refObj.volatileBounds;
-    }
 
    /**
      * Return a copy of the bounds of the subtree rooted at this node in local coordinates.
      * If a valid cached value is available, this method returns it.  If a
      * valid cache is not available (i.e. the object is volatile) then the bounds are
      * recomputed, cached and then returned to the caller.
+     * <P>
+     * If the object is a context-sensitive object, then it may compute the bounds
+     * based on the current render context.
      * @return The bounds of the subtree rooted at this in local coordinates.
+     * @see ZRoot#getCurrentRenderContext
      */
     public ZBounds getBounds() {
 	if (getVolatileBounds()) {
@@ -113,7 +117,7 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable {
      * recomputed, cached and then returned to the caller.
      * @return The bounds of the subtree rooted at this in local coordinates.
      */
-    ZBounds getBoundsReference() {
+    protected ZBounds getBoundsReference() {
 	if (getVolatileBounds()) {
 	    computeBounds();
 	}
@@ -123,7 +127,7 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable {
     /**
      * Internal method to specify the bounds of this object.
      */
-    void setBounds(ZBounds newBounds) {
+    protected void setBounds(ZBounds newBounds) {
 	bounds = newBounds;
     }
 
@@ -204,13 +208,16 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable {
      * @return true if this node is volatile
      * @see #setVolatileBounds(boolean)
      */
-    public final boolean getVolatileBounds() {
+    public boolean getVolatileBounds() {
 	return volatileBounds;
     }
 
     /**
      * Specifies whether or not this node is volatile.
      * All parents of this node are also volatile when this is volatile.
+     * <p>
+     * Volatile objects are those objects that change regularly, such as an object
+     * that is animated, or one whose rendering depends on its context.
      * @param v the new specification of whether this node is volatile.
      * @see #getVolatileBounds()
      */
@@ -230,14 +237,102 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable {
     }
 
     /**
-     * Manage dangling references when scenegraph objects are cloned.
-     * This gets called after a sub-graph of the scenegraph has been cloned,
-     * and it is this method's responsibility to update any internal references
-     * to the original portions of the scenegraph.  Subtypes that define new
-     * references should override this method to manage their references.
-     * @param objRefTable The table that maintains the relationships between cloned objects.
+     * Creates a copy of this scene graph object and all its children.<p>
+     *
+     * ZSceneGraphObject.duplicateObject() calls Object.clone() on this object, and
+     * returns the newly cloned object. This results in a shallow copy of the object.<p>
+     *
+     * Subclasses override this method to modify the cloning behavior
+     * for nodes in the scene graph. Typically, subclasses first invoke super.duplicateObject()
+     * to get the default cloning behavior, and then take additional actions after this.
+     * In particular, ZGroup.duplicateObject() first invokes super.duplicateObject(), 
+     * and then calls duplicateObject() on all of the children in the group, so that the whole
+     * tree beneath the group is cloned.
+     *
+     * Applications do not call duplicateObject directly. Instead, 
+     * ZSceneGraphObject.clone() is used clone a scene graph object.
      */
-    public void updateObjectReferences(ZObjectReferenceTable objRefTable) {
+    protected Object duplicateObject() {
+	ZSceneGraphObject newObject;
+	try {
+	    newObject = (ZSceneGraphObject)super.clone();
+	} catch (CloneNotSupportedException e) {
+	    throw new RuntimeException("Object.clone() failed: " + e);
+	}
+
+	if (bounds != null) {
+	    newObject.bounds = (ZBounds)(bounds.clone());
+	}
+
+	objRefTable.addObject(this, newObject);
+
+	return newObject;
+    }
+
+    /**
+     * Updates references to scene graph nodes after a clone operation.<p>
+     *
+     * This method is invoked on cloned objects after the clone operation has been
+     * completed. The objRefTable parameter is a table mapping from the original
+     * uncloned objects to their newly cloned versions. Subclasses override this
+     * method to update any internal references they have to scene graph nodes.
+     * For example, ZNode's updateObjectReferences does:
+     * 
+     * <pre>
+     *	    super.updateObjectReferences(objRefTable);
+     *
+     *	    // Set parent to point to the newly cloned parent, or to 
+     *	    // null if the parent object was not cloned.
+     *      parent = (ZNode)objRefTable.getNewObjectReference(parent);
+     * </pre>
+     *
+     * @param objRefTable Table mapping from uncloned objects to their cloned versions.
+     */
+    protected void updateObjectReferences(ZObjectReferenceTable objRefTable) {
+
+	if (!inClone) {
+	    throw new RuntimeException("ZSceneGraphObject.updateObjectReferences: Called outside of a clone");
+	}
+
+    }
+
+
+    /**
+     * Clones this scene graph object and all its children and returns the newly 
+     * cloned sub-tree. Applications must then add the sub-tree to the scene graph
+     * for it to become visible.
+     *
+     * @return A cloned copy of this object.
+     */
+    public Object clone() {
+	Object newObject;
+
+	if (inClone) {
+
+	    // Recursive call of clone (e.g. by a group to copy its children)
+	    newObject = duplicateObject();
+
+	} else {
+	    try {
+		inClone = true;
+		objRefTable.reset();
+		newObject = duplicateObject();
+		
+		// Updates cloned objects. This iterates through all the cloned 
+		// objects in the reference table, notifying them to update their
+		// internal references, passing in a reference
+		// to objRefTable so it can be queried for original/new object mappings.
+
+		for (Iterator iter = objRefTable.iterator() ; iter.hasNext() ;) {
+		    ZSceneGraphObject clonedObject = (ZSceneGraphObject) iter.next();
+		    clonedObject.updateObjectReferences(objRefTable);
+		}
+
+	    } finally {
+		inClone = false;
+	    }
+	}
+	return newObject;
     }
 
     /**
@@ -251,8 +346,8 @@ public abstract class ZSceneGraphObject implements ZSerializable, Serializable {
 	if (b.isEmpty()) {
 	    str += ": Bounds = [Empty]";
 	} else {
-	    str += ": Bounds = [x=" + (float)b.getX() + ", y=" + (float)b.getY() +
-		", w=" + (float)b.getWidth() + ", h=" + (float)b.getHeight() + "]";
+	    str += ": Bounds = [x=" + b.getX() + ", y=" + b.getY() +
+		", w=" + b.getWidth() + ", h=" + b.getHeight() + "]";
 	}
 	if (getVolatileBounds()) {
 	    str += "\n Volatile";

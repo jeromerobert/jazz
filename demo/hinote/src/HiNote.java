@@ -318,13 +318,13 @@ class ApplicationMenuBar extends JMenuBar {
 	qualityGroup.add(radioButton);
 	radioButton.setMnemonic('M');
 	radioButton.addItemListener(cmdTable.lookupItemListener("med-quality"));
-	radioButton.setSelected(true);
 	edit.add(radioButton);
 
 	radioButton = new JRadioButtonMenuItem("High Quality");
 	qualityGroup.add(radioButton);
 	radioButton.setMnemonic('Q');
 	radioButton.addItemListener(cmdTable.lookupItemListener("high-quality"));
+	radioButton.setSelected(true);
 	edit.add(radioButton);
 	
 	return edit;
@@ -338,6 +338,11 @@ class ApplicationMenuBar extends JMenuBar {
 	menuItem = new JMenuItem("Image ...");
 	menuItem.setMnemonic('m');
 	menuItem.addActionListener(cmdTable.lookupActionListener("insert image"));
+	insert.add(menuItem);
+
+	menuItem = new JMenuItem("File ...");
+	menuItem.setMnemonic('f');
+	menuItem.addActionListener(cmdTable.lookupActionListener("insert file"));
 	insert.add(menuItem);
 
 	return insert;
@@ -431,6 +436,11 @@ class ApplicationMenuBar extends JMenuBar {
 	menuItem.addActionListener(cmdTable.lookupActionListener("dump scenegraph"));
 	debug.add(menuItem);
 
+	menuItem = new JMenuItem("Browse Scene graph");
+	menuItem.setMnemonic('O');
+	menuItem.addActionListener(cmdTable.lookupActionListener("showTreeView"));
+	debug.add(menuItem);
+
 	debug.addSeparator();
 
         checkBox = new JCheckBoxMenuItem("Debug Rendering");
@@ -472,6 +482,22 @@ class ApplicationMenuBar extends JMenuBar {
         checkBox.addItemListener(cmdTable.lookupItemListener("double buffer"));
 	checkBox.setSelected(true);
         debug.add(checkBox);
+
+	debug.addSeparator();
+
+	menuItem = new JMenuItem("Index a Group");
+	menuItem.setMnemonic('I');
+	menuItem.addActionListener(cmdTable.lookupActionListener("rtree index"));
+	debug.add(menuItem);
+
+	menuItem = new JMenuItem("UnIndex a Group");
+	menuItem.setMnemonic('J');
+	menuItem.addActionListener(cmdTable.lookupActionListener("rtree unindex"));
+	debug.add(menuItem);
+
+	menuItem = new JMenuItem("Dump RTree");
+	menuItem.addActionListener(cmdTable.lookupActionListener("dump rtree"));
+	debug.add(menuItem);
 
 	return debug;
     }

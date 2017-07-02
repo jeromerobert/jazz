@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz;
@@ -12,47 +12,106 @@ import edu.umd.cs.jazz.io.*;
 import edu.umd.cs.jazz.util.*;
 
 /**
- * <b>ZFadeGroup</b> is a group node that has control over transparency of itself (and sub-tree),
- * and its minimum and maximum magnification.
+ * <b>ZFadeGroup</b> is a group node that controls transparency and fading of its
+ * sub-tree. Inserting a fade node into the tree lets you control transparency
+ * and minimum/maximum magnification of all its descendants. If this node is rendered
+ * below its minimum magnification, or above its maximum magnification, it and its
+ * children will not be rendered. The node and its subtree will be smoothly faded
+ * out as the minimum or maximum magnification is approached.
+ * <P>
+ * Four types of fading have been implemented,
+ * selected with the setFadeType method:<P>
+ * <b>CAMERA_MAG</b> fades a node on camera magnification.<BR>
+ * <b>COMPOSITE_MAG</b> fades on composite camera magnification.<BR>
+ * <b>ABSOLUTE_SCREEN_SIZE</b> fades on absolute screen size in pixels.<BR>
+ * <b>PERCENT_OF_CAMERA</b> fades on percentage of the camera size.
+ *
+ * <P>
+ * {@link edu.umd.cs.jazz.util.ZSceneGraphEditor} provides a convenience mechanism to locate, create 
+ * and manage nodes of this type.
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
  * @author Ben Bederson
  */
 public class ZFadeGroup extends ZGroup implements ZSerializable, Serializable {
+    /**
+     * FadeType: Fade on camera magnification.
+     */
+    static public final short CAMERA_MAG = 0;
+
+    /**
+     * FadeType: Fade on composite magnification.
+     */
+    static public final short COMPOSITE_MAG = 1;
+
+    /**
+     * FadeType: Fade on absolute screen size in pixels.
+     */
+    static public final short ABSOLUTE_SCREEN_SIZE = 2;
+
+    /**
+     * FadeType: Fade on percentage of camera size.
+     */
+    static public final short PERCENT_OF_CAMERA = 3;
+
 				// Default values
-    static public final float   alpha_DEFAULT = 1;
-    static public final float   minMag_DEFAULT = 0.0f;
-    static public final float   maxMag_DEFAULT = 1000.0f;
+    static public final short   fadeType_DEFAULT = CAMERA_MAG;
+    static public final double   alpha_DEFAULT = 1;
+    static public final double   minMag_DEFAULT = 0.0;
+    static public final double   maxMag_DEFAULT = 1000.0;
+    static public final double   fadeRange_DEFAULT = 0.3f;
 
     static private final int    NUM_ALPHA_LEVELS = 16;    // The number of pre-allocated alpha levels
-    static private final float  MIN_FADE_RANGE = 1.3f;    // The range over which objects fade to minimum magnification
-    static private final float  MAX_FADE_RANGE = 0.7f;    // The range over which objects fade to maximum magnification
 
     static private Composite alphas[] = null;             // The pre-allocated alpha levels
+
+    /**
+     * Type of fading: can be CAMERA_MAG, COMPOSITE_MAG, ABSOLUTE_SCREEN_SIZE
+     * or PERCENT_OF_CAMERA
+     */
+    private short fadeType = fadeType_DEFAULT;
 
     /**
      * The alpha value that will be applied to the transparency (multiplicitively) of the graphics
      * context during render.
      */
-    private float alpha = alpha_DEFAULT;
+    private double alpha = alpha_DEFAULT;
 
     /**
      * The minimum magnification that this node gets rendered at.
      */
-    private float minMag = minMag_DEFAULT;
+    private double minMag = minMag_DEFAULT;
 
     /**
      * The maximum magnification that this node gets rendered at.
      */
-    private float maxMag = maxMag_DEFAULT;
+    private double maxMag = maxMag_DEFAULT;
+
+    /**
+     * The percentage of magnification change over which an object is faded in or out
+     * as it reaches its minimum or maximum magnification.
+     * A value of 0 means there is no fading at all and the object just jumps in
+     * and out of visibility.  A value of 0.3 is reasonable, meaning it fades
+     * in and out over 30% of its size.
+     */
+    private double fadeRange = fadeRange_DEFAULT;
+
+    private AffineTransform tmpTransform = new AffineTransform();
+
 
     static {
 				// Allocate the pre-computed alpha composites the first time a fade group is used.
-	float value;
+	double value;
 	alphas = new Composite[NUM_ALPHA_LEVELS];
 
 	for (int i=0; i<NUM_ALPHA_LEVELS; i++) {
-	    value = (float)i / (NUM_ALPHA_LEVELS - 1);
-	    alphas[i] = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, value);
+	    value = (double)i / (NUM_ALPHA_LEVELS - 1);
+	    alphas[i] = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float)value);
 	}
     }
 
@@ -76,49 +135,6 @@ public class ZFadeGroup extends ZGroup implements ZSerializable, Serializable {
 	super(child);
     }
 
-
-    /**
-     * Copies all object information from the reference object into the current
-     * object. This method is called from the clone method.
-     * All ZSceneGraphObjects objects contained by the object being duplicated
-     * are duplicated, except parents which are set to null.  This results
-     * in the sub-tree rooted at this object being duplicated.
-     *
-     * @param refNode The reference node to copy
-     */
-    public void duplicateObject(ZFadeGroup refNode) {
-	super.duplicateObject(refNode);
-
-	alpha = refNode.alpha;
-	minMag = refNode.minMag;
-	maxMag = refNode.maxMag;
-    }
-
-    /**
-     * Duplicates the current node by using the copy constructor.
-     * The portion of the reference node that is duplicated is that necessary to reuse the node
-     * in a new place within the scenegraph, but the new node is not inserted into any scenegraph.
-     * The node must be attached to a live scenegraph (a scenegraph that is currently visible)
-     * or be registered with a camera directly in order for it to be visible.
-     * <P>
-     * In particular, the visual component associated with this group gets duplicated
-     * along with the subtree.
-     *
-     * @return A copy of this node.
-     * @see #updateObjectReferences
-     */
-    public Object clone() {
-	ZFadeGroup copy;
-
-	objRefTable.reset();
-	copy = new ZFadeGroup();
-	copy.duplicateObject(this);
-	objRefTable.addObject(this, copy);
-	objRefTable.updateObjectReferences();
-
-	return copy;
-    }
-
     //****************************************************************************
     //
     // Get/Set pairs
@@ -126,11 +142,11 @@ public class ZFadeGroup extends ZGroup implements ZSerializable, Serializable {
     //***************************************************************************
 
     /**
-     * Set the alpha value (opacity) for this node.  Alpha values are applied
+     * Get the alpha value (opacity) for this node.  Alpha values are applied
      * multiplicitively with the current alpha values at render time.
      * @return The alpha value for this node.
      */
-    public float getAlpha() {
+    public double getAlpha() {
 	return alpha;
     }
 
@@ -143,12 +159,12 @@ public class ZFadeGroup extends ZGroup implements ZSerializable, Serializable {
      *
      * @param alpha The new alpha value for this node.
      */
-    public void setAlpha(float alpha) {
+    public void setAlpha(double alpha) {
 	if (this.alpha != alpha) {
-	    if (alpha < 0.0f) {
-		alpha = 0.0f;
-	    } else if (alpha > 1.0f) {
-		alpha = 1.0f;
+	    if (alpha < 0.0) {
+		alpha = 0.0;
+	    } else if (alpha > 1.0) {
+		alpha = 1.0;
 	    }
 	    this.alpha = alpha;
 	    repaint();
@@ -156,56 +172,126 @@ public class ZFadeGroup extends ZGroup implements ZSerializable, Serializable {
     }
 
     /**
-     * Get the minimumn magnification for this node.
+     * Get the minimumn magnification for this node, as defined by the fade type.
      * @return The minimum magnification of this node
      */
-    public float getMinMag() {
+    public double getMinMag() {
 	return minMag;
     }
 
     /**
-     * Set the minimumn magnification for this node.  This node will not be rendered
+     * Set the minimumn magnification for this node. <BR> This node will not be rendered
      * when the current rendering camera's magnification is less than then specified
      * minimum magnification for this node.  The node with smoothly fade from its
      * regular opacity to completely transparent during a small magnification range
      * just before the minimum magnification is reached.  This transparency control
      * affects the entire sub-tree rooted at this node.  The minimum magnification
-     * has a minimum value of 0, and is clamped to that value.
+     * has a minimum value of 0, and is clamped to that value.<P>
+     * If fade type is CAMERA_MAG, then minMag is the minimum magnification for this 
+     * node.<BR>
+     * If fade type is COMPOSITE_MAG, then minMag is the minimum composite
+     * magnification for this node.<BR>
+     * if fade type is ABSOLUTE_SCREEN_SIZE, then minMag is the minimum size of the
+     * node in pixels.<BR>
+     * if fade type is PERCENT_OF_CAMERA, then minMag is the minimum size, as a
+     * percentage of the camera size.<BR>
      *
      * @param minMag The new minimumn magnification for this node.
      */
-    public void setMinMag(float minMag) {
-	if (minMag < 0.0f) {
-	    minMag = 0.0f;
+    public void setMinMag(double minMag) {
+	if (minMag < 0.0) {
+	    minMag = 0.0;
 	}
 	this.minMag = minMag;
 	repaint();
     }
 
     /**
-     * Get the maximum magnification for this node.
+     * Get the maximum magnification for this node, as defined by the fade type.
      * @return The maximum magnification of this node
      */
-    public float getMaxMag() {
+    public double getMaxMag() {
 	return maxMag;
     }
 
     /**
-     * Set the maximumn magnification for this node.  This node will not be rendered
+     * Set the maximumn magnification for this node. <BR> This node will not be rendered
      * when the current rendering camera's magnification is greater than then specified
      * maximum magnification for this node.  The node with smoothly fade from its
      * regular opacity to completely transparent during a small magnification range
      * just before the maximum magnification is reached.  This transparency control
      * affects the entire sub-tree rooted at this node.  To disable the maximum magnification
-     * feature, set the value to any negative value.
+     * feature, set the value to any negative value.<P>
+     * If fade type is CAMERA_MAG, then maxMag is the maximum magnification for this 
+     * node.<BR>
+     * If fade type is COMPOSITE_MAG, then maxMag is the maximum composite
+     * magnification for this node.<BR>
+     * if fade type is ABSOLUTE_SCREEN_SIZE, then maxMag is the maximum size of the
+     * node in pixels.<BR>
+     * if fade type is PERCENT_OF_CAMERA, then maxMag is the maximum size, as a
+     * percentage of the camera size.<BR>
      *
      * @param maxMag The new maximumn magnification for this node.
      */
-    public void setMaxMag(float maxMag) {
+    public void setMaxMag(double maxMag) {
 	this.maxMag = maxMag;
 	repaint();
     }
 
+    /**
+     * Sets the percentage of magnification change over which an object is faded in or out
+     * as it reaches its minimum or maximum magnification.
+     * A value of 0 means there is no fading at all and the object just jumps in
+     * and out of visibility.  A value of 0.3 is reasonable, meaning it fades
+     * in and out over 30% of its size.  The input is clamped between 0 and 1.
+     * @param fadeRange the new fade range [0, 1]
+     */
+    public void setFadeRange(double fadeRange) {
+	if (fadeRange < 0.0) {
+	    fadeRange = 0.0;
+	}
+	if (fadeRange > 1.0) {
+	    fadeRange = 1.0;
+	}
+	this.fadeRange = fadeRange;
+    }
+
+    /**
+     * Returns the current fade range of this node.
+     * @return the current fade range
+     * @see #setFadeRange
+     */
+    public double getFadeRange() {
+	return fadeRange;
+    }
+
+    /**
+     * Set the type of fading that this node implements.
+     * Must be CAMERA_MAG, COMPOSITE_MAG, ABSOLUTE_SCREEN_SIZE or PERCENT_OF_CAMERA.<BR>
+     * CAMERA_MAG fades a node on camera magnification.<BR>
+     * COMPOSITE_MAG fades on composite camera magnification.<BR>
+     * ABSOLUTE_SCREEN_SIZE fades on absolute screen size in pixels.<BR>
+     * PERCENT_OF_CAMERA fades on percentage of the camera size.
+     * @param fadeType The fade type for this node.
+     */
+    public void setFadeType(short aFadeType) {
+	if ((aFadeType != CAMERA_MAG) &&
+	    (aFadeType != COMPOSITE_MAG) &&
+	    (aFadeType != ABSOLUTE_SCREEN_SIZE) &&
+	    (aFadeType != PERCENT_OF_CAMERA)) {
+	    throw new Error("Fade type must be: CAMERA_MAG, COMPOSITE_MAG, ABSOLUTE_SCREEN_SIZE or PERCENT_OF_CAMERA");
+	} else {
+	    fadeType = aFadeType;
+	}
+    }
+
+    /**
+     * Determine the type of fading that this node implements.
+     * @return They fade type.
+     */
+    public int getFadeType() {
+	return fadeType;
+    }
 
     //****************************************************************************
     //
@@ -214,16 +300,80 @@ public class ZFadeGroup extends ZGroup implements ZSerializable, Serializable {
     //***************************************************************************
 
     /**
-     * Determines if this fade node is visible at the specified magnification.
-     * @param mag The magnification to check at
+     * Computes the composite magnification by climbing the scenegraph path.
+     * @param path A scenegraph path.
+     */
+    private double getCompositeMag(ZSceneGraphPath path) {
+	tmpTransform.setToIdentity();
+	int n = path.getNumParents();
+	ZSceneGraphObject obj;
+	for (int i=0; i<n; i++) {
+	    obj = path.getParent(i);
+	    if (obj instanceof ZCamera) {
+		tmpTransform.concatenate(((ZCamera)obj).getViewTransform());
+	    } else if (obj instanceof ZTransformGroup) {
+		tmpTransform.concatenate(((ZTransformGroup)obj).getTransform());
+	    }
+	}
+	return ZTransformGroup.computeScale(tmpTransform);
+    }
+
+    /**
+     * Determines if this fade node is visible.
+     * @param path A scenegraph path.
+     * @return True if this node is visible at the current magnification.
+     */
+    public boolean isVisible(ZSceneGraphPath path) {
+	if (path == null) {
+	    return false;
+	}
+
+	ZCamera camera = path.getCamera();
+	double currentMag = camera.getMagnification();
+	double metric = currentMag;
+	switch(fadeType) {
+	    
+	case CAMERA_MAG:
+	    metric = currentMag;
+	    break;
+
+	case COMPOSITE_MAG:
+	    metric = getCompositeMag(path);
+	    break;
+
+	case ABSOLUTE_SCREEN_SIZE:
+	    double objSize = Math.max(getBounds().getWidth(),
+					    getBounds().getHeight());
+	    metric = objSize * getCompositeMag(path);
+	    break;
+
+	case PERCENT_OF_CAMERA:
+	    Rectangle2D cameraView = camera.getViewBounds();
+	    Rectangle2D nodeBounds = editor().getNode().getGlobalBounds();
+	    double objWidth = nodeBounds.getWidth();
+	    double objHeight = nodeBounds.getHeight();
+	    if (objWidth > objHeight) {
+		metric =  objWidth / cameraView.getWidth();
+	    } else {
+		metric = objHeight / cameraView.getHeight();
+	    }
+	    break;
+	}
+	return isVisible(metric);
+    }
+
+    /**
+     * Internal method: determines if this fade node is visible at the specified
+     * magnification.
+     * @param metric The magnification, as defined by fade type.
      * @return True if this node is visible at the specified magnification.
      */
-    public boolean isVisible(float mag) {
+    public boolean isVisible(double metric) {
 	boolean visible;
 
-	if ((alpha == 0.0f) ||
-	    (mag < minMag) ||
-	    ((maxMag >= 0) && (mag > maxMag))) {
+	if ((alpha == 0.0) ||
+	    (metric < minMag) ||
+	    ((maxMag >= 0) && (metric > maxMag))) {
 
 	    visible = false;
 	} else {
@@ -234,27 +384,29 @@ public class ZFadeGroup extends ZGroup implements ZSerializable, Serializable {
     }
 
     /**
-     * Internal method to compute and access an alpha Composite given the current rendering
-     * composite, and the current magnification.  It determines the alpha based
-     * on this node's alpha value, minimum magnification, and maximum magnification.
+     * Internal method to compute and access an alpha Composite given the current 
+     * rendering composite, and the current metric. The metric can be magnification,
+     * composite magnification, absolute size in pixels, or percentage of camera
+     * size in pixels, depending on fadeType. This method determines the alpha based
+     * on this node's alpha value, minimum metric, and maximum metric.
      * @param currentComposite The composite in the current render context
-     * @param currentMag The magnification of the current rendering camera
+     * @param currentMag The metric of the current rendering camera
      * @return Composite The Composite to use to render this node
      */
-    protected Composite getComposite(Composite currentComposite, float currentMag) {
-	float newAlpha = alpha;
-	float maxMagFadeStart;
-	float minMagFadeStart;
+    protected Composite getComposite(Composite currentComposite, double metric) {
+	double newAlpha = alpha;
+	double maxMagFadeStart;
+	double minMagFadeStart;
 
 				// Assume that there is NO overlap between min and max mag fading...
 				// beware the assignment inside the first clause of both if conditions
-	if ((maxMag >= 0) && (currentMag > (maxMagFadeStart = maxMag * MAX_FADE_RANGE))) {
+	if ((maxMag >= 0) && (metric > (maxMagFadeStart = maxMag * (1.0 - fadeRange)))) {
 
-	    newAlpha *= (maxMag - currentMag)  / (maxMag - maxMagFadeStart);
+	    newAlpha *= (maxMag - metric)  / (maxMag - maxMagFadeStart);
 
-	} else if ((currentMag < (minMagFadeStart = minMag * MIN_FADE_RANGE))) {
+	} else if ((metric < (minMagFadeStart = minMag * (1.0 + fadeRange)))) {
 
-	    newAlpha *= (currentMag - minMag)  / (minMagFadeStart - minMag);
+	    newAlpha *= (metric - minMag)  / (minMagFadeStart - minMag);
 	}
 
 	if ((currentComposite != null) &&
@@ -263,7 +415,7 @@ public class ZFadeGroup extends ZGroup implements ZSerializable, Serializable {
 	    newAlpha *= ((AlphaComposite)currentComposite).getAlpha();
 	}
 
-	if (newAlpha == 1.0f) {
+	if (newAlpha == 1.0) {
 	    return currentComposite;
 	} else {
 	    return alphas[(int)(newAlpha * NUM_ALPHA_LEVELS)];
@@ -284,20 +436,54 @@ public class ZFadeGroup extends ZGroup implements ZSerializable, Serializable {
      */
     public void render(ZRenderContext renderContext) {
 	Graphics2D      g2 = renderContext.getGraphics2D();
-	Composite       saveComposite = g2.getComposite();
-	float           currentMag = renderContext.getCameraMagnification();
+	Composite       saveComposite = null;
+	double           metric = 1;
 
+				// Apply transparency for this node (if fading enabled)
+	switch(fadeType) {
+	    
+	case CAMERA_MAG:
+	    metric = renderContext.getCameraMagnification();
+	    break;
+
+	case COMPOSITE_MAG:
+	    metric = renderContext.getCompositeMagnification();
+	    break;
+
+	case ABSOLUTE_SCREEN_SIZE:
+	    double objSize = Math.max(getBounds().getWidth(),
+					    getBounds().getHeight());
+	    metric = objSize * renderContext.getCompositeMagnification();
+	    break;
+
+	case PERCENT_OF_CAMERA:
+	    Rectangle2D cameraView = renderContext.getRenderingCamera().getViewBounds();
+	    Rectangle2D nodeBounds = editor().getNode().getGlobalBounds();
+	    double objWidth = nodeBounds.getWidth();
+	    double objHeight = nodeBounds.getHeight();
+	    if (objWidth > objHeight) {
+		metric =  objWidth / cameraView.getWidth();
+	    } else {
+		metric = objHeight / cameraView.getHeight();
+	    }
+	    break;
+	}
 				// Don't paint nodes that are invisible, too big or too small
-	if (!isVisible(currentMag)) {
+	if (!isVisible(metric)) {
 	    return;
 	}
+				// Apply transparency for this node (if fading enabled)
+	if (fadeRange > 0.0) {
+	    saveComposite = g2.getComposite();
+	    g2.setComposite(getComposite(saveComposite, metric));
+	}
 
-				// Apply transparency for this node
-	g2.setComposite(getComposite(saveComposite, currentMag));
 				// Render node
 	super.render(renderContext);
 				// Restore graphics state
-	g2.setComposite(saveComposite);
+	if (fadeRange > 0.0) {
+	    g2.setComposite(saveComposite);
+	}
     }
 
     //****************************************************************************
@@ -318,16 +504,16 @@ public class ZFadeGroup extends ZGroup implements ZSerializable, Serializable {
      * Instead, this node will be returned if any children are picked, or if this node's
      * visual component is picked.  Else, it will return null.
      * @param rect Coordinates of pick rectangle in local coordinates
-     * @param mag The magnification of the camera being picked within.
+     * @param path The path through the scenegraph to the picked node. Modified by this call.
      * @return The picked node, or null if none
-     * @see ZDrawingSurface#pick(int, int);
+     * @see ZDrawingSurface#pick(int, int)
      */
     public boolean pick(Rectangle2D rect, ZSceneGraphPath path) {
 				// Don't pick nodes that are invisible, too big or too small
-	if (!isVisible((float)ZTransformGroup.computeScale(path.getTransform()))) {
+	if (!isVisible(path)) {
 	    return false;
 	}
-				// Use super's pick method
+				// If not faded out, use super's pick method
 	return super.pick(rect, path);
     }
 
@@ -345,13 +531,19 @@ public class ZFadeGroup extends ZGroup implements ZSerializable, Serializable {
 	super.writeObject(out);
 
 	if (alpha != alpha_DEFAULT) {
-	    out.writeState("float", "alpha", alpha);
+	    out.writeState("double", "alpha", alpha);
 	}
 	if (minMag != minMag_DEFAULT) {
-	    out.writeState("float", "minMag", minMag);
+	    out.writeState("double", "minMag", minMag);
 	}
 	if (maxMag != maxMag_DEFAULT) {
-	    out.writeState("float", "maxMag", maxMag);
+	    out.writeState("double", "maxMag", maxMag);
+	}
+	if (fadeRange != fadeRange_DEFAULT) {
+	    out.writeState("double", "fadeRange", fadeRange);
+	}
+	if (fadeType != fadeType_DEFAULT) {
+	    out.writeState("short", "fadeType", fadeType);
 	}
     }
 
@@ -377,11 +569,15 @@ public class ZFadeGroup extends ZGroup implements ZSerializable, Serializable {
 	super.setState(fieldType, fieldName, fieldValue);
 
 	if (fieldName.compareTo("alpha") == 0) {
-	    alpha = ((Float)fieldValue).floatValue();
+	    alpha = ((Double)fieldValue).doubleValue();
 	} else if (fieldName.compareTo("minMag") == 0) {
-	    minMag = ((Float)fieldValue).floatValue();
+	    minMag = ((Double)fieldValue).doubleValue();
 	} else if (fieldName.compareTo("maxMag") == 0) {
-	    maxMag = ((Float)fieldValue).floatValue();
+	    maxMag = ((Double)fieldValue).doubleValue();
+	} else if (fieldName.compareTo("fadeRange") == 0) {
+	    fadeRange = ((Double)fieldValue).doubleValue();
+	} else if (fieldName.compareTo("fadeType") == 0) {
+	    fadeType = ((Short)fieldValue).shortValue();
 	}
     }
 }

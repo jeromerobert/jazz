@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz;
@@ -13,7 +13,15 @@ import edu.umd.cs.jazz.io.*;
 import edu.umd.cs.jazz.util.*;
 
 /**
- * <b>ZVisualGroup</b> is a group node that has a visual component that can be rendered.
+ * <b>ZVisualGroup</b> is a group node that has a visual components that can be rendered.
+ * It has two visual components (either or both of which could be null) which get rendered
+ * before and after the node's children, respectively.  
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
  * @author Ben Bederson
  */
@@ -86,98 +94,24 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
     }
 
     /**
-     * Copies all object information from the reference object into the current
-     * object. This method is called from the clone method.
-     * All ZSceneGraphObjects objects contained by the object being duplicated
-     * are duplicated, except parents which are set to null.  This results
-     * in the sub-tree rooted at this object being duplicated.
+     * Returns a clone of this object.
      *
-     * @param refNode The reference node to copy
+     * @see ZSceneGraphObject#duplicateObject
      */
-    public void duplicateObject(ZVisualGroup refNode) {
-	super.duplicateObject(refNode);
+    protected Object duplicateObject() {
+	ZVisualGroup newGroup = (ZVisualGroup)super.duplicateObject();
+	
+	if (frontVisualComponent != null) {
+	    newGroup.frontVisualComponent = (ZVisualComponent)frontVisualComponent.clone();
+	}
 
-	frontVisualComponentPickable = refNode.frontVisualComponentPickable;
-	backVisualComponentPickable = refNode.backVisualComponentPickable;
-
-	try {
-				// Need to use reflection to call 'duplicateObject' method
-				// in order to get the method called on the right object type.
-	    if (frontVisualComponent != null) {
-		Class cl = refNode.frontVisualComponent.getClass();
-		frontVisualComponent = (ZVisualComponent)cl.newInstance();
-		Class[] parameterTypes = new Class[1];
-		parameterTypes[0] = cl;
-		Method method = cl.getMethod("duplicateObject", parameterTypes);
-		Object[] args = new Object[1];
-		args[0] = refNode.frontVisualComponent;
-		method.invoke(frontVisualComponent, args);
-
-		objRefTable.addObject(refNode.frontVisualComponent, frontVisualComponent);
-	    }
-	    if (backVisualComponent != null) {
-		Class cl = refNode.backVisualComponent.getClass();
-		backVisualComponent = (ZVisualComponent)cl.newInstance();
-		Class[] parameterTypes = new Class[1];
-		parameterTypes[0] = cl;
-		Method method = cl.getMethod("duplicateObject", parameterTypes);
-		Object[] args = new Object[1];
-		args[0] = refNode.backVisualComponent;
-		method.invoke(backVisualComponent, args);
-
-		objRefTable.addObject(refNode.backVisualComponent, backVisualComponent);
-	    }
-	}
-	catch (IllegalAccessException e) {
-	    System.out.println("ZVisualLeaf.duplicateObject: " + e);
-	}
-	catch (IllegalArgumentException e) {
-	    System.out.println("ZVisualLeaf.duplicateObject: " + e);
-	}
-	catch (InvocationTargetException e) {
-	    System.out.println("ZVisualLeaf.duplicateObject: " + e);
-	}
-	catch (NullPointerException e) {
-	    System.out.println("ZVisualLeaf.duplicateObject: " + e);
-	}
-	catch (InstantiationException e) {
-	    System.out.println("ZVisualLeaf.duplicateObject: " + e);
-	}
-	catch (ExceptionInInitializerError e) {
-	    System.out.println("ZVisualLeaf.duplicateObject: " + e);
-	}
-	catch (SecurityException e) {
-	    System.out.println("ZVisualLeaf.duplicateObject: " + e);
-	}
-	catch (NoSuchMethodException e) {
-	    System.out.println("ZVisualLeaf.duplicateObject: " + e);
-	}
+	if (backVisualComponent != null) {
+	    newGroup.backVisualComponent = (ZVisualComponent)backVisualComponent.clone();
+	}	
+	
+	return newGroup;
     }
 
-    /**
-     * Duplicates the current node by using the copy constructor.
-     * The portion of the reference node that is duplicated is that necessary to reuse the node
-     * in a new place within the scenegraph, but the new node is not inserted into any scenegraph.
-     * The node must be attached to a live scenegraph (a scenegraph that is currently visible)
-     * or be registered with a camera directly in order for it to be visible.
-     * <P>
-     * In particular, the visual component associated with this group gets duplicated
-     * along with the subtree.
-     *
-     * @return A copy of this node.
-     * @see #updateObjectReferences
-     */
-    public Object clone() {
-	ZVisualGroup copy;
-
-	objRefTable.reset();
-	copy = new ZVisualGroup();
-	copy.duplicateObject(this);
-	objRefTable.addObject(this, copy);
-	objRefTable.updateObjectReferences();
-
-	return copy;
-    }
 
     /**
      * Set the front visual component associated with this group node.
@@ -199,6 +133,7 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
 	if (frontVisualComponent != null) {
 	    frontVisualComponent.addParent(this);
 	}
+	updateVolatility();
 	reshape();
     }
 
@@ -230,6 +165,7 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
 	if (backVisualComponent != null) {
 	    backVisualComponent.addParent(this);
 	}
+	updateVolatility();
 	reshape();
     }
 
@@ -252,28 +188,26 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      */
     protected void updateVolatility() {
 				// If this node set to volatile, then it is volatile
-	cacheVolatile = getVolatileBounds();
-	if (!cacheVolatile) {
-				// Else, if either visual component is volatile, then it is volatile
-	    if (frontVisualComponent != null) {
-		cacheVolatile = frontVisualComponent.getVolatileBounds();
-		if (!cacheVolatile) {
-		    if (backVisualComponent != null) {
-			cacheVolatile = backVisualComponent.getVolatileBounds();
-			if (!cacheVolatile) {
+	cacheVolatile = volatileBounds;
 
-				// Else, if any of its children are volatile, then it is volatile
-			    for (int i=0; i<numChildren; i++) {
-				if (children[i].getVolatileBounds()) {
-				    cacheVolatile = true;
-				    break;
-				}
-			    }
-			}
-		    }
-		}
-	    }
+
+			        // Else, if either visual component is volatile, then it is volatile
+	if (!cacheVolatile && frontVisualComponent != null) {
+	    cacheVolatile = frontVisualComponent.getVolatileBounds();
 	}
+	if (!cacheVolatile && backVisualComponent != null) {
+	    cacheVolatile = backVisualComponent.getVolatileBounds();
+	}
+	if (!cacheVolatile) {
+                                // Else, if any of its children are volatile, then it is volatile
+	    for (int i=0; i<numChildren; i++) {
+		if (children[i].getVolatileBounds()) {
+		    cacheVolatile = true;
+		    break;
+		}
+	    }	    
+	}
+
 				// Update parent's volatility
 	if (parent != null) {
 	    parent.updateVolatility();
@@ -358,7 +292,7 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
 	    if (ZDebug.showBounds) {
 		Graphics2D g2 = renderContext.getGraphics2D();
 		g2.setColor(new Color(60, 60, 60));
-		g2.setStroke(new BasicStroke(1.0f / renderContext.getCompositeMagnification(),
+		g2.setStroke(new BasicStroke((float)(1.0 / renderContext.getCompositeMagnification()),
 					     BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER));
 		if (frontVisualComponent != null) {
 		    g2.draw(frontVisualComponent.getBoundsReference());
@@ -408,9 +342,9 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
      * Instead, this node will be returned if any children are picked, or one of this node's
      * visual components is picked.  Else, it will return null.
      * @param rect Coordinates of pick rectangle in local coordinates
-     * @param mag The magnification of the camera being picked within.
+     * @param path The path through the scenegraph to the picked node. Modified by this call.
      * @return The picked node, or null if none
-     * @see ZDrawingSurface#pick(int, int);
+     * @see ZDrawingSurface#pick(int, int)
      */
     public boolean pick(Rectangle2D rect, ZSceneGraphPath path) {
 
@@ -418,7 +352,11 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
 	if (isFrontVisualComponentPickable() && (frontVisualComponent != null)) {
 	    path.push(this);
 	    if (frontVisualComponent.pick(rect, path)) {
-	    	path.setObject(frontVisualComponent);
+		if (!(frontVisualComponent instanceof ZCamera)) {
+				// Set object here rather than in component so components don't
+				// have to worry about implementation of paths.
+		    path.setObject(frontVisualComponent);
+		}
 		return true;
 	    }
 	    path.pop(this);
@@ -431,7 +369,11 @@ public class ZVisualGroup extends ZGroup implements ZSerializable, Serializable 
 	if (isBackVisualComponentPickable() && (backVisualComponent != null)) {
 	    path.push(this);
 	    if (backVisualComponent.pick(rect, path)) {
-		path.setObject(backVisualComponent);
+		if (!(backVisualComponent instanceof ZCamera)) {
+				// Set object here rather than in component so components don't
+				// have to worry about implementation of paths.
+		    path.setObject(backVisualComponent);
+		}
 		return true;
 	    }
 	    path.pop(this);

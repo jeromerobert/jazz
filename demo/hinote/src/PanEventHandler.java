@@ -17,10 +17,19 @@ import edu.umd.cs.jazz.component.*;
  *
  * @author  Benjamin B. Bederson
  */
-public class PanEventHandler extends ZPanEventHandler implements Serializable {
+public class PanEventHandler extends ZPanEventHandler implements KeyListener, Serializable {
     private ZCanvas canvas = null;
     private ZNode currentNode = null;
     private ZAnchorGroup link = null;
+				                    // Mask out mouse and mouse/key chords
+    private int            all_button_mask   = (MouseEvent.BUTTON1_MASK | 
+						MouseEvent.BUTTON2_MASK | 
+						MouseEvent.BUTTON3_MASK | 
+						MouseEvent.ALT_GRAPH_MASK | 
+						MouseEvent.CTRL_MASK | 
+						MouseEvent.META_MASK | 
+						MouseEvent.SHIFT_MASK | 
+						MouseEvent.ALT_MASK);
 
     public PanEventHandler(ZNode node, ZCanvas canvas) {
 	super(node);
@@ -35,6 +44,7 @@ public class PanEventHandler extends ZPanEventHandler implements Serializable {
 		link.setVisible(true, canvas.getCamera());
 		if ((link.getDestNode() != null) || (link.getDestBounds() != null)) {
 		    canvas.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		    canvas.addKeyListener(this);
 		}
 	    }
 	}
@@ -47,6 +57,7 @@ public class PanEventHandler extends ZPanEventHandler implements Serializable {
 	    if (link != null) {
 		link.setVisible(false, null);
 		canvas.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+		canvas.removeKeyListener(this);
 	    }
 	}
     }
@@ -95,12 +106,36 @@ public class PanEventHandler extends ZPanEventHandler implements Serializable {
     public void mouseReleased(ZMouseEvent e) {
 	super.mouseReleased(e);
 
-	if ((e.getModifiers() & MouseEvent.BUTTON1_MASK) == MouseEvent.BUTTON1_MASK) {   // Left button only
+	if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
 	    if (!isMoved()) {
 		if (currentNode != null) {
 		    followLink(currentNode);
 		}
 	    }
 	}
+    }
+
+    public void keyPressed(KeyEvent e) {
+				// if a link is visible, and the delete key is pressed,
+				// delete the link
+	if (e.getKeyChar() == KeyEvent.VK_DELETE) {
+	    if (currentNode != null) {
+		ZSceneGraphEditor editor = currentNode.editor();
+		if (editor.hasAnchorGroup()) {
+		    ZAnchorGroup link = editor.getAnchorGroup();
+		    if (link != null) {
+			link.setVisible(false, null);
+			link.extract();
+			currentNode = null;
+		    }
+		}
+	    }
+	}
+    }
+
+    public void keyReleased(KeyEvent e) {
+    }
+
+    public void keyTyped(KeyEvent e) {
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz;
@@ -17,6 +17,13 @@ import edu.umd.cs.jazz.util.*;
  * A visual component primarily implements three methods: paint(), pick(), and computeBounds().
  * New sub-classes must override at least paint() and computeBounds(), and will often
  * choose to override pick() as well.
+ *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
  * @author Ben Bederson
  * @author Britt McAlister
@@ -48,41 +55,45 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
     }
 
     /**
-     * Copies all object information from the reference object into the current
-     * object. This method is called from the clone method.
-     * All ZSceneGraphObjects objects contained by the object being duplicated
-     * are duplicated, except parents which are set to null.  This results
-     * in the sub-tree rooted at this object being duplicated.
+     * Returns a clone of this object.
      *
-     * @param refVC The reference visual component to copy
+     * @see ZSceneGraphObject#duplicateObject
      */
-    public void duplicateObject(ZVisualComponent refVC) {
-	super.duplicateObject(refVC);
+    protected Object duplicateObject() {
+	ZVisualComponent newComponent = (ZVisualComponent)super.duplicateObject();
 
-	parents = new ZNode[1];
+	if (parents != null) {
+	    // Perform a shallow-copy of the parents array. The 
+	    // updateObjectReferences table modifies this array. See below.
+	    newComponent.parents = (ZNode[])parents.clone();
+	}
+	return newComponent;
     }
 
     /**
-     * Duplicates the current object by using the copy constructor.
-     * The portion of the reference object that is duplicated is that necessary to reuse the object
-     * in a new place within the scenegraph, but the new object is not inserted into any scenegraph.
-     * The object must be attached to a live scenegraph (a scenegraph that is currently visible)
-     * or be registered with a camera directly in order for it to be visible.
+     * Called to update internal object references after a clone operation 
+     * by {@link ZSceneGraphObject#clone}.
      *
-     * @return A copy of this visual component.
-     * @see #updateObjectReferences
+     * @see ZSceneGraphObject#updateObjectReferences
      */
-    public Object clone() {
-	ZVisualComponent copy;
-
-	objRefTable.reset();
-	copy = new ZVisualComponent();
-	copy.duplicateObject(this);
-	objRefTable.addObject(this, copy);
-	objRefTable.updateObjectReferences();
-
-	return copy;
+    protected void updateObjectReferences(ZObjectReferenceTable objRefTable) {
+	if (parents != null) {
+	    int n = 0;
+	    for (int i = 0; i < numParents; i++) {
+		ZNode newParent = (ZNode)objRefTable.getNewObjectReference(parents[i]);
+		if (newParent == null) {
+		    // Cloned a visual component, but did not clone its parent. 
+		    // Drop the parent from the list of parents.
+		} else {
+		    // Cloned a visual component and its parent. Add the newly cloned 
+		    // parent to the parents list
+		    parents[n++] = newParent;
+		}
+	    }
+	    numParents = n;
+	}
     }
+
 
     /**
      * Trims the capacity of the array that stores the parents list points to
@@ -122,6 +133,14 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
     }
 
     /**
+     * Returns the root of the scene graph that this component is in.
+     * Actually returns the root of the first node this is a child of.
+     */
+    public ZRoot getRoot() {
+        return (numParents > 0) ? parents[0].getRoot() : null;
+    }
+
+    /**
      * Return a copy of the array of parents of this node.
      * This method always returns an array, even when there
      * are no children.
@@ -139,7 +158,7 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * is added to the end of the list of this node's parents;
      * @param parent The new parent node.
      */
-    void addParent(ZNode parent) {
+    protected void addParent(ZNode parent) {
 	try {
 	    parents[numParents] = parent;
 	} catch (ArrayIndexOutOfBoundsException e) {
@@ -157,7 +176,7 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * then nothing happens.
      * @param parent The parent to be removed.
      */
-    void removeParent(ZNode parent) {
+    protected void removeParent(ZNode parent) {
 	for (int i=0; i<numParents; i++) {
 				// Find parent within parent list
 	    if (parent == parents[i]) {
@@ -196,6 +215,7 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
      * a circle may only consider itself to be picked if the pointer is within
      * the circle - rather than within the rectangular bounds.
      * @param rect The rectangle that is picking this visual component in local coordinates.
+     * @param path The path through the scenegraph to the picked node. Modified by this call.
      * @return true if the rectangle picks this visual component
      * @see ZDrawingSurface#pick(int, int)
      */
@@ -204,18 +224,38 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
     }
 
     /**
-     * Renders this visual component.  The rendercontext contains various
-     * aspects of the rendering state including the Graphics2D and the
-     * camera being rendered within.
-     * <p>
-     * The transform, clip, and composite will be set appropriately when this object
-     * is rendered.  It is up to this object to restore the transform, clip, and composite of
-     * the Graphics2D if this node changes any of them. However, the color, font, and stroke are
-     * unspecified by Jazz.  This object should set those things if they are used, but
-     * they do not need to be restored.
-     * <P>
-     * Note that a subclass can either extend this directly, or can
-     * just extend paint if it does not access to the render context.
+     * Paints this component. This method is called when the contents of the 
+     * visual component should be painted, either when the component is being
+     * shown for the first time, or when repaint() has been called.<p>
+     *
+     * The clip rectangle, composite mode and transform of the Graphics2D parameter 
+     * are set by Jazz to reflect the context in which the component is being painted. 
+     * However, the color, font and stroke of the Graphics2D parameter are
+     * left undefined by Jazz, and each visual component must set these attributes explicitly
+     * to ensure that they are painted correctly.<p>
+     * 
+     * The paint method is called by ZVisualComponent.render. Some visual components 
+     * may need to override render() instead of paint().<p>
+     *
+     * @param Graphics2D The graphics context to use for painting. 
+     * @see #render(ZRenderContext)
+     */
+    public void paint(Graphics2D g2) {
+    }
+    
+    /**
+     * Renders this visual component.<p>  
+     * 
+     * This method is called by Jazz when the component needs to be 
+     * redrawn on the screen. The default implementation of render simply
+     * calls paint(), passing it the graphics object stored in the renderContext:<p>
+     *
+     * <code>    paint(renderContext.getGraphics2D()); </code><p>
+     *
+     * Sophisticated visual components may need access to the state information
+     * stored in the ZRenderContext to draw themselves. Such components should override 
+     * render() rather than paint().<p>
+     *
      * @param renderContext The graphics context to use for rendering.
      * @see #paint(Graphics2D)
      */
@@ -223,31 +263,14 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
 	paint(renderContext.getGraphics2D());
     }
 
-    /**
-     * Renders this visual component.
-     * <p>
-     * It is guaranteed that
-     * the transform, clip, and composite of the Graphics2D will be set properly
-     * for this component.
-     * However, the color, font, and stroke are unset, and the visual component
-     * must set those things as needed.  The visual component is
-     * not obligated to restore any aspect of the Graphics2D state.
-     * <P>
-     * Note that a subclass can either extend this directly, or can
-     * just render if it needs access to the render context for a more complex object.
-     * @param Graphics2D The graphics to render with
-     * @see #render(ZRenderContext)
-     */
-    public void paint(Graphics2D g2) {
-    }
-
+    
     /*
      * Repaint causes the portions of the surfaces that this object
      * appears in to be marked as needing painting, and queues events to cause
      * those areas to be painted. The painting does not actually
      * occur until those events are handled.
      * If this object is visible in multiple places because more than one
-     * camera can see this object, then all of those places are marked as needing
+     * camera can see it, then all of those places are marked as needing
      * painting.
      * <p>
      * Scenegraph objects should call repaint when their internal
@@ -280,20 +303,19 @@ public class ZVisualComponent extends ZSceneGraphObject implements ZSerializable
 
     /**
      * Internal method that causes this node and all of its ancestors
-     * to recompute their bounds.
+     * to recompute their bounds. Calls computeBounds(), followed by
+     * updateParentBounds().
      */
     protected void updateBounds() {
 	computeBounds();
-	for (int i=0; i<numParents; i++) {
-	    parents[i].updateBounds();
-	}
+	updateParentBounds();
     }
 
     /**
-     * Internal method to notify the visual component that its bounds have
-     * been updated, and its parents should now update their bounds
+     * Internal method that causes all the ancestors of this component
+     * to recompute their bounds.
      */
-    protected void boundsUpdated() {
+    protected void updateParentBounds() {
 	for (int i=0; i<numParents; i++) {
 	    parents[i].updateBounds();
 	}

@@ -291,27 +291,27 @@ public class PathLayoutTest implements Runnable, ZLoadable, ActionListener {
 	    Rectangle2D bounds = camera.getViewBounds();	    	    
 	    switch (currentLayout) {
 	    case LINE:
-		((ZPathLayoutManager)layoutManager).setShape(new Line2D.Float((float)bounds.getWidth()/10.0f+(float)bounds.getX(),(float)bounds.getHeight()/10.0f+(float)bounds.getY(),(float)bounds.getX()+(float)bounds.getWidth()-(float)bounds.getWidth()/10.0f,(float)bounds.getY()+(float)bounds.getHeight()-(float)bounds.getHeight()/10.0f));
+		((ZPathLayoutManager)layoutManager).setShape(new Line2D.Double(bounds.getWidth()/10.0+bounds.getX(),bounds.getHeight()/10.0+bounds.getY(),bounds.getX()+bounds.getWidth()-bounds.getWidth()/10.0,bounds.getY()+bounds.getHeight()-bounds.getHeight()/10.0));
 		((ZPathLayoutManager)layoutManager).setClosed(false);
 		break;
 	    case ELLIPSE:
-		((ZPathLayoutManager)layoutManager).setShape(new Ellipse2D.Float((float)bounds.getWidth()/10.0f+(float)bounds.getX(),(float)bounds.getHeight()/10.0f+(float)bounds.getY(),(8.0f/10.0f)*(float)bounds.getWidth(),(8.0f/10.0f)*(float)bounds.getHeight()));
+		((ZPathLayoutManager)layoutManager).setShape(new Ellipse2D.Double(bounds.getWidth()/10.0+bounds.getX(),bounds.getHeight()/10.0+bounds.getY(),(8.0/10.0)*bounds.getWidth(),(8.0/10.0)*bounds.getHeight()));
 		((ZPathLayoutManager)layoutManager).setClosed(true);
 		break;
 	    case RECT:
-		((ZPathLayoutManager)layoutManager).setShape(new Rectangle2D.Float((float)bounds.getWidth()/10.0f+(float)bounds.getX(),(float)bounds.getHeight()/10.0f+(float)bounds.getY(),(8.0f/10.0f)*(float)bounds.getWidth(),(8.0f/10.0f)*(float)bounds.getHeight()));
+		((ZPathLayoutManager)layoutManager).setShape(new Rectangle2D.Double(bounds.getWidth()/10.0+bounds.getX(),bounds.getHeight()/10.0+bounds.getY(),(8.0/10.0)*bounds.getWidth(),(8.0/10.0)*bounds.getHeight()));
 		((ZPathLayoutManager)layoutManager).setClosed(true);
 		break;
 	    case QUAD:
-		((ZPathLayoutManager)layoutManager).setShape(new QuadCurve2D.Float((float)bounds.getWidth()/10.0f+(float)bounds.getX(),(9.0f/10.0f)*(float)bounds.getHeight()+(float)bounds.getY(),(float)bounds.getWidth()/2.0f+(float)bounds.getX(),(float)bounds.getY()-(float)bounds.getHeight()/1.5f,(9.0f/10.0f)*(float)bounds.getWidth()+(float)bounds.getX(),(9.0f/10.0f)*(float)bounds.getHeight()+(float)bounds.getY()));
+		((ZPathLayoutManager)layoutManager).setShape(new QuadCurve2D.Double(bounds.getWidth()/10.0+bounds.getX(),(9.0/10.0)*bounds.getHeight()+bounds.getY(),bounds.getWidth()/2.0+bounds.getX(),bounds.getY()-bounds.getHeight()/1.5,(9.0/10.0)*bounds.getWidth()+bounds.getX(),(9.0/10.0)*bounds.getHeight()+bounds.getY()));
 		((ZPathLayoutManager)layoutManager).setClosed(false);	
 		break;
 	    case CUBIC:
-		((ZPathLayoutManager)layoutManager).setShape(new CubicCurve2D.Float((float)bounds.getWidth()/10.0f+(float)bounds.getX(),(1.0f/2.0f)*(float)bounds.getHeight()+(float)bounds.getY(),(float)bounds.getWidth()/3.0f+(float)bounds.getX(),(float)bounds.getY()-(float)bounds.getHeight()/1.5f,(2.0f/3.0f)*(float)bounds.getWidth()+(float)bounds.getX(),(2.5f/1.5f)*(float)bounds.getHeight()+(float)bounds.getY(),(9.0f/10.0f)*(float)bounds.getWidth()+(float)bounds.getX(),(1.0f/2.0f)*(float)bounds.getHeight()+(float)bounds.getY()));
+		((ZPathLayoutManager)layoutManager).setShape(new CubicCurve2D.Double(bounds.getWidth()/10.0+bounds.getX(),(1.0/2.0)*bounds.getHeight()+bounds.getY(),bounds.getWidth()/3.0+bounds.getX(),bounds.getY()-bounds.getHeight()/1.5,(2.0/3.0)*bounds.getWidth()+bounds.getX(),(2.5/1.5)*bounds.getHeight()+bounds.getY(),(9.0/10.0)*bounds.getWidth()+bounds.getX(),(1.0/2.0)*bounds.getHeight()+bounds.getY()));
 		((ZPathLayoutManager)layoutManager).setClosed(false);	
 		break;
 	    case ARC:
-		((ZPathLayoutManager)layoutManager).setShape(new Arc2D.Float((float)bounds.getWidth()/10.0f+(float)bounds.getX(),(1.0f/4.0f)*(float)bounds.getHeight()+(float)bounds.getY(),(8.0f/10.0f)*(float)bounds.getWidth(),(8.0f/10.0f)*(float)bounds.getHeight(),0.0f,180.0f,Arc2D.OPEN));
+		((ZPathLayoutManager)layoutManager).setShape(new Arc2D.Double(bounds.getWidth()/10.0+bounds.getX(),(1.0/4.0)*bounds.getHeight()+bounds.getY(),(8.0/10.0)*bounds.getWidth(),(8.0/10.0)*bounds.getHeight(),0.0,180.0,Arc2D.OPEN));
 		((ZPathLayoutManager)layoutManager).setClosed(false);	
 		break;
 	    case POLY:
@@ -354,7 +354,7 @@ public class PathLayoutTest implements Runnable, ZLoadable, ActionListener {
 	    }
 
 	    // Now we remove the group
-	    layoutGroup.remove();
+	    layoutGroup.extract();
 	}
 	else if (ae.getSource() == done) {
 	    // Dismiss the dialog
@@ -464,7 +464,7 @@ public class PathLayoutTest implements Runnable, ZLoadable, ActionListener {
 		ZNode node = (ZNode)nodes.get(0);
 		if (node instanceof ZVisualLeaf) {
 		    ZVisualLeaf leaf = (ZVisualLeaf)node;
-		    ZVisualComponent vc = leaf.getVisualComponent();
+		    ZVisualComponent vc = leaf.getFirstVisualComponent();
 		    if (vc instanceof ZPolyline) {
 			polyPath = (GeneralPath)((ZPolyline)vc).getPath().clone();
 			polyPath.transform(node.editor().getTransformGroup().getTransform());

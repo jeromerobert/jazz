@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.component;
@@ -17,12 +17,20 @@ import edu.umd.cs.jazz.util.*;
  * <b>ZRectangle</b> is a graphic object that represents a hard-cornered
  * or rounded rectangle.
  *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
+ *
  * @author  Benjamin B. Bederson
  */
 public class ZRectangle extends ZVisualComponent implements ZPenColor, ZFillColor, ZStroke, Serializable {
-    static public final Color  penColor_DEFAULT = Color.black;
-    static public final Color  fillColor_DEFAULT = Color.white;
-    static public final float  penWidth_DEFAULT = 1.0f;
+    static public final Color   penColor_DEFAULT = Color.black;
+    static public final Color   fillColor_DEFAULT = Color.white;
+    static public final double  penWidth_DEFAULT = 1.0;
+    static public final boolean absPenWidth_DEFAULT = false;
 
     /**
      * Pen color for perimeter of rectangle
@@ -32,7 +40,12 @@ public class ZRectangle extends ZVisualComponent implements ZPenColor, ZFillColo
     /**
      * Pen width of pen color.
      */
-    private float     penWidth  = penWidth_DEFAULT;
+    private double     penWidth  = penWidth_DEFAULT;
+
+    /**
+     * Specifies if pen width is an absolute specification (independent of camera magnification)
+     */
+    private boolean    absPenWidth = absPenWidth_DEFAULT;
 
     /**
      * Fill color for interior of rectangle.
@@ -47,7 +60,7 @@ public class ZRectangle extends ZVisualComponent implements ZPenColor, ZFillColo
     /**
      * Stroke for rendering pen color
      */
-    private transient Stroke stroke = new BasicStroke(penWidth_DEFAULT, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
+    private transient Stroke stroke = new BasicStroke((float)penWidth_DEFAULT, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
 
     //****************************************************************************
     //
@@ -59,29 +72,29 @@ public class ZRectangle extends ZVisualComponent implements ZPenColor, ZFillColo
      * Constructs a new Rectangle.
      */
     public ZRectangle() {
-        rect = new Rectangle2D.Float();
+        rect = new Rectangle2D.Double();
 	reshape();
     }
 
     /**
-     * Constructs a new Rectangle.
+     * Constructs a new Rectangle at the specified location, with dimensions of zero.
      * @param <code>x</code> X-coord of top-left corner
      * @param <code>y</code> Y-coord of top-left corner
      */
-    public ZRectangle(float x, float y) {
-        rect = new Rectangle2D.Float(x, y, 0.0f, 0.0f);
+    public ZRectangle(double x, double y) {
+        rect = new Rectangle2D.Double(x, y, 0.0, 0.0);
 	reshape();
     }
 
     /**
-     * Constructs a new Rectangle.
+     * Constructs a new Rectangle at the specified location, with the given dimensions.
      * @param <code>x</code> X-coord of top-left corner
      * @param <code>y</code> Y-coord of top-left corner
      * @param <code>width</code> Width of rectangle
      * @param <code>height</code> Height of rectangle
      */
-    public ZRectangle(float x, float y, float width, float height) {
-        rect = new Rectangle2D.Float(x, y, width, height);
+    public ZRectangle(double x, double y, double width, double height) {
+        rect = new Rectangle2D.Double(x, y, width, height);
 	reshape();
     }
 
@@ -95,44 +108,18 @@ public class ZRectangle extends ZVisualComponent implements ZPenColor, ZFillColo
     }
 
     /**
-     * Copies all object information from the reference object into the current
-     * object. This method is called from the clone method.
-     * All ZSceneGraphObjects objects contained by the object being duplicated
-     * are duplicated, except parents which are set to null.  This results
-     * in the sub-tree rooted at this object being duplicated.
+     * Returns a clone of this object.
      *
-     * @param refRect The reference visual component to copy
+     * @see ZSceneGraphObject#duplicateObject
      */
-    public void duplicateObject(ZRectangle refRect) {
-	super.duplicateObject(refRect);
+    protected Object duplicateObject() {
+	ZRectangle newRectangle = (ZRectangle)super.duplicateObject();
 
-        rect = (Rectangle2D)refRect.rect.clone();
-	penColor = refRect.penColor;
-	setPenWidth(refRect.penWidth);
-	fillColor = refRect.fillColor;
+        newRectangle.rect = (Rectangle2D)rect.clone();
+
+	return newRectangle;	
     }
 
-    /**
-     * Duplicates the current object by using the copy constructor.
-     * The portion of the reference object that is duplicated is that necessary to reuse the object
-     * in a new place within the scenegraph, but the new object is not inserted into any scenegraph.
-     * The object must be attached to a live scenegraph (a scenegraph that is currently visible)
-     * or be registered with a camera directly in order for it to be visible.
-     *
-     * @return A copy of this visual component.
-     * @see #updateObjectReferences
-     */
-    public Object clone() {
-	ZRectangle copy;
-
-	objRefTable.reset();
-	copy = new ZRectangle();
-	copy.duplicateObject(this);
-	objRefTable.addObject(this, copy);
-	objRefTable.updateObjectReferences();
-
-	return copy;
-    }
 
     //****************************************************************************
     //
@@ -143,11 +130,17 @@ public class ZRectangle extends ZVisualComponent implements ZPenColor, ZFillColo
     /**
      * Get the width of the pen used to draw the perimeter of this rectangle.
      * The pen is drawn centered around the rectangle vertices, so if the pen width
-     * is thick, the bounds of the rectangle will grow.
+     * is thick, the bounds of the rectangle will grow.  If the pen width is absolute
+     * (independent of magnification), then this returns 0.
      * @return the pen width.
+     * @see #getAbsPenWidth
      */
-    public float getPenWidth() {
-	return penWidth;
+    public double getPenWidth() {
+	if (absPenWidth) {
+	    return 0.0d;
+	} else {
+	    return penWidth;
+	}
     }
 
     /**
@@ -156,10 +149,41 @@ public class ZRectangle extends ZVisualComponent implements ZPenColor, ZFillColo
      * is thick, the bounds of the rectangle will grow.
      * @param width the pen width.
      */
-    public void setPenWidth(float width) {
+    public void setPenWidth(double width) {
 	penWidth = width;
-	stroke = new BasicStroke(penWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
+	absPenWidth = false;
+	setVolatileBounds(false);
+	stroke = new BasicStroke((float)penWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
 	reshape();
+    }
+
+    /**
+     * Set the absolute width of the pen used to draw the line around the perimeter of this rectangle.
+     * The pen is drawn centered around the rectangle vertices, so if the pen width
+     * is thick, the bounds of the rectangle will grow.
+     * @param width the pen width.
+     */
+    public void setAbsPenWidth(double width) {
+	penWidth = width;
+	absPenWidth = true;
+	setVolatileBounds(true);
+	reshape();
+    }
+
+    /**
+     * Get the absolute width of the pen used to draw the line around the perimeter of this rectangle.
+     * The pen is drawn centered around the rectangle vertices, so if the pen width
+     * is thick, the bounds of the rectangle will grow.  If the pen width is not absolute
+     * (dependent on magnification), then this returns 0.
+     * @return the pen width.
+     * @see #getPenWidth
+     */
+    public double getAbsPenWidth() {
+	if (absPenWidth) {
+	    return penWidth;
+	} else {
+	    return 0.0d;
+	}
     }
 
     /**
@@ -176,6 +200,7 @@ public class ZRectangle extends ZVisualComponent implements ZPenColor, ZFillColo
      */
     public void setStroke(Stroke stroke) {
 	this.stroke = stroke;
+	reshape();
     }
 
     /**
@@ -235,6 +260,7 @@ public class ZRectangle extends ZVisualComponent implements ZPenColor, ZFillColo
     /**
      * Determines if the specified rectangle overlaps this rectangle.
      * @param pickRect The rectangle that is picking this rectangle
+     * @param path The path through the scenegraph to the picked node. Modified by this call.
      * @return true if the rectangle picks this visual component
      * @see ZDrawingSurface#pick(int, int)
      */
@@ -242,17 +268,23 @@ public class ZRectangle extends ZVisualComponent implements ZPenColor, ZFillColo
 	if (fillColor == null) {
 				// If no fill color, then don't pick inside of rectangle, only edge
 	    if (pickBounds(pickRect)) {
-		Rectangle2D innerBounds = new Rectangle2D.Float();
-		float p, p2;
+		Rectangle2D innerBounds = new Rectangle2D.Double();
+		double p, p2;
 
 		if (penColor == null) {
-		    p = 0.0f;
+		    p = 0.0;
 		} else {
-		    p = penWidth;
+		    if (absPenWidth) {
+			ZRenderContext rc = getRoot().getCurrentRenderContext();
+			double mag = (rc == null) ? 1.0f : rc.getCameraMagnification();
+			p = penWidth / mag;
+		    } else {
+			p = penWidth;
+		    }
 		}
-		p2 = 0.5f * p;
-		innerBounds.setRect((float)(rect.getX() + p2), (float)(rect.getY() + p2),
-				    (float)(rect.getWidth() - p), (float)(rect.getHeight() - p));
+		p2 = 0.5 * p;
+		innerBounds.setRect((rect.getX() + p2), (rect.getY() + p2),
+				    (rect.getWidth() - p), (rect.getHeight() - p));
 
 		if (innerBounds.contains(pickRect)) {
 		    return false;
@@ -281,12 +313,16 @@ public class ZRectangle extends ZVisualComponent implements ZPenColor, ZFillColo
     public void render(ZRenderContext renderContext) {
 	Graphics2D g2 = renderContext.getGraphics2D();
 
-        g2.setStroke(stroke);
 	if (fillColor != null) {
 	    g2.setColor(fillColor);
 	    g2.fill(rect);
 	}
 	if (penColor != null) {
+	    if (absPenWidth) {
+		double pw = penWidth / renderContext.getCompositeMagnification();
+		stroke = new BasicStroke((float)pw, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
+	    }
+	    g2.setStroke(stroke);
 	    g2.setColor(penColor);
 	    g2.draw(rect);
 	}
@@ -299,17 +335,23 @@ public class ZRectangle extends ZVisualComponent implements ZPenColor, ZFillColo
      */
     protected void computeBounds() {
 				// Expand the bounds to accomodate the pen width
-	float p, p2;
+	double p, p2;
 
 	if (penColor == null) {
-	    p = 0.0f;
+	    p = 0.0;
 	} else {
-	    p = penWidth;
+	    if (absPenWidth) {
+		ZRenderContext rc = getRoot().getCurrentRenderContext();
+		double mag = (rc == null) ? 1.0f : rc.getCameraMagnification();
+		p = penWidth / mag;
+	    } else {
+		p = penWidth;
+	    }
 	}
-	p2 = 0.5f * p;
+	p2 = 0.5 * p;
 
-	bounds.setRect((float)(rect.getX() - p2), (float)(rect.getY() - p2),
-		       (float)(rect.getWidth() + p), (float)(rect.getHeight() + p));
+	bounds.setRect((rect.getX() - p2), (rect.getY() - p2),
+		       (rect.getWidth() + p), (rect.getHeight() + p));
     }
 
 
@@ -317,32 +359,32 @@ public class ZRectangle extends ZVisualComponent implements ZPenColor, ZFillColo
      * Return x-coord of rectangle.
      * @return x-coord.
      */
-    public float getX() {
-	return (float)rect.getX();
+    public double getX() {
+	return rect.getX();
     }
 
     /**
      * Return y-coord of rectangle.
      * @return y-coord.
      */
-    public float getY() {
-	return (float)rect.getY();
+    public double getY() {
+	return rect.getY();
     }
 
     /**
      * Return width of rectangle.
      * @return width.
      */
-    public float getWidth() {
-	return (float)rect.getWidth();
+    public double getWidth() {
+	return rect.getWidth();
     }
 
     /**
      * Return height of rectangle.
      * @return height.
      */
-    public float getHeight() {
-	return (float)rect.getHeight();
+    public double getHeight() {
+	return rect.getHeight();
     }
 
     /**
@@ -354,19 +396,19 @@ public class ZRectangle extends ZVisualComponent implements ZPenColor, ZFillColo
     }
 
     /**
-     * Sets coords of rectangle
+     * Sets location and size of the rectangle.
      * @param <code>x</code> X-coord of top-left corner
      * @param <code>y</code> Y-coord of top-left corner
      * @param <code>width</code> Width of rectangle
      * @param <code>height</code> Height of rectangle
      */
-    public void setRect(float x, float y, float width, float height) {
+    public void setRect(double x, double y, double width, double height) {
 	rect.setRect(x, y, width, height);
 	reshape();
     }
 
     /**
-     * Sets coords of rectangle
+     * Sets coordinates of rectangle.
      * @param <code>r</code> The new rectangle coordinates
      */
     public void setRect(Rectangle2D r) {
@@ -394,15 +436,18 @@ public class ZRectangle extends ZVisualComponent implements ZPenColor, ZFillColo
 	if ((fillColor != null) && (fillColor != fillColor_DEFAULT)) {
 	    out.writeState("java.awt.Color", "fillColor", fillColor);
 	}
+	if (absPenWidth != absPenWidth_DEFAULT) {
+	    out.writeState("boolean", "absPenWidth", absPenWidth);
+	}
 	if (getPenWidth() != penWidth_DEFAULT) {
-	    out.writeState("float", "penWidth", getPenWidth());
+	    out.writeState("double", "penWidth", getPenWidth());
 	}
 
 	Vector dimensions = new Vector();
-	dimensions.add(new Float(rect.getX()));
-	dimensions.add(new Float(rect.getY()));
-	dimensions.add(new Float(rect.getWidth()));
-	dimensions.add(new Float(rect.getHeight()));
+	dimensions.add(new Double(rect.getX()));
+	dimensions.add(new Double(rect.getY()));
+	dimensions.add(new Double(rect.getWidth()));
+	dimensions.add(new Double(rect.getHeight()));
 	out.writeState("rectangle", "rect", dimensions);
     }
 
@@ -424,13 +469,17 @@ public class ZRectangle extends ZVisualComponent implements ZPenColor, ZFillColo
 	} else if (fieldName.compareTo("fillColor") == 0) {
 	    setFillColor((Color)fieldValue);
 	} else if (fieldName.compareTo("penWidth") == 0) {
-	    setPenWidth(((Float)fieldValue).floatValue());
+	    if (absPenWidth) {
+		setAbsPenWidth(((Double)fieldValue).doubleValue());
+	    } else {
+		setPenWidth(((Double)fieldValue).doubleValue());
+	    }
 	} else if (fieldName.compareTo("rect") == 0) {
 	    Vector dim = (Vector)fieldValue;
-	    float xpos   = ((Float)dim.get(0)).floatValue();
-	    float ypos   = ((Float)dim.get(1)).floatValue();
-	    float width  = ((Float)dim.get(2)).floatValue();
-	    float height = ((Float)dim.get(3)).floatValue();
+	    double xpos   = ((Double)dim.get(0)).doubleValue();
+	    double ypos   = ((Double)dim.get(1)).doubleValue();
+	    double width  = ((Double)dim.get(2)).doubleValue();
+	    double height = ((Double)dim.get(3)).doubleValue();
 	    setRect(xpos, ypos, width, height);
 	}
     }
@@ -467,7 +516,7 @@ public class ZRectangle extends ZVisualComponent implements ZPenColor, ZFillColo
 	cap = in.readInt();
 	join = in.readInt();
 
-	rect = new Rectangle2D.Float((float)x, (float)y, (float)w, (float)h);
-	stroke = new BasicStroke(penWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
+	rect = new Rectangle2D.Double(x, y, w, h);
+	stroke = new BasicStroke((float)penWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
     }
 }

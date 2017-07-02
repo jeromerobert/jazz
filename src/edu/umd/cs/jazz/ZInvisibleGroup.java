@@ -1,10 +1,11 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz;
 
 import java.util.*;
+import java.io.*;
 import java.awt.*;
 import java.awt.geom.*;
 
@@ -14,13 +15,21 @@ import edu.umd.cs.jazz.util.*;
 /**
  * <b>ZInvisibleGroup</b> is a group node that completely hides its descendents.
  * It does not render anything, nor does it pick or find any children.  In addition,
- * An invisible group always has empty bounds.  An invisible group can be inserted
- * into the tree when an application wants to temporarily act as if a portion of
- * the scenegraph doesn't exist.
+ * an invisible group always has empty bounds.  An invisible group can be inserted
+ * into a scenegraph when a portion of the tree needs to be temporarily hidden.
+ * <P>
+ * {@link ZSceneGraphEditor} provides a convenience mechanism to locate, create 
+ * and manage nodes of this type.
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
  * @author Ben Bederson
  */
-public class ZInvisibleGroup extends ZGroup implements ZSerializable {
+public class ZInvisibleGroup extends ZGroup implements ZSerializable, Serializable {
     //****************************************************************************
     //
     //                  Constructors
@@ -42,43 +51,7 @@ public class ZInvisibleGroup extends ZGroup implements ZSerializable {
     }
 
 
-    /**
-     * Copies all object information from the reference object into the current
-     * object. This method is called from the clone method.
-     * All ZSceneGraphObjects objects contained by the object being duplicated
-     * are duplicated, except parents which are set to null.  This results
-     * in the sub-tree rooted at this object being duplicated.
-     *
-     * @param refNode The reference node to copy
-     */
-    public void duplicateObject(ZInvisibleGroup refNode) {
-	super.duplicateObject(refNode);
-    }
 
-    /**
-     * Duplicates the current node by using the copy constructor.
-     * The portion of the reference node that is duplicated is that necessary to reuse the node
-     * in a new place within the scenegraph, but the new node is not inserted into any scenegraph.
-     * The node must be attached to a live scenegraph (a scenegraph that is currently visible)
-     * or be registered with a camera directly in order for it to be visible.
-     * <P>
-     * In particular, the visual component associated with this group gets duplicated
-     * along with the subtree.
-     *
-     * @return A copy of this node.
-     * @see #updateObjectReferences
-     */
-    public Object clone() {
-	ZInvisibleGroup copy;
-
-	objRefTable.reset();
-	copy = new ZInvisibleGroup();
-	copy.duplicateObject(this);
-	objRefTable.addObject(this, copy);
-	objRefTable.updateObjectReferences();
-
-	return copy;
-    }
 
     //****************************************************************************
     //
@@ -132,7 +105,7 @@ public class ZInvisibleGroup extends ZGroup implements ZSerializable {
      * An invisible node never gets picked, nor does it pick any of its children.
      *
      * @param rect Coordinates of pick rectangle in local coordinates
-     * @param mag The magnification of the camera being picked within.
+     * @param path The path through the scenegraph to the picked node. Modified by this call.
      * @return The picked node, or null if none
      */
     public boolean pick(Rectangle2D rect, ZSceneGraphPath path) {
@@ -146,7 +119,7 @@ public class ZInvisibleGroup extends ZGroup implements ZSerializable {
      * @param nodes the accumulation list (results will be place here).
      * @return the number of nodes searched
      */
-    int findNodes(ZFindFilter filter, ArrayList nodes) {
+    protected int findNodes(ZFindFilter filter, ArrayList nodes) {
 	return 0;
     }
 }

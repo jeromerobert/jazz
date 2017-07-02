@@ -42,7 +42,7 @@ public class HiNoteCore implements ClipboardOwner {
     final static public int METAL_LAF   = 2;
     final static public int MOTIF_LAF   = 3;
 
-    static final protected float MAX_ITEM_MAG = 10;
+    static final protected double MAX_ITEM_MAG = 10;
     static final protected int   ANIMATION_TIME = 1000;
 
 				// Event modes
@@ -53,6 +53,7 @@ public class HiNoteCore implements ClipboardOwner {
     static final public int TEXT_MODE      = 5;
     static final public int SELECTION_MODE = 6;
     static final public int POLYLINE_MODE  = 7;
+    static final public int ELLIPSE_MODE  = 8;
 
     protected ZCanvas                canvas; 
     protected ZRoot		     root;
@@ -67,11 +68,13 @@ public class HiNoteCore implements ClipboardOwner {
     protected ZLinkEventHandler      linkEventHandler;
     protected ZEventHandler          keyboardNavEventHandler;
     protected ZEventHandler          squiggleEventHandler;
+    protected EllipseEventHandler    ellipseEventHandler;
     protected ZEventHandler          polygonEventHandler;
     protected TextEventHandler	     textEventHandler;
     protected ZEventHandler          rectEventHandler;
     protected ZSelectionEventHandler selectionEventHandler;
     protected ZEventHandler          activeEventHandler=null;
+    protected ZSceneGraphTreeView    treeView;
     protected int		     currentEventHandlerMode = PAN_MODE;
     protected Cursor		     crosshairCursor = null;
     protected String                 currentFileName = null;
@@ -81,7 +84,7 @@ public class HiNoteCore implements ClipboardOwner {
     protected ColorSelector          colorComponent;
     protected Color                  penColor = Color.black;
     protected Color                  fillColor = Color.white;
-    protected float                  penWidth = 4;
+    protected double                  penWidth = 4;
     protected Stroke                 penStroke;
     protected FontChooser            fontChooser;
     protected Font                   font = new Font("Arial", Font.PLAIN, 40);
@@ -95,11 +98,14 @@ public class HiNoteCore implements ClipboardOwner {
     protected PenSelector            penWidthButton;
     protected Clipboard              clipboard = null;
     protected AbstractButton         panButton = null;
+    protected String                 jazzFilterDescription = "Jazz Custom Format files";
+    protected String                 jazzExtension = "jazz";
+    protected String                 jazzbFilterDescription = "Jazz Java-Serialized files";
+    protected String                 jazzbExtension = "jazzb";
+    protected JCheckBox              embed;
+    protected JComboBox              fileChooserSelectionCB;
+    protected JFileChooser           fileChooser;
     protected javax.swing.filechooser.FileFilter lastFilter = null;
-    protected String jazzFilterDescription = "Jazz Custom Format files";
-    protected String jazzExtension = "jazz";
-    protected String jazzbFilterDescription = "Jazz Java-Serialized files";
-    protected String jazzbExtension = "jazzb";
 
     public HiNoteCore(Container container, ZCanvas canvas) {
 	cmdTable = new CmdTable(this);
@@ -153,6 +159,7 @@ public class HiNoteCore implements ClipboardOwner {
 	textEventHandler =        new TextEventHandler(this, cameraNode, canvas);
 	squiggleEventHandler =    new SquiggleEventHandler(this, cameraNode);
 	polygonEventHandler =     new PolygonEventHandler(this, cameraNode);
+	ellipseEventHandler =     new EllipseEventHandler(this, cameraNode);
 	rectEventHandler =        new RectEventHandler(this, cameraNode);
 	linkEventHandler =        new ZLinkEventHandler(cameraNode, canvas);
 	selectionEventHandler =   new ZSelectionEventHandler(cameraNode, canvas, selectionLayer);
@@ -248,7 +255,7 @@ public class HiNoteCore implements ClipboardOwner {
 	}
 
 	if (node instanceof ZVisualLeaf) {
-	    ZVisualComponent vc = ((ZVisualLeaf)node).getVisualComponent();
+	    ZVisualComponent vc = ((ZVisualLeaf)node).getFirstVisualComponent();
 	    if (vc instanceof ZStroke) {
 		((ZStroke)vc).setPenWidth(penWidth);
 	    }
@@ -292,7 +299,7 @@ public class HiNoteCore implements ClipboardOwner {
 	}
 
 	if (node instanceof ZVisualLeaf) {
-	    ZVisualComponent vc = ((ZVisualLeaf)node).getVisualComponent();
+	    ZVisualComponent vc = ((ZVisualLeaf)node).getFirstVisualComponent();
 	    if (vc instanceof ZPenColor) {
 		((ZPenColor)vc).setPenColor(penColor);
 	    }
@@ -337,7 +344,7 @@ public class HiNoteCore implements ClipboardOwner {
 	}
 
 	if (node instanceof ZVisualLeaf) {
-	    ZVisualComponent vc = ((ZVisualLeaf)node).getVisualComponent();
+	    ZVisualComponent vc = ((ZVisualLeaf)node).getFirstVisualComponent();
 	    if (vc instanceof ZFillColor) {
 		((ZFillColor)vc).setFillColor(fillColor);
 	    }
@@ -381,7 +388,7 @@ public class HiNoteCore implements ClipboardOwner {
 	}
 
 	if (node instanceof ZVisualLeaf) {
-	    ZVisualComponent vc = ((ZVisualLeaf)node).getVisualComponent();
+	    ZVisualComponent vc = ((ZVisualLeaf)node).getFirstVisualComponent();
 	    if (vc instanceof ZText) {
 		Font currFont = ((ZText)vc).getFont();
 		String currStr = ((ZText)vc).getText();
@@ -428,7 +435,7 @@ public class HiNoteCore implements ClipboardOwner {
 	}
 
 	if (node instanceof ZVisualLeaf) {
-	    ZVisualComponent vc = ((ZVisualLeaf)node).getVisualComponent();
+	    ZVisualComponent vc = ((ZVisualLeaf)node).getFirstVisualComponent();
 	    if (vc instanceof ZText) {
 		Font font = ((ZText)vc).getFont();
 		if (baseFont == null) {
@@ -579,6 +586,16 @@ public class HiNoteCore implements ClipboardOwner {
 	polygon.addActionListener(cmdTable.lookupAction("polygon"));
 	group.add(polygon);
 	toolBar.add(polygon);
+
+				// Ellipse button
+	resource = this.getClass().getClassLoader().getResource("resources/ellipse.gif");
+	JToggleButton ellipse = new JToggleButton(new ImageIcon(resource), false);
+	ellipse.setToolTipText("ellipse");
+	ellipse.setText(null);
+	ellipse.setPreferredSize(new Dimension(34, 30));
+	ellipse.addActionListener(cmdTable.lookupAction("ellipse"));
+	group.add(ellipse);
+	toolBar.add(ellipse);
 
 				// Rectangle button
 	resource = this.getClass().getClassLoader().getResource("resources/rect.gif");
@@ -922,7 +939,7 @@ public class HiNoteCore implements ClipboardOwner {
 	}
 
 				// Make camera in new window look at same place as current window
-	camera.center(camera.getViewBounds(), 0, canvas.getDrawingSurface());
+	camera.center(this.camera.getViewBounds(), 0, canvas.getDrawingSurface());
 
 				// Use same render quality as current window
 	canvas.getDrawingSurface().setRenderQuality(getRenderQuality());
@@ -957,14 +974,14 @@ public class HiNoteCore implements ClipboardOwner {
 	window.setLocation(0, 0);
 	window.setSize(screenSize);
 	window.setBackground(null);
-	window.setVisible(true);
 	window.getContentPane().add(canvas);
-	window.validate();
-	window.requestFocus();
 	final ZCamera camera = canvas.getCamera();
 
+	window.setVisible(true);
+	canvas.requestFocus();
+
 				// Make camera in new window look at same place as current window
-	camera.center(camera.getViewBounds(), 0, camera.getDrawingSurface());
+	camera.center(this.camera.getViewBounds(), 0, camera.getDrawingSurface());
 
 				// Use same render quality as current window
 	camera.getDrawingSurface().setRenderQuality(getRenderQuality());
@@ -978,6 +995,11 @@ public class HiNoteCore implements ClipboardOwner {
 	    public void keyPressed(KeyEvent e) {
 		super.keyPressed(e);
 		if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+		    camera.removeLayer(HiNoteCore.this.getLayer());
+		    ZNode[] parents = camera.getParents();
+		    for (int i=0; i<parents.length; i++) {
+			parents[i].getParent().removeChild(parents[i]);
+		    }
 		    window.dispose();
 		}
 	    }
@@ -1017,14 +1039,48 @@ public class HiNoteCore implements ClipboardOwner {
 		    root = (ZRoot)ois.readObject();
 		    buildScene(root, canvas);
 		    ois.close();
+		} catch (InvalidClassException e) {
+		    System.out.println("error processing jazzb ObjectInputStream: InvalidClassException: " + e.getMessage());
+		} catch (StreamCorruptedException e) {
+		    System.out.println("error processing jazzb ObjectInputStream: StreamCorruptedException: " + e.getMessage());
+		} catch (OptionalDataException e) {
+		    System.out.println("error processing jazzb ObjectInputStream: OptionalDataException: " + e.getMessage());
+		} catch ( ClassNotFoundException e) {
+		    System.out.println("error processing jazzb ObjectInputStream:  ClassNotFoundException: " + e.getMessage());
+		} catch (IOException e) {
+		    System.out.println("error processing jazzb ObjectInputStream: IOException: " + e.getMessage());
 		} catch (Exception e) {
-		    System.out.println(e.getMessage());
+		    System.out.println("error processing jazzb ObjectInputStream: Exception: " + e.getMessage());
 		}
 	    }
 	}
     }
 
     public void open() {
+	// Pathnames are to be stored in jazz files relative to
+	// current jazz save directory. Do a temporary 'set cwd'
+	// so the readObject methods can change filenames to
+	// be relative to this new cwd
+	File file = getJazzFile();
+	if (file != null) {
+	    String cwd = System.getProperty("user.dir");
+	    System.setProperty("user.dir",file.getParent());
+	    FileInputStream inStream = null;
+	    try {
+		inStream = new FileInputStream(currentFileName);
+	    }
+	    catch (java.io.FileNotFoundException e) {
+		System.out.println("File " + currentFileName + " not found.");
+		return;
+	    }
+
+	    openStream(inStream, currentFileName);
+	    // restore the cwd
+	    System.setProperty("user.dir", cwd);
+	}
+    }
+	
+    public File getJazzFile() {
 	ExtensionFileFilter filter[] = new ExtensionFileFilter[3];
 	filter[0] = new ExtensionFileFilter();
 	filter[0].addExtension(jazzbExtension);
@@ -1061,42 +1117,24 @@ public class HiNoteCore implements ClipboardOwner {
 		    }
 		}
 	    }
-
-
-	    // Pathnames are to be stored in jazz files relative to
-	    // current jazz save directory. Do a temporary 'set cwd'
-	    // so the readObject methods can change filenames to
-	    // be relative to this new cwd
-	    String cwd = System.getProperty("user.dir");
-	    System.setProperty("user.dir",file.getParent());
-	    FileInputStream inStream = null;
-	    try {
-		inStream = new FileInputStream(currentFileName);
-	    }
-	    catch (java.io.FileNotFoundException e) {
-		System.out.println("File " + currentFileName + " not found.");
-		return;
-	    }
-
-	    openStream(inStream, currentFileName);
-	    // restore the cwd
-	    System.setProperty("user.dir", cwd);
 	}
+	return file;
     }
 
     public void buildScene(ZRoot root, ZCanvas canvas) {
 	ZNode[] children = root.getChildren();
 	layer = (ZLayerGroup)children[0];
 	ZVisualLeaf cameraNode = (ZVisualLeaf)children[1];
-	camera = (ZCamera)cameraNode.getVisualComponent();
-
-	canvas.setRoot(root);
-	canvas.setLayer(layer);
-	canvas.setCamera(camera);
-	canvas.getDrawingSurface().setCamera(camera, cameraNode);
-	camera.setDrawingSurface(canvas.getDrawingSurface());
-
+	camera = (ZCamera)cameraNode.getFirstVisualComponent();
 	ZGroup selectionLayer = (ZGroup)children[2];
+
+	canvas.setNavEventHandlersActive(true);
+	canvas.setCamera(camera, cameraNode);
+	canvas.setLayer(layer);
+	canvas.setRoot(root);
+	canvas.setNavEventHandlersActive(false);
+
+	root.addChild(selectionLayer);
 	selectionEventHandler.setMarqueeLayer(selectionLayer);
 
 	initEventHandlers(cameraNode, canvas, selectionLayer);
@@ -1105,6 +1143,25 @@ public class HiNoteCore implements ClipboardOwner {
 	panButton.doClick();
 
 	canvas.getDrawingSurface().repaint();
+    }
+
+    /**
+     * Set the writeEmbeddedImage flag for all nodes under this node.
+     */
+    public void setEmbeddedImages(ZNode node, boolean flag) {
+	if (node instanceof ZGroup) {
+	    ZNode[] children = ((ZGroup)node).getChildren();
+	    for (int i=0; i<children.length; i++) {
+		setEmbeddedImages(children[i], flag);
+	    }
+	}
+
+	if (node instanceof ZVisualLeaf) {
+	    ZVisualComponent vc = ((ZVisualLeaf)node).getFirstVisualComponent();
+	    if (vc instanceof ZImage) {
+		((ZImage)vc).setWriteEmbeddedImage(flag);
+	    }
+	}
     }
 
     public void save() {
@@ -1117,7 +1174,7 @@ public class HiNoteCore implements ClipboardOwner {
 	    filter[1] = new ExtensionFileFilter();
 	    filter[1].addExtension(jazzbExtension);
 	    filter[1].setDescription(jazzbFilterDescription);
-	
+
 	    File file = QueryUserForFile(filter, "Save");
 	    if (file != null) {
 		currentFileName = file.getAbsolutePath();
@@ -1127,12 +1184,14 @@ public class HiNoteCore implements ClipboardOwner {
 	if (currentFileName != null) {
 	    String extension = null;
 	    int i = currentFileName.lastIndexOf('.');
-	    if (i > 0 && i < currentFileName.length()-1) {
-		 extension = currentFileName.substring(i+1).toLowerCase();
+	    if ((i > 0) && (i < currentFileName.length()-1) && 
+		(i > currentFileName.lastIndexOf(File.separatorChar))) {
+		extension = currentFileName.substring(i+1).toLowerCase();
 	    }
 
 	    if (extension == null) {
 		if (lastFilter != null) {
+				// set extension to .jazz or .jazzb as chosen by user
 		    if (lastFilter.getDescription().indexOf("Custom") > -1) {
 			extension = jazzExtension;
 		    } else {
@@ -1153,10 +1212,22 @@ public class HiNoteCore implements ClipboardOwner {
 	    try {
 		FileOutputStream fos =  new FileOutputStream(currentFileName);
 		if (extension.equals(jazzExtension)) {
+				// write .jazz file
 		    ZObjectOutputStream out = new ZObjectOutputStream(fos);
 		    out.writeObject(getRoot());
 		    out.close();
+
 		} else if (extension.equals(jazzbExtension)) {
+
+				// set WriteEmbeddedImage flag on images to what user
+				// chose in fileChooser dialog
+		    if (embed.isSelected()) {
+			setEmbeddedImages(getRoot(), true);
+		    } else {
+			setEmbeddedImages(getRoot(), false);
+		    }
+
+				// write .jazzb file
 		    ObjectOutputStream out = new ObjectOutputStream(fos);
 		    out.writeObject(getRoot());
 		    out.close();
@@ -1179,26 +1250,23 @@ public class HiNoteCore implements ClipboardOwner {
 	surface.printSurface();
     }
 
-    public File QueryUserForFile(javax.swing.filechooser.FileFilter filter, String approveText) {
-	File file = null;
-	JFileChooser fileChooser = new JFileChooser(prevFile);
-
-	if (filter != null) {
-	    fileChooser.addChoosableFileFilter(filter);
-	    fileChooser.setFileFilter(filter);
-	}
-	int retval = fileChooser.showDialog(getCanvas(), approveText);
-	if (retval == JFileChooser.APPROVE_OPTION) {
-	    file = fileChooser.getSelectedFile();
-	    prevFile = file;
-	}
-
-	return file;
+    /**
+     * Checkbox "embed images in save file" 
+     * enabled for .jazzb files only
+     */
+    public void enableEmbedCheckBox() {
+	javax.swing.filechooser.FileFilter ff = fileChooser.getFileFilter();
+	if (ff.getDescription().indexOf("Java-Serialized") > -1) {
+	    embed.setEnabled(true);
+	} else {
+	    embed.setSelected(false);
+	    embed.setEnabled(false);
+	}		    
     }
 
     public File QueryUserForFile(javax.swing.filechooser.FileFilter[] filter, String approveText) {
 	File file = null;
-	JFileChooser fileChooser = new JFileChooser(prevFile);
+	fileChooser = new JFileChooser(prevFile);
 
 	if (filter != null) {
 	    javax.swing.filechooser.FileFilter currentFilter = null;
@@ -1224,6 +1292,24 @@ public class HiNoteCore implements ClipboardOwner {
 		fileChooser.setFileFilter(filter[0]);
 	    }
 	}
+	if (approveText.equals("Save")) {
+	    JPanel cb = new JPanel();
+	    cb.setLayout(new FlowLayout(FlowLayout.LEFT));
+
+				// Checkbox "embed images in save file" 
+				// enabled for .jazzb files only
+	    embed = new JCheckBox("Embed images in save file");
+	    if (fileChooser.getFileFilter().getDescription().indexOf("Java-Serialized") > -1) {
+		embed.setEnabled(true);
+	    } else {
+		embed.setEnabled(false);
+	    }
+	    cb.add(embed);
+	    fileChooser.add(cb);
+
+	    fileChooser.addPropertyChangeListener(cmdTable.lookupPropertyListener("fileChooserSaveSelection"));
+	}
+
 	int retval = fileChooser.showDialog(getCanvas(), approveText);
 	if (retval == JFileChooser.APPROVE_OPTION) {
 	    file = fileChooser.getSelectedFile();
@@ -1232,6 +1318,127 @@ public class HiNoteCore implements ClipboardOwner {
 	}
 
 	return file;
+    }
+
+    public File QueryUserForFile(javax.swing.filechooser.FileFilter filter, String approveText) {
+	File file = null;
+	fileChooser = new JFileChooser(prevFile);
+
+	if (filter != null) {
+	    fileChooser.addChoosableFileFilter(filter);
+	    fileChooser.setFileFilter(filter);
+	}
+	int retval = fileChooser.showDialog(getCanvas(), approveText);
+	if (retval == JFileChooser.APPROVE_OPTION) {
+	    file = fileChooser.getSelectedFile();
+	    prevFile = file;
+	}
+
+	return file;
+    }
+
+    /**
+     * Merge a new sceneGraph into current sceneGraph
+     * @param mergeRoot root of sceneGraph to be merged.
+     */
+    public void mergeScene(ZRoot mergeRoot) {
+				// Get the layer to be merged
+	ZNode[] mergeChildren = mergeRoot.getChildren();
+	int numMergeChildren = mergeRoot.getNumChildren();
+	ZLayerGroup mergeLayer = (ZLayerGroup)mergeChildren[0];
+
+				// Get the current layer
+	ZRoot root = canvas.getRoot();
+	ZNode[] children = root.getChildren();
+	ZLayerGroup layer = (ZLayerGroup)children[0];
+	ZVisualLeaf cameraNode = (ZVisualLeaf)children[1];
+	camera = (ZCamera)cameraNode.getFirstVisualComponent();
+
+	ZTransformGroup transform;
+	    for ( int i = 0; i < numMergeChildren; i++ ) {
+		if (mergeChildren[i] instanceof ZLayerGroup) {
+		    mergeLayer = (ZLayerGroup) mergeChildren[i];
+		    if (mergeLayer.getNumChildren() != 0 ) {
+			
+				// Set transform of merged Layers
+			transform = mergeLayer.editor().getTransformGroup();
+			transform.setTransform(getCamera().getInverseViewTransform());
+
+				// Add another merge layer under the current layer
+			getDrawingLayer().addChild(transform);
+		    }
+		}
+	    }
+
+				// Get the merge layers the merge camera looked at
+	ZVisualLeaf mergeCameraNode = (ZVisualLeaf) mergeChildren[1];
+	ZCamera mergeCamera = (ZCamera) mergeCameraNode.getFirstVisualComponent();
+	int numMergeLayers = mergeCamera.getNumLayers();
+	ZLayerGroup[] mergeLayerGroup = mergeCamera.getLayers();
+    
+				// Add those merge layers onto the current camera
+	    for ( int i = 0; i < numMergeLayers; i++ ) {
+		if (mergeLayerGroup[i] instanceof ZLayerGroup) {
+		    mergeLayer = (ZLayerGroup) mergeLayerGroup[i];
+		    if (mergeLayer.getNumChildren() != 0 ) 
+			camera.addLayer(mergeLayer);
+		}
+	    }
+
+	canvas.getDrawingSurface().repaint();
+    }
+
+    public void insertFile() {
+	// Pathnames are to be stored in jazz files relative to
+	// current jazz save directory. Do a temporary 'set cwd'
+	// so the readObject methods can change filenames to
+	// be relative to this new cwd
+	File file = getJazzFile();
+	if (file != null) {
+	    String cwd = System.getProperty("user.dir");
+	    System.setProperty("user.dir",file.getParent());
+	    FileInputStream inStream = null;
+	    try {
+		inStream = new FileInputStream(currentFileName);
+	    }
+	    catch (java.io.FileNotFoundException e) {
+		System.out.println("File " + currentFileName + " not found.");
+		return;
+	    }
+
+	String extension = null;
+	int i = currentFileName.lastIndexOf('.');
+	if(i > 0 && i < currentFileName.length()-1) {
+	    extension = currentFileName.substring(i+1).toLowerCase();
+	}
+
+	if (inStream != null) {
+	    if (extension.equals(jazzExtension)) {
+		if (parser == null) {
+		    parser = new ZParser();
+		} 
+		try {
+		    root = (ZRoot)parser.parse(inStream);
+		    mergeScene(root);
+		} catch (ParseException e) {
+		    System.out.println(e.getMessage());
+		    System.out.println("Invalid file format");
+		}
+	    } else if (extension.equals(jazzbExtension)) {
+		try {
+		    ObjectInputStream ois = new ObjectInputStream(inStream);
+		    root = (ZRoot)ois.readObject();
+		    mergeScene(root);
+		    ois.close();
+		} catch (Exception e) {
+		    System.out.println(e.getMessage());
+		}
+	    }
+	}
+
+	// restore the cwd
+	System.setProperty("user.dir", cwd);
+	}
     }
 
     public void insertImage() {
@@ -1265,14 +1472,14 @@ public class HiNoteCore implements ClipboardOwner {
 	String text = null;
 	for (Iterator i=selection.iterator(); i.hasNext();) {
             node = (ZNode)i.next();
-	    ZSelectionGroup.unselect(node);
+	    unselect(node);
 	    handle = node.editor().getTop();
 	    getDrawingLayer().removeChild(handle);
 	    copyBuffer.add(handle);
 
 	    // copy text to system clipboard
 	    if (clipboard != null) {
-		ZVisualComponent vc = ((ZVisualLeaf)node).getVisualComponent();
+		ZVisualComponent vc = ((ZVisualLeaf)node).getFirstVisualComponent();
 		if ((node instanceof ZVisualLeaf) && (vc instanceof ZText)) {
 		    if (text != null) {
 			text += "\n" + ((ZText)vc).getText();
@@ -1291,6 +1498,7 @@ public class HiNoteCore implements ClipboardOwner {
 	pasteDelta.setToIdentity();
 	pasteViewTransform = getCamera().getViewTransform();
     }
+
 	
     public void copy() {
 	ZNode node;
@@ -1303,15 +1511,15 @@ public class HiNoteCore implements ClipboardOwner {
 	String text = null;
 	for (Iterator i=selection.iterator(); i.hasNext();) {
             node = (ZNode)i.next();
-	    ZSelectionGroup.unselect(node);
+	    unselect(node);
 	    handle = node.editor().getTop();
 	    copy = (ZNode)handle.clone();
 	    copyBuffer.add(copy);
-	    ZSelectionGroup.select(node);
+	    select(node);
 
 	    // copy text to system clipboard
-	    if (clipboard != null) {
-		ZVisualComponent vc = ((ZVisualLeaf)node).getVisualComponent();
+	    if (clipboard != null && (node instanceof ZVisualLeaf)) {
+		ZVisualComponent vc = ((ZVisualLeaf)node).getFirstVisualComponent();
 		if ((node instanceof ZVisualLeaf) && (vc instanceof ZText)) {
 		    if (text != null) {
 			text += "\n" + ((ZText)vc).getText();
@@ -1341,7 +1549,7 @@ public class HiNoteCore implements ClipboardOwner {
 	AffineTransform currentTransform = camera.getViewTransform();
 	if (pasteViewTransform.equals(currentTransform)) {
 				// Update paste delta 
-	    pasteDelta.translate(10.0f, 10.0f);
+	    pasteDelta.translate(10.0, 10.0);
 	} else {
 				// Update paste position relative to current camera if it has changed
 	    try {
@@ -1354,7 +1562,7 @@ public class HiNoteCore implements ClipboardOwner {
 	    }
 	}
 
-	ZSelectionGroup.unselectAll(camera);
+	unselectAll(camera);
 	ZSceneGraphEditor editor;
 	// if local clipboad (copyBuffer) is empty, try system clipboard
 	if (clipboard != null) {
@@ -1384,12 +1592,11 @@ public class HiNoteCore implements ClipboardOwner {
             node = (ZNode)i.next();
 	    copy = (ZNode)node.clone();
 	    editor = copy.editor();
-	    transform = new ZTransformGroup();
-	    transform.addChild(node);
-	    transform.setHasOneChild(true);
-	    transform.concatenate(pasteDelta);
-	    layer.addChild(transform);
-	    ZSelectionGroup.select(node);
+	    
+	    transform = editor.getTransformGroup();
+	    transform.preConcatenate(pasteDelta);
+	    layer.addChild(editor.getTop());
+	    select(copy);
 	}
 
 	if (clipboard != null) {
@@ -1441,6 +1648,7 @@ public class HiNoteCore implements ClipboardOwner {
 	for (Iterator i=selection.iterator(); i.hasNext();) {
             node = (ZNode)i.next();
 	    fade = node.editor().getFadeGroup();
+	    fade.setFadeType(ZFadeGroup.CAMERA_MAG);
 	    fade.setMinMag(camera.getMagnification());
 	}
     }
@@ -1454,6 +1662,7 @@ public class HiNoteCore implements ClipboardOwner {
 	for (Iterator i=selection.iterator(); i.hasNext();) {
             node = (ZNode)i.next();
 	    fade = node.editor().getFadeGroup();
+	    fade.setFadeType(ZFadeGroup.CAMERA_MAG);
 	    fade.setMaxMag(camera.getMagnification());
 	}
     }
@@ -1467,6 +1676,7 @@ public class HiNoteCore implements ClipboardOwner {
 	for (Iterator i=selection.iterator(); i.hasNext();) {
             node = (ZNode)i.next();
 	    fade = node.editor().getFadeGroup();
+	    fade.setFadeType(ZFadeGroup.CAMERA_MAG);
 	    fade.setMinMag(0);
 	    fade.setMaxMag(-1);
 	}
@@ -1479,9 +1689,9 @@ public class HiNoteCore implements ClipboardOwner {
 
 	for (Iterator i=selection.iterator(); i.hasNext();) {
             node = (ZNode)i.next();
-	    ZSelectionGroup.unselect(node);
+	    unselect(node);
 	    ZStickyGroup.makeSticky(node, camera, constraintType);
-	    ZSelectionGroup.select(node);
+	    select(node);
 	}
     }
 	
@@ -1496,13 +1706,21 @@ public class HiNoteCore implements ClipboardOwner {
 	    editor = node.editor();
 
 	    if (editor.hasStickyGroup()) {
-		ZSelectionGroup.unselect(node);
+		unselect(node);
 		ZStickyGroup.makeUnSticky(node);
-		ZSelectionGroup.select(node);
+		select(node);
 	    }
 	}
     }
     
+    public void select(ZNode node) {
+	ZSelectionGroup.select(node);
+    }
+
+    public void unselect(ZNode node) {
+	ZSelectionGroup.unselect(node);
+    }
+
     public void selectAll() {
 	ZGroup layer = getLayer();
 	ZNode[] children = layer.getChildren();
@@ -1510,8 +1728,12 @@ public class HiNoteCore implements ClipboardOwner {
 
 	for (int i=0; i<children.length; i++) {
 	    child = children[i].editor().getNode();
-	    ZSelectionGroup.select(child);
+	    select(child);
 	}
+    }
+
+    public void unselectAll(ZCamera camera) {
+	ZSelectionGroup.unselectAll(camera);
     }
 
     public void delete() {
@@ -1523,7 +1745,7 @@ public class HiNoteCore implements ClipboardOwner {
 				// should just delete a character, not the whole node
 	if (selection.size() == 1) {
 	    node = (ZNode)selection.get(0);
-	    ZVisualComponent vc = ((ZVisualLeaf)node).getVisualComponent();
+	    ZVisualComponent vc = ((ZVisualLeaf)node).getFirstVisualComponent();
 	    if ((node instanceof ZVisualLeaf) && (vc instanceof ZText)) {
 		if (((ZText)vc).getEditable()) {
 		    return;
@@ -1563,11 +1785,11 @@ public class HiNoteCore implements ClipboardOwner {
 				// Move nodes to be grouped to the new group
 	for (Iterator i=selection.iterator(); i.hasNext();) {
             node = (ZNode)i.next();
-	    ZSelectionGroup.unselect(node);
+	    unselect(node);
 	    handle = node.editor().getTop();
 	    handle.setParent(group);
 	}
-	ZSelectionGroup.select(group);
+	select(group);
     }
 
     /**
@@ -1595,13 +1817,84 @@ public class HiNoteCore implements ClipboardOwner {
 		children = group.getChildren();
 		for (int j=0; j<children.length; j++) {
 		    children[j].reparent(layer);
-		    ZSelectionGroup.select(children[j].editor().getNode());
+		    select(children[j].editor().getNode());
 		}
 
 		handle = group.editor().getTop();
 		layer.removeChild(handle);
 	    }
 	}
+    }
+
+    public void indexGroup() {
+	ArrayList selection = ZSelectionGroup.getSelectedNodes(getCamera());
+
+	if (selection.size() != 1) {
+	    System.out.println("RTree index error1: You can only index a single group of nodes");
+	    return;
+	}
+
+	if (! (selection.get(0) instanceof ZGroup)) {
+	    System.out.println("RTree index error2: You can only index a single group of nodes");
+	    return;
+	}
+	    
+	ZGroup group = (ZGroup)selection.get(0);
+	if (group.editor().hasSpatialIndexGroup()) {
+	    System.out.println("RTree index error: nodes already indexed.");
+	    return;
+	}
+	ZSpatialIndexGroup index = group.editor().getSpatialIndexGroup();
+    }
+
+    public void unIndexGroup() {
+	ArrayList selection = ZSelectionGroup.getSelectedNodes(getCamera());
+
+	if (selection.size() != 1) {
+	    System.out.println("RTree index error1: You can only unIndex a single group");
+	    return;
+	}
+
+	if (! (selection.get(0) instanceof ZGroup)) {
+	    System.out.println("RTree index error2: You can only index a single group");
+	    return;
+	}
+	    
+	ZGroup group = (ZGroup)selection.get(0);
+	if (! group.editor().hasSpatialIndexGroup()) {
+	    System.out.println("RTree index error: nodes not indexed.");
+	    return;
+	}
+
+	if (! group.editor().removeSpatialIndexGroup()) {
+	    System.out.println("unidexing failed on node: " + group);
+	}
+    }
+
+    public void dumpRtree() {
+	ArrayList selection = ZSelectionGroup.getSelectedNodes(getCamera());
+
+	if (selection.size() != 1) {
+	    System.out.println("dumpRtree error: Select a single node that is part of an index group.");
+	    return;
+	}
+	    
+	ZNode selectedNode = (ZNode)selection.get(0);
+	ZNode topGroup = selectedNode.editor().getTop();
+	if ( !(topGroup.getParent() instanceof ZGroup)) {
+	    System.out.println("dumpRtree error: selected node not part of a group.");
+	    return;
+	}
+
+	ZGroup group = topGroup.getParent();
+
+	if (! group.editor().hasSpatialIndexGroup()) {
+	    System.out.println("dumpRtree error: selected node not indexed.");
+	    return;
+	}
+
+	ZSpatialIndexGroup ig = group.editor().getSpatialIndexGroup();
+	ig.displayTree("RTree");
     }
 
     public void setEventHandler(int newEventHandlerMode) {
@@ -1643,6 +1936,11 @@ public class HiNoteCore implements ClipboardOwner {
 	    getCanvas().setCursor(crosshairCursor);
 	    keyboardNavEventHandler.setActive(true);
 	    break;
+	case ELLIPSE_MODE:
+	    activeEventHandler = ellipseEventHandler;
+	    getCanvas().setCursor(crosshairCursor);
+	    keyboardNavEventHandler.setActive(true);
+	    break;
 	case RECTANGLE_MODE:
 	    activeEventHandler = rectEventHandler;
 	    getCanvas().setCursor(crosshairCursor);
@@ -1668,6 +1966,24 @@ public class HiNoteCore implements ClipboardOwner {
 	    currentEventHandlerMode = newEventHandlerMode;
 	}
     }
+
+    public void showTreeView() {
+	if (treeView == null) {
+	    treeView = new ZSceneGraphTreeView(canvas);
+	    treeView.addWindowListener(new WindowAdapter() {
+		public void windowDeactivated(WindowEvent e){
+		    treeView = null;
+		}
+		public void windowClosed(WindowEvent e) {
+		    treeView = null;
+		}
+	    });
+
+	    treeView.pack();
+	    treeView.show();
+	}
+    }
+
 
     public int getCurrentHandlerMode() {
 	return currentEventHandlerMode;

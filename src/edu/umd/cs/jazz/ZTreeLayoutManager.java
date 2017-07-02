@@ -1,3 +1,7 @@
+/**
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
+ * All rights reserved.
+ */
 package edu.umd.cs.jazz;
 
 import java.awt.*;
@@ -16,11 +20,18 @@ import edu.umd.cs.jazz.component.ZStroke;
  * the bounding box of the entire subtree, rather it tries to minimize the
  * total space used while maintaining no overlap among child subtrees.
  *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
+ *
  * @author  Jin Tong
  * @author  Ben Bederson
  * @author  Lance Good 
  */
-public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
+public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable, Serializable, Cloneable {
 
     /**
      * Vertical Tree Layout - a top to bottom layout
@@ -66,49 +77,89 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
     // Internal Variables
     //
 
-    // The Default Spacing
-    protected static float DEFAULT_SPACING = 20.0f;
+    /**
+     * The Default Spacing.
+     */
+    protected static double DEFAULT_SPACING = 20.0;
 
-    // A Permanent holder for an Origin point
-    protected static final Point2D ORIGIN = new Point2D.Float(0.0f, 0.0f);
+    /**
+     * A Permanent holder for an Origin point.
+     */
+    protected static final Point2D ORIGIN = new Point2D.Double(0.0, 0.0);
     
-    // Current Heading Style
+    /**
+     * The Current Heading Style.
+     */
     protected int currentHeadStyle = HEAD_IN;
 
-    // Current Orientation
+    /**
+     * The Current Orientation.
+     */
     protected static int currentOrientation = ORIENT_VERTICAL;
 
-    // Current X Spacing
-    protected float currentXSpacing = DEFAULT_SPACING;
+    /**
+     * The Current X Spacing.
+     */
+    protected double currentXSpacing = DEFAULT_SPACING;
 
-    // Current Y Spacing
-    protected float currentYSpacing = DEFAULT_SPACING;
+    /**
+     * The Current Y Spacing.
+     */
+    protected double currentYSpacing = DEFAULT_SPACING;
 
-    // Current Link Style
+    /**
+     * The Current Link Style.
+     */
     protected int currentLinkStyle = LINK_STRAIGHTLINE;
 
-    // Are links visible?
+    /**
+     * Are links visible?
+     */
     protected boolean linkVisible = true;
 
-    // A hashtable to store the areas for nodes using this manager
+    /**
+     * A hashtable to store the areas for nodes using this manager.
+     */
     protected Hashtable areaManager = new Hashtable();
 
-    // A hashtable to store the transforms for nodes in the current
-    // set of recursive calls to doLayout
+    /**
+     * A hashtable to store the transforms for nodes in the current
+     * set of recursive calls to doLayout
+     */
     protected Hashtable transformTable = new Hashtable();
 
-    // A hashtable to store nodes that need transforming in the current
-    // set of recursive calls to doLayout
+    /**
+     * A hashtable to store nodes that need transforming in the current
+     * set of recursive calls to doLayout.
+     */
     protected ArrayList transformNodes = new ArrayList();
 
-    // The current level of recursion in this layout manager
+    /**
+     *  The current level of recursion in this layout manager.
+     */
     protected int recurseLevel = 0;    
 
-    
     /**
      * The default constructor - uses all default values
      */
     public ZTreeLayoutManager() {
+	areaManager = new Hashtable();
+	transformTable = new Hashtable();
+    	transformNodes = new ArrayList();
+    }
+
+    /**
+     * Return a clone of this object.
+     */
+    public Object clone() {
+	Object newObject;
+	try {
+	    newObject = super.clone();
+	} catch (CloneNotSupportedException e) {
+	    throw new RuntimeException("Error in Object.clone(): " + e);
+	}
+
+	return newObject;
     }
 
     /**
@@ -161,8 +212,7 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 
     /**
      * Get the current orientation.
-     *
-     * @return   returns the current orientation for this tree
+     * @return the current orientation for this tree.
      */
     public int getCurrentOrientation() {
 	return currentOrientation;
@@ -170,6 +220,7 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 
     
     /**
+     * Set the current heading style.
      * @param h    the desired heading style - HEAD_IN, HEAD_OUT, or HEAD_SIDE
      * @return     <code>true</code> if set successfuly, <code>false</code>
      *             otherwise
@@ -207,12 +258,13 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 
 
     /**
+     * Set the current vertical spacing.
      * @param x  the value for x spacing -- horizontal spacing
      * @return     <code>true</code> if set successfuly, <code>false</code>
      *             otherwise
      */
-    public boolean setCurrentXSpacing(float x) {
-	if ((x > 0.0f) && (x != currentXSpacing)) {
+    public boolean setCurrentXSpacing(double x) {
+	if ((x > 0.0) && (x != currentXSpacing)) {
 	    currentXSpacing = x;
 	    return true;
 	}
@@ -223,12 +275,13 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 
 
     /**
+     * Set the current horizontal spacing.
      * @param y  the value for y spacing -- horizontal spacing
      * @return     <code>true</code> if set successfuly, <code>false</code>
      *             otherwise
      */
-    public boolean setCurrentYSpacing(float y) {
-	if ((y > 0.0f) && (y != currentYSpacing)) {
+    public boolean setCurrentYSpacing(double y) {
+	if ((y > 0.0) && (y != currentYSpacing)) {
 	    currentYSpacing = y;
 	    return true;
 	}
@@ -242,7 +295,7 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
      * Get the current x spacing
      * @return   current x spacing
      */
-    public float getCurrentXSpacing() {
+    public double getCurrentXSpacing() {
 	return currentXSpacing;
     }
 
@@ -251,7 +304,7 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
      * Get the current y spacing
      * @return   current y spacing
      */
-    public float getCurrentYSpacing() {
+    public double getCurrentYSpacing() {
 	return currentYSpacing;
     }
 
@@ -301,6 +354,16 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 	recurseLevel++;
     }
 
+    /**
+     * Apply this manager's layout algorithm to the specified node's children,
+     * and animate the changes over time.
+     * @param node The node to apply this layout algorithm to.
+     * @param millis The number of milliseconds over which to animate layout changes.
+     */
+    public void doLayout(ZGroup node, int millis) {
+	System.out.println("WARNING: Layout animation not implemented yet - layout being applied without animation.");
+	doLayout(node);
+    }
 
     /**
      * Method from the ZLayoutManager interface
@@ -339,8 +402,8 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
      * @param aPrimaryGroup The primary group for which the children should be laid out
      */
     protected void calculateChildrenLayout(ZGroup aPrimaryGroup) {
-	float lastX = 0.0f;
-	float lastY = 0.0f;
+	double lastX = 0.0;
+	double lastY = 0.0;
 	Area currentUsage = new Area();
 	Area childUsage = null;
 	ZBounds immediateChildrenBounds = new ZBounds();
@@ -367,20 +430,20 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 		}
 		bounds.transform(childEditor.getTransformGroup().getTransform());
 		padBounds(bounds);
-		bounds.setRect(0.0f,0.0f,(float)bounds.getWidth(),(float)bounds.getHeight());
+		bounds.setRect(0.0,0.0,bounds.getWidth(),bounds.getHeight());
 
 		currentUsage.add(getNodeArea(childPrimary));
 	
-		lastX = (float)bounds.getWidth();
-		lastY = (float)bounds.getHeight();
+		lastX = bounds.getWidth();
+		lastY = bounds.getHeight();
 	    }
 	    else {
 		Point2D dest;
 		if (currentOrientation == ORIENT_VERTICAL) {
-		    dest = new Point2D.Float(lastX,0.0f);
+		    dest = new Point2D.Double(lastX,0.0);
 		}
 		else {
-		    dest = new Point2D.Float(0.0f,lastY);
+		    dest = new Point2D.Double(0.0,lastY);
 		}
 
 		Point2D trans = setDestinationPoint(childPrimary,dest);
@@ -391,8 +454,8 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 
 		    trans = computeOverlap(currentUsage, childUsage);
 
-		    dest.setLocation((float)dest.getX()+(float)trans.getX(),
-				     (float)dest.getY()+(float)trans.getY());
+		    dest.setLocation(dest.getX()+trans.getX(),
+				     dest.getY()+trans.getY());
 
 
 		    translateDestinationPoint(childPrimary,trans);
@@ -408,13 +471,13 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 		bounds.transform(childEditor.getTransformGroup().getTransform());		
 		padBounds(bounds);
 
-		bounds.setRect((float)dest.getX(),(float)dest.getY(),
-			       (float)bounds.getWidth(),(float)bounds.getHeight());
+		bounds.setRect(dest.getX(),dest.getY(),
+			       bounds.getWidth(),bounds.getHeight());
 
 		currentUsage.add(childUsage);
 
-		lastX = (float)bounds.getX()+(float)bounds.getWidth();
-		lastY = (float)bounds.getY()+(float)bounds.getHeight();
+		lastX = bounds.getX()+bounds.getWidth();
+		lastY = bounds.getY()+bounds.getHeight();
 	    }
 
 	    immediateChildrenBounds.add(bounds);
@@ -425,50 +488,50 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 
 	    if (bounds != null) {
 
-		float transX = 0.0f;
-		float transY = 0.0f;
+		double transX = 0.0;
+		double transY = 0.0;
 
 		Rectangle2D allChildrenBounds = currentUsage.getBounds();
 
 		if (currentHeadStyle == HEAD_IN) {
 		    if (currentOrientation == ORIENT_VERTICAL) {
-			transX = 0.5f*((float)bounds.getWidth()-(float)immediateChildrenBounds.getWidth()) +
-			    (float)bounds.getX()-(float)immediateChildrenBounds.getX();
-			transY = (float)bounds.getHeight() + 0.5f*currentYSpacing;
+			transX = 0.5*(bounds.getWidth()-immediateChildrenBounds.getWidth()) +
+			    bounds.getX()-immediateChildrenBounds.getX();
+			transY = bounds.getHeight() + 0.5*currentYSpacing;
 
 		    }
 		    else {
-			transX = (float)bounds.getWidth() + 0.5f*currentXSpacing;
+			transX = bounds.getWidth() + 0.5*currentXSpacing;
 
-			transY = 0.5f*((float)bounds.getHeight()-(float)immediateChildrenBounds.getHeight()) +
-			    (float)bounds.getY()-(float)immediateChildrenBounds.getY();
+			transY = 0.5*(bounds.getHeight()-immediateChildrenBounds.getHeight()) +
+			    bounds.getY()-immediateChildrenBounds.getY();
 			
 		    }
 		}
 		else if (currentHeadStyle == HEAD_OUT) {
 		    if (currentOrientation == ORIENT_VERTICAL) {
-			transX = 0.5f*((float)bounds.getWidth()-(float)allChildrenBounds.getWidth()) +
-			    (float)bounds.getX()-(float)allChildrenBounds.getX();
-			transY = (float)bounds.getHeight() + 0.5f*currentYSpacing;
+			transX = 0.5*(bounds.getWidth()-allChildrenBounds.getWidth()) +
+			    bounds.getX()-allChildrenBounds.getX();
+			transY = bounds.getHeight() + 0.5*currentYSpacing;
 		    }
 		    else {
-			transX = (float)bounds.getWidth() + 0.5f*currentXSpacing;
-			transY = 0.5f*((float)bounds.getHeight()-(float)allChildrenBounds.getHeight()) +
-			    (float)bounds.getY()-(float)allChildrenBounds.getY();
+			transX = bounds.getWidth() + 0.5*currentXSpacing;
+			transY = 0.5*(bounds.getHeight()-allChildrenBounds.getHeight()) +
+			    bounds.getY()-allChildrenBounds.getY();
 		    }
 		}
 		else {
 		    if (currentOrientation == ORIENT_VERTICAL) {
-			transX = (float)bounds.getX()-(float)immediateChildrenBounds.getX()-0.5f*currentXSpacing;
-			transY = (float)bounds.getHeight() + 0.5f*currentYSpacing;
+			transX = bounds.getX()-immediateChildrenBounds.getX()-0.5*currentXSpacing;
+			transY = bounds.getHeight() + 0.5*currentYSpacing;
 		    }
 		    else {
-			transX = (float)bounds.getWidth() + 0.5f*currentXSpacing;
-			transY = (float)bounds.getY()-(float)immediateChildrenBounds.getY()-0.5f*currentYSpacing;			
+			transX = bounds.getWidth() + 0.5*currentXSpacing;
+			transY = bounds.getY()-immediateChildrenBounds.getY()-0.5*currentYSpacing;			
 		    }
 		}
 
-		Point2D trans = new Point2D.Float(transX,transY);
+		Point2D trans = new Point2D.Double(transX,transY);
 
 		// Translate each child the appropriate amount
 		for(int i=0; i<children.length; i++) {
@@ -530,8 +593,8 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 
     
     /**
-     * Translates the transform for the transform corresponding to the given
-     * node in the transformTable
+     * Translates the transform corresponding to the given
+     * node in the transformTable.
      * This is meant to be a pure translation that will not depend on any
      * scaling in this node's transform - ie. this resulting transform
      * will be preConcatenated with the node's current transform
@@ -540,7 +603,7 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
      */
     protected void translateDestinationPoint(ZNode aPrimaryNode, final Point2D trans) {
 	AffineTransform at = new AffineTransform();
-	at.translate((float)trans.getX(),(float)trans.getY());
+	at.translate(trans.getX(),trans.getY());
 
 	ZTransformGroup transGroup = aPrimaryNode.editor().getTransformGroup();
 	
@@ -561,7 +624,7 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 
 
     /**
-     * Sets the bounds location for the given node to the specified point
+     * Sets the bounds location for the given node to the specified point.
      * The resulting translation is meant to be a pure translation that will
      * not depend on any scaling in this node's transform - ie. this resulting
      * will be preConcatenated with the node's current transform
@@ -583,9 +646,9 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 
 	// Make the new transform be such that if it is preconcatenated with
 	// the old one - the primaryNode is at dest
-	Point2D trans = new Point2D.Float((float)(dest.getX()-localBounds.getX()),(float)(dest.getY()-localBounds.getY()));
+	Point2D trans = new Point2D.Double((dest.getX()-localBounds.getX()),(dest.getY()-localBounds.getY()));
 
-	at.setToTranslation((float)trans.getX(),(float)trans.getY());  
+	at.setToTranslation(trans.getX(),trans.getY());  
 
 	// This is really slick - put on a hashtable returns the last object
 	// stored with this key or null if none
@@ -607,7 +670,7 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
     protected Area updateChildArea(ZNode aPrimaryNode, Point2D trans) {
 
 	AffineTransform at = new AffineTransform();
-	at.translate((float)trans.getX(),(float)trans.getY());
+	at.translate(trans.getX(),trans.getY());
 
 	Area area = (Area)areaManager.get(aPrimaryNode);
 
@@ -698,7 +761,7 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
     protected ZBounds getFrontVisualComponentBounds(ZNode aVisualNode) {
 	ZBounds bounds = null;
 	if (aVisualNode instanceof ZVisualLeaf) {
-	    bounds = ((ZVisualLeaf)aVisualNode).getVisualComponent().getBounds();
+	    bounds = ((ZVisualLeaf)aVisualNode).getFirstVisualComponent().getBounds();
 	} else if (aVisualNode instanceof ZVisualGroup) {
 	    bounds = ((ZVisualGroup)aVisualNode).getFrontVisualComponentBounds();
 	}
@@ -713,12 +776,12 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
      * @return Convenience return of the padded bounds
      */
     protected ZBounds padBounds(ZBounds bounds) {
-	float spaceX = getCurrentXSpacing();
-	float spaceY = getCurrentYSpacing();
-	bounds.setRect(((float)bounds.getX()) - 0.5f*spaceX,
-		       ((float)bounds.getY()) - 0.5f*spaceY,
-		       ((float)bounds.getWidth()) + spaceX,
-		       ((float)bounds.getHeight())+ spaceY);
+	double spaceX = getCurrentXSpacing();
+	double spaceY = getCurrentYSpacing();
+	bounds.setRect((bounds.getX()) - 0.5*spaceX,
+		       (bounds.getY()) - 0.5*spaceY,
+		       (bounds.getWidth()) + spaceX,
+		       (bounds.getHeight())+ spaceY);
 	return bounds;
     }
 
@@ -731,9 +794,9 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
      */
     protected Point2D computeOverlap(Area a, Area b) {
 
-	Point2D.Float retVal = new Point2D.Float();
-	float x = 0f;
-	float y = 0f;
+	Point2D.Double retVal = new Point2D.Double();
+	double x = 0f;
+	double y = 0f;
 	Area tmp = (Area)a.clone();
 	tmp.intersect(b);
 	if (!tmp.isEmpty()) {
@@ -746,16 +809,16 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 		//  the spacing when the width is too big
 
 
-	        x = ((float)bound.getWidth() > currentXSpacing) ?
+	        x = (bound.getWidth() > currentXSpacing) ?
 		    currentXSpacing:
-		(float)bound.getWidth();
+		bound.getWidth();
 
 	    }
 	    else { // left right layout
 		
-		y = ((float)bound.getHeight() > currentYSpacing) ?
+		y = (bound.getHeight() > currentYSpacing) ?
 		    currentYSpacing:
-		(float)bound.getHeight();
+		bound.getHeight();
 
 	    }
 	}
@@ -763,14 +826,14 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 
 	// Now we try to eliminate rounding error and any unnecessary translation
 	Rectangle2D bounds = tmp.getBounds2D();
-	Rectangle2D boundsRound = new Rectangle2D.Float((float)(int)(bounds.getX()+1.0),
-							(float)(int)(bounds.getY()+1.0),
-							(float)(int)(bounds.getWidth()),
-							(float)(int)(bounds.getHeight()));
+	Rectangle2D boundsRound = new Rectangle2D.Double((double)(int)(bounds.getX()+1.0),
+							(double)(int)(bounds.getY()+1.0),
+							(double)(int)(bounds.getWidth()),
+							(double)(int)(bounds.getHeight()));
 	Area round = new Area(boundsRound);
 	tmp.intersect(round);
 	if (tmp.isEmpty()) {
-	    retVal.setLocation(0.0f, 0.0f);
+	    retVal.setLocation(0.0, 0.0);
 	}
 	
 	return retVal;
@@ -822,6 +885,24 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
      * @param out The stream that this object writes into
      */
     public void writeObject(ZObjectOutputStream out) throws IOException {
+	if (currentHeadStyle != HEAD_IN) {
+	    out.writeState("int", "currentHeadStyle", currentHeadStyle);
+	}
+	if (currentXSpacing != DEFAULT_SPACING) {
+	    out.writeState("double", "currentXSpacing", currentXSpacing);
+	}
+	if (currentYSpacing != DEFAULT_SPACING) {
+	    out.writeState("double", "currentYSpacing", currentYSpacing);
+	}
+	if (currentLinkStyle != LINK_STRAIGHTLINE) {
+	    out.writeState("int", "currentLinkStyle", currentLinkStyle);
+	}
+	out.writeState("boolean", "linkVisible", linkVisible);
+
+	out.writeState("java.util.HashTable", "areaManager", areaManager);
+	out.writeState("java.util.HashTable", "transformTable", transformTable);
+	out.writeState("java.util.ArrayList", "transformNodes", transformNodes);
+	out.writeState("int", "recurseLevel", recurseLevel);
     }
 
 
@@ -844,6 +925,25 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
      * @param fieldValue The value of the field
      */
     public void setState(String fieldType, String fieldName, Object fieldValue) {
+	if (fieldName.compareTo("currentHeadStyle") == 0) {
+	    currentHeadStyle = ((Integer)fieldValue).intValue();
+	} else if (fieldName.compareTo("currentXSpacing") == 0) {
+	    setCurrentXSpacing(((Double)fieldValue).doubleValue());
+	} else if (fieldName.compareTo("currentYSpacing") == 0) {
+	    setCurrentYSpacing(((Double)fieldValue).doubleValue());
+	} else if (fieldName.compareTo("currentLinkStyle") == 0) {
+	    currentLinkStyle = ((Integer)fieldValue).intValue();
+	} else if (fieldName.compareTo("linkVisible") == 0) {
+	    linkVisible = ((Boolean)fieldValue).booleanValue();
+	} else if (fieldName.compareTo("areaManager") == 0) {
+	    areaManager = (Hashtable)fieldValue;
+	} else if (fieldName.compareTo("transformTable") == 0) {
+	    transformTable = (Hashtable)fieldValue;
+	} else if (fieldName.compareTo("transformNodes") == 0) {
+	    transformNodes = (ArrayList)fieldValue;
+	} else if (fieldName.compareTo("recurseLevel") == 0) {
+	    recurseLevel = ((Integer)fieldValue).intValue();
+	}
     }
 
     
@@ -878,7 +978,7 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 	protected BasicStroke stroke = new BasicStroke(2);
 	
 	// The pen width
-	protected float penWidth = 1;
+	protected double penWidth = 1;
 	
 	// The visual link
 	Shape visLink = null;
@@ -899,7 +999,7 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 		bounds = new ZBounds(visLink.getBounds());
 	    }
 	    else {
-		bounds.setRect(0.0f,0.0f,0.0f,0.0f);
+		bounds.setRect(0.0,0.0,0.0,0.0);
 	    }
 	}
 	
@@ -957,7 +1057,7 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 	 * Get the current pen width
 	 * @return The current pen width
 	 */
-	public float getPenWidth() {
+	public double getPenWidth() {
 	    return penWidth;
 	}
 
@@ -965,9 +1065,22 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 	 * Sets the pen width
 	 * @param w The new pen width
 	 */
-	public void setPenWidth(float w) {
+	public void setPenWidth(double w) {
 	    penWidth = w;
 	    repaint();
+	}
+
+	/**
+	 * Not implemented.
+	 */
+	public void setAbsPenWidth(double w) {
+	}
+
+	/**
+	 * Not implemented.
+	 */
+	public double getAbsPenWidth() {
+	    return 0.0d;
 	}
 
 	/**
@@ -977,10 +1090,10 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 	public void render(ZRenderContext renderContext) {
 	    Graphics2D g2 = renderContext.getGraphics2D();
 	    
-	    float mag = renderContext.getCompositeMagnification();
+	    double mag = renderContext.getCompositeMagnification();
 	    
 	    if (mag*stroke.getLineWidth() != penWidth) {
-		stroke = new BasicStroke(penWidth/mag);
+		stroke = new BasicStroke((float)(penWidth/mag));
 	    }
 	    
 	    g2.setStroke(stroke);
@@ -1080,16 +1193,16 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 			childBounds.transform(parentTransform.getTransform());
 			
 			if (ZTreeLayoutManager.this.getCurrentOrientation() == ZTreeLayoutManager.ORIENT_VERTICAL) {		    
-			    ((GeneralPath) visLink).moveTo((float)parentBounds.getX() + (float)parentBounds.getWidth() / 2.0f,
-							   (float)parentBounds.getY() + (float)parentBounds.getHeight());
-			    ((GeneralPath) visLink).lineTo((float)childBounds.getX() + (float)childBounds.getWidth() / 2.0f,
+			    ((GeneralPath) visLink).moveTo((float)(parentBounds.getX() + parentBounds.getWidth() / 2.0),
+							   (float)(parentBounds.getY() + parentBounds.getHeight()));
+			    ((GeneralPath) visLink).lineTo((float)(childBounds.getX() + childBounds.getWidth() / 2.0),
 							   (float)childBounds.getY());
 			}
 			else {
-			    ((GeneralPath) visLink).moveTo((float)parentBounds.getX() + (float)parentBounds.getWidth(),
-							   (float)parentBounds.getY() + (float)parentBounds.getHeight() / 2.0f);
+			    ((GeneralPath) visLink).moveTo((float)(parentBounds.getX() + parentBounds.getWidth()),
+							   (float)(parentBounds.getY() + parentBounds.getHeight() / 2.0));
 			    ((GeneralPath) visLink).lineTo((float)childBounds.getX(),
-							   (float)childBounds.getY() + (float)childBounds.getHeight() / 2.0f);
+							   (float)(childBounds.getY() + childBounds.getHeight() / 2.0));
 			}
 		    }
 		    
@@ -1126,8 +1239,8 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 			childBounds.transform(parentTransform.getTransform());
 			
 
-			float yMiddle = (float)parentBounds.getY()+(float)parentBounds.getHeight() + ((float)childBounds.getY() - ((float)parentBounds.getY()+(float)parentBounds.getHeight())) / 2.0f;
-			float xMiddle = (float)parentBounds.getX()+(float)parentBounds.getWidth() + ((float)childBounds.getX() - ((float)parentBounds.getX()+(float)parentBounds.getWidth())) / 2.0f;
+			double yMiddle = parentBounds.getY()+parentBounds.getHeight() + (childBounds.getY() - (parentBounds.getY()+parentBounds.getHeight())) / 2.0;
+			double xMiddle = parentBounds.getX()+parentBounds.getWidth() + (childBounds.getX() - (parentBounds.getX()+parentBounds.getWidth())) / 2.0;
 			
 			
 			if (first == child) {
@@ -1139,42 +1252,42 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 			    if (ZTreeLayoutManager.this.getCurrentOrientation() == ZTreeLayoutManager.ORIENT_VERTICAL) {
 
 
-				((GeneralPath) visLink).moveTo((float)parentBounds.getX() + (float)parentBounds.getWidth() / 2.0f,
-							       yMiddle);
-				((GeneralPath) visLink).lineTo((float)parentBounds.getX() + (float)parentBounds.getWidth() / 2.0f,
-							       (float)parentBounds.getY() + (float)parentBounds.getHeight());
+				((GeneralPath) visLink).moveTo((float)(parentBounds.getX() + parentBounds.getWidth() / 2.0),
+							       (float)yMiddle);
+				((GeneralPath) visLink).lineTo((float)(parentBounds.getX() + parentBounds.getWidth() / 2.0),
+							       (float)(parentBounds.getY() + parentBounds.getHeight()));
 
-				((GeneralPath) visLink).moveTo((float)childBounds.getX() + (float)childBounds.getWidth() /2.0f,
-							       yMiddle);
+				((GeneralPath) visLink).moveTo((float)(childBounds.getX() + childBounds.getWidth() /2.0),
+							       (float)yMiddle);
 
-				((GeneralPath) visLink).lineTo((float)parentBounds.getX() + (float)parentBounds.getWidth() / 2.0f,
-							       yMiddle);
+				((GeneralPath) visLink).lineTo((float)(parentBounds.getX() + parentBounds.getWidth() / 2.0),
+							       (float)yMiddle);
 
-				((GeneralPath) visLink).moveTo((float)childBounds.getX() + (float)childBounds.getWidth() / 2.0f,
+				((GeneralPath) visLink).moveTo((float)(childBounds.getX() + childBounds.getWidth() / 2.0),
 							       (float)childBounds.getY());
 
-				((GeneralPath) visLink).lineTo((float)childBounds.getX() + (float)childBounds.getWidth() /2.0f,
-							       yMiddle);
+				((GeneralPath) visLink).lineTo((float)(childBounds.getX() + childBounds.getWidth() /2.0),
+							       (float)yMiddle);
 				
 			    }
 			    else { //if (ZTreeLayoutManager.getCurrentOrientation() == ZTreeLayoutManager.Orientation_HORIZONTAL)
 
-				((GeneralPath) visLink).moveTo(xMiddle,
-							       (float)parentBounds.getY() + (float)parentBounds.getHeight() / 2.0f);
-				((GeneralPath) visLink).lineTo((float)parentBounds.getX() + (float)parentBounds.getWidth(),
-							       (float)parentBounds.getY() + (float)parentBounds.getHeight() / 2.0f);
+				((GeneralPath) visLink).moveTo((float)xMiddle,
+							       (float)(parentBounds.getY() + parentBounds.getHeight() / 2.0));
+				((GeneralPath) visLink).lineTo((float)(parentBounds.getX() + parentBounds.getWidth()),
+							       (float)(parentBounds.getY() + parentBounds.getHeight() / 2.0));
 
-				((GeneralPath) visLink).moveTo(xMiddle,
-							       (float)childBounds.getY() + (float)childBounds.getHeight() / 2.0f);
+				((GeneralPath) visLink).moveTo((float)xMiddle,
+							       (float)(childBounds.getY() + childBounds.getHeight() / 2.0));
 
-				((GeneralPath) visLink).lineTo(xMiddle,
-							       (float)parentBounds.getY() + (float)parentBounds.getHeight() / 2.0f);
+				((GeneralPath) visLink).lineTo((float)xMiddle,
+							       (float)(parentBounds.getY() + parentBounds.getHeight() / 2.0));
 
 				((GeneralPath) visLink).moveTo((float)childBounds.getX(),
-							       (float)childBounds.getY() + (float)childBounds.getHeight() / 2.0f);
+							       (float)(childBounds.getY() + childBounds.getHeight() / 2.0));
 
-				((GeneralPath) visLink).lineTo(xMiddle,
-							       (float)childBounds.getY() + (float) childBounds.getHeight() / 2.0f);			
+				((GeneralPath) visLink).lineTo((float)xMiddle,
+							       (float)(childBounds.getY() +  childBounds.getHeight() / 2.0));			
 
 			    }
 			}
@@ -1182,20 +1295,20 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 			    // Draw the line up from the child
 			    if (ZTreeLayoutManager.this.getCurrentOrientation() == ZTreeLayoutManager.ORIENT_VERTICAL) {
 				
-				((GeneralPath) visLink).moveTo((float)childBounds.getX() + (float)childBounds.getWidth() / 2.0f,
+				((GeneralPath) visLink).moveTo((float)(childBounds.getX() + childBounds.getWidth() / 2.0),
 							       (float)childBounds.getY());
 
-				((GeneralPath) visLink).lineTo((float)childBounds.getX() + (float)childBounds.getWidth() / 2.0f,
-							       yMiddle);
+				((GeneralPath) visLink).lineTo((float)(childBounds.getX() + childBounds.getWidth() / 2.0),
+							       (float)yMiddle);
 				
 			    }
 			    else { //if (ZTreeLayoutManager.getCurrentOrientation() == ZTreeLayoutManager.Orientation_HORIZONTAL)
 				// Half up link
 				((GeneralPath) visLink).moveTo((float)childBounds.getX(),
-							       (float)childBounds.getY() + (float)childBounds.getHeight() / 2.0f);
+							       (float)(childBounds.getY() + childBounds.getHeight() / 2.0));
 
-				((GeneralPath) visLink).lineTo(xMiddle,
-							       (float)childBounds.getY() + (float)childBounds.getHeight() / 2.0f);
+				((GeneralPath) visLink).lineTo((float)xMiddle,
+							       (float)(childBounds.getY() + childBounds.getHeight() / 2.0));
 				
 			    }
 			}
@@ -1203,27 +1316,27 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 			lastBounds = childBounds;
 		    } // end for
 
-		    float yMiddle = (float)parentBounds.getY()+(float)parentBounds.getHeight() + ((float)firstBounds.getY() - ((float)parentBounds.getY()+(float)parentBounds.getHeight())) / 2.0f;
-		    float xMiddle = (float)parentBounds.getX()+(float)parentBounds.getWidth() + ((float)firstBounds.getX() - ((float)parentBounds.getX()+(float)parentBounds.getWidth())) / 2.0f;
+		    double yMiddle = parentBounds.getY()+parentBounds.getHeight() + (firstBounds.getY() - (parentBounds.getY()+parentBounds.getHeight())) / 2.0;
+		    double xMiddle = parentBounds.getX()+parentBounds.getWidth() + (firstBounds.getX() - (parentBounds.getX()+parentBounds.getWidth())) / 2.0;
 		    
 		    // Draw down link if not Heading_SIDE -- Heading_SIDE's down link has already benn drawn
 		    if (ZTreeLayoutManager.this.getCurrentHeadStyle() != ZTreeLayoutManager.HEAD_SIDE) {
 			if (ZTreeLayoutManager.this.getCurrentOrientation() == ZTreeLayoutManager.ORIENT_VERTICAL) {
 			    
-			    ((GeneralPath) visLink).moveTo((float)parentBounds.getX() + (float)parentBounds.getWidth() / 2.0f,
-							   (float)parentBounds.getY() + (float)parentBounds.getHeight());
+			    ((GeneralPath) visLink).moveTo((float)(parentBounds.getX() + parentBounds.getWidth() / 2.0),
+							   (float)(parentBounds.getY() + parentBounds.getHeight()));
 
-			    ((GeneralPath) visLink).lineTo((float)parentBounds.getX() + (float)parentBounds.getWidth() / 2.0f,
-							   yMiddle);
+			    ((GeneralPath) visLink).lineTo((float)(parentBounds.getX() + parentBounds.getWidth() / 2.0),
+							   (float)yMiddle);
 			    
 			}
 			else { //if (ZTreeLayoutManager.getCurrentOrientation() == ZTreeLayoutManager.Orientation_HORIZONTAL)
-			    ((GeneralPath) visLink).moveTo((float)parentBounds.getX() + (float)parentBounds.getWidth(),
-							   (float)parentBounds.getY() + (float)parentBounds.getHeight() / 2.0f);
+			    ((GeneralPath) visLink).moveTo((float)(parentBounds.getX() + parentBounds.getWidth()),
+							   (float)(parentBounds.getY() + parentBounds.getHeight() / 2.0));
 
 
-			    ((GeneralPath) visLink).lineTo(xMiddle,
-			    			   (float)parentBounds.getY() + (float)parentBounds.getHeight() / 2.0f);
+			    ((GeneralPath) visLink).lineTo((float)xMiddle,
+			    			   (float)(parentBounds.getY() + parentBounds.getHeight() / 2.0));
 			
 			}
 		    }
@@ -1234,39 +1347,39 @@ public class ZTreeLayoutManager implements ZLayoutManager, ZSerializable {
 			    if (ZTreeLayoutManager.this.getCurrentOrientation() == ZTreeLayoutManager.ORIENT_VERTICAL) {
 
 				
-				((GeneralPath) visLink).moveTo((float)lastBounds.getX() + (float)lastBounds.getWidth() / 2.0f,
-							       yMiddle);
+				((GeneralPath) visLink).moveTo((float)(lastBounds.getX() + lastBounds.getWidth() / 2.0),
+							       (float)yMiddle);
 
-				((GeneralPath) visLink).lineTo((float)firstBounds.getX() + (float)(firstBounds.getWidth()) / 2.0f,
-							       yMiddle);
+				((GeneralPath) visLink).lineTo((float)(firstBounds.getX() + (firstBounds.getWidth()) / 2.0),
+							       (float)yMiddle);
 
 				
 			    }
 			    else { //if (ZTreeLayoutManager.getCurrentOrientation() == ZTreeLayoutManager.Orientation_HORIZONTAL)
 
-				((GeneralPath) visLink).moveTo(xMiddle,
-							       (float)lastBounds.getY() + (float)lastBounds.getHeight() / 2.0f);
-				((GeneralPath) visLink).lineTo(xMiddle,
-							       (float)firstBounds.getY() + (float)firstBounds.getHeight() / 2.0f);
+				((GeneralPath) visLink).moveTo((float)xMiddle,
+							       (float)(lastBounds.getY() + lastBounds.getHeight() / 2.0));
+				((GeneralPath) visLink).lineTo((float)xMiddle,
+							       (float)(firstBounds.getY() + firstBounds.getHeight() / 2.0));
 				
 			    }
 			}
 			else {
 			    if (ZTreeLayoutManager.this.getCurrentOrientation() == ZTreeLayoutManager.ORIENT_VERTICAL) {
 
-				((GeneralPath) visLink).moveTo((float)lastBounds.getX() + (float)lastBounds.getWidth() / 2.0f,
-							       yMiddle);
+				((GeneralPath) visLink).moveTo((float)(lastBounds.getX() + lastBounds.getWidth() / 2.0),
+							       (float)yMiddle);
 				
-				((GeneralPath) visLink).lineTo((float)firstBounds.getX() + (float)firstBounds.getWidth() / 2.0f,
-							       yMiddle);
+				((GeneralPath) visLink).lineTo((float)(firstBounds.getX() + firstBounds.getWidth() / 2.0),
+							       (float)yMiddle);
 							       
 			    }
 			    else { //if (ZTreeLayoutManager.getCurrentOrientation() == ZTreeLayoutManager.Orientation_HORIZONTAL)
 
-				((GeneralPath) visLink).moveTo(xMiddle,
-							       (float)lastBounds.getY() + (float)lastBounds.getHeight() / 2.0f);
-				((GeneralPath) visLink).lineTo(xMiddle,
-							       (float)firstBounds.getY() + (float)firstBounds.getHeight() /2.0f);
+				((GeneralPath) visLink).moveTo((float)xMiddle,
+							       (float)(lastBounds.getY() + lastBounds.getHeight() / 2.0));
+				((GeneralPath) visLink).lineTo((float)xMiddle,
+							       (float)(firstBounds.getY() + firstBounds.getHeight() /2.0));
 				
 			    }
 			}

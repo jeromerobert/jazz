@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 
@@ -13,13 +13,20 @@ import java.io.*;
  * the specified bounds in global coordinates, but only if the object is within
  * its visible magnification range.  
  * Terminal nodes are leaf nodes and group
- * nodes that do not "childrenFindable".
+ * nodes that do not return true for "childrenFindable()".
  * 
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
+ *
  * @author Ben Bederson
  */
 public class ZMagBoundsFindFilter extends ZBoundsFindFilter implements Serializable {
     ZBounds bounds = null;
-    float mag = 1.0f;
+    double mag = 1.0;
 
     /**
      * Create a new magnification bounds filter.  This filter accepts "terminal" nodes whose
@@ -30,7 +37,7 @@ public class ZMagBoundsFindFilter extends ZBoundsFindFilter implements Serializa
      * @param bounds The bounds in global coordinates to search within.
      * @param mag The magnification to use for filtering
      */
-    public ZMagBoundsFindFilter(ZBounds bounds, float mag) {
+    public ZMagBoundsFindFilter(ZBounds bounds, double mag) {
 	super(bounds);
 
 	this.bounds = bounds;

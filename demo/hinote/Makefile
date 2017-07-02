@@ -4,16 +4,24 @@
 
 # Compile all the java source code
 all :
-	cd src; javac -d classes -classpath ../../../src/classes *.java
-	cp -r resources src/classes
-	cd src/classes; jar -cfm ../../hinote.jar ../../resources/hinote.manifest *.class resources/*.gif
-	cd resources; jar -cfm ../src/classes/resources/help.jar ../src/classes/resources/help.manifest about.jazz using.jazz
-	cp src/classes/resources/help.jar help.jar
+# Compile HiNote source .java files, importing jazz classes above
+	cd src; javac -g -d classes -classpath ../../../src/classes *.java
+
+# Create demo/hinote/hinote.jar, including hinote manifest file and all gif resources
+	cd src/classes; jar -cfm ../../hinote.jar ../../resources/hinote.manifest *.class
+
+# Add resources to hinote.jar
+	jar -uf hinote.jar resources/*.gif
+
+# Create demo/hinote/resources/help.jar containing "about.jazz" and "using.jazz"
+	cd resources; jar -cfm ../help.jar help.manifest about.jazz using.jazz;
+
+# Add jazz classes to demo/hinote/hinote.jar
 	cd ../../src/classes; jar -uf ../../demo/hinote/hinote.jar edu
 
 # Remove all class files
 clean:
-	rm -rf src/classes/*.class src/classes/resources
+	rm -rf src/classes/*.class
 
 rundemo:
 	cd src; java -classpath "../../../src/classes:classes:.." HiNote

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 
@@ -15,6 +15,13 @@ import edu.umd.cs.jazz.*;
  * <b>ZLayout</b> is a utility class that provides general-purpose layout mechanisms
  * to position nodes.
  * 
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
+ *
  * @author Lance Good
  * @author Ben Bederson
  */
@@ -26,10 +33,10 @@ public class ZLayout implements Serializable {
      * exact spacing on a non-closed path with default tolerance.
      * @param nodes The nodes to be distributed.
      * @param coordinates The coordinates of the path.
-     * @see #distribute(ZNode[], ArrayList, float, boolean)
+     * @see #distribute(ZNode[], ArrayList, double, boolean)
      */
     static public void distribute(ZNode[] nodes, ArrayList coordinates) {
-	distribute(nodes, coordinates, -1.0f, false);
+	distribute(nodes, coordinates, -1.0, false);
     }
 
     /**
@@ -44,20 +51,20 @@ public class ZLayout implements Serializable {
      * @param exact Should the algorithm run once and stop or iterate to 
      *              get exact spacing.
      * @param closedPath Does the path represent a closed path?
-     * @see #distribute(ZNode[], ArrayList, float, float, boolean, boolean)
+     * @see #distribute(ZNode[], ArrayList, double, double, boolean, boolean)
      */
     static public void distribute(ZNode[] nodes, ArrayList coordinates, boolean exact, boolean closedPath) {
 	// The number of nodes
 	int numNodes;
 
 	// The amount of space to start the algorithm
-	float space;
+	double space;
 
 	// The length of the path 
-	float pathLength;
+	double pathLength;
 
 	// The total dimension of all the nodes
-	float totalDim;
+	double totalDim;
 
 	// The current ZNode
 	ZNode node;
@@ -70,17 +77,17 @@ public class ZLayout implements Serializable {
 	}
 
 	pathLength = pathLength(coordinates);
-	totalDim = 0.0f;
+	totalDim = 0.0;
 	numNodes = 0;
 	for(int i=0; i<nodes.length; i++) {
 	    node = (ZNode)nodes[i].editor().getNode();
 	    bounds = node.getGlobalBounds();
-	    totalDim = totalDim + ((float)(bounds.getWidth()+bounds.getHeight())/(float)2.0);
+	    totalDim = totalDim + ((bounds.getWidth()+bounds.getHeight())/2.0);
 	    numNodes++;
 	}
 
-	if (pathLength == 0.0f) {
-	    distribute(nodes, coordinates, 0.0f, -1.0f, false, closedPath);
+	if (pathLength == 0.0) {
+	    distribute(nodes, coordinates, 0.0, -1.0, false, closedPath);
 	} else {
 	    if (closedPath) {
 		space = (pathLength - totalDim) / (numNodes);
@@ -88,7 +95,7 @@ public class ZLayout implements Serializable {
 	    else {
 		space = (pathLength - totalDim) / (numNodes-1);
 	    }
-	    distribute(nodes, coordinates, space, -1.0f, exact, closedPath);
+	    distribute(nodes, coordinates, space, -1.0, exact, closedPath);
 	}
     }
 
@@ -102,20 +109,20 @@ public class ZLayout implements Serializable {
      * @param coordinates The coordinates of the path.
      * @param tolerance The error allowed in placing the nodes
      * @param closedPath Does the path represent a closed path?
-     * @see #distribute(ZNode[], ArrayList, float, float, boolean, boolean)
+     * @see #distribute(ZNode[], ArrayList, double, double, boolean, boolean)
      */
-    static public void distribute(ZNode[] nodes, ArrayList coordinates, float tolerance, boolean closedPath) {
+    static public void distribute(ZNode[] nodes, ArrayList coordinates, double tolerance, boolean closedPath) {
 	// The number of nodes
 	int numNodes;
 
 	// The amount of space to start the algorithm
-	float space;
+	double space;
 
 	// The length of the path 
-	float pathLength;
+	double pathLength;
 
 	// The total dimension of all the nodes
-	float totalDim;
+	double totalDim;
 
 	// The current ZNode
 	ZNode node;
@@ -128,17 +135,17 @@ public class ZLayout implements Serializable {
 	}
 
 	pathLength = pathLength(coordinates);
-	totalDim = 0.0f;
+	totalDim = 0.0;
 	numNodes = 0;
 	for(int i=0; i<nodes.length; i++) {
 	    node = (ZNode)nodes[i].editor().getNode();
 	    bounds = node.getGlobalBounds();
-	    totalDim = totalDim + ((float)(bounds.getWidth()+bounds.getHeight())/(float)2.0);
+	    totalDim = totalDim + ((bounds.getWidth()+bounds.getHeight())/2.0);
 	    numNodes++;
 	}
 
-	if (pathLength == 0.0f) {
-	    distribute(nodes, coordinates, 0.0f, -1.0f, false, closedPath);
+	if (pathLength == 0.0) {
+	    distribute(nodes, coordinates, 0.0, -1.0, false, closedPath);
 	}
 	else {
 	    if (closedPath) {
@@ -174,11 +181,11 @@ public class ZLayout implements Serializable {
      * @param closedPath Does the path represent a closed path?
      */
     static public void distribute(ZNode[] nodes, ArrayList coordinates,
-				  float space, float tolerance,
+				  double space, double tolerance,
 				  boolean exact, boolean closedPath) {
 	
 	// The default tolerance value
-	final float DEFAULT_TOLERANCE = 0.1f;
+	final double DEFAULT_TOLERANCE = 0.1f;
 
 	// The number of points on the path
 	int numCoords;
@@ -187,10 +194,10 @@ public class ZLayout implements Serializable {
 	int numNodes;
 
 	// The length of the path given by coordinates
-	float pathLength;
+	double pathLength;
 
 	// The amount of path passing through the first node - for closed paths
-	float closingLength;
+	double closingLength;
 	
 	// Node index
 	int index;
@@ -202,24 +209,24 @@ public class ZLayout implements Serializable {
 	boolean done = false;
 	
 	// represents the current error in distributing along the path
-	float currentError = -1.0f;
+	double currentError = -1.0;
 	
 	// Storage for a frequently used variable
-	Point2D halfDim = new Point2D.Float();
+	Point2D halfDim = new Point2D.Double();
 
 	if ((nodes.length == 0) || coordinates.isEmpty()) {
 	    return;
 	}
 
-	if (!(tolerance > 0.0f && tolerance <= 100.0f)) {
+	if (!(tolerance > 0.0 && tolerance <= 100.0)) {
 	    tolerance = DEFAULT_TOLERANCE;
 	}
-	tolerance = tolerance/100.0f;
+	tolerance = tolerance/100.0;
 	
 	pathLength = pathLength(coordinates);
 	numCoords = coordinates.size();
 	numNodes = nodes.length;
-	closingLength = 0.0f;
+	closingLength = 0.0;
 	
 	
 	/* This code handles the special case when the path is closed.  Since
@@ -228,21 +235,21 @@ public class ZLayout implements Serializable {
 	   will intersect the node in order to add this to our
 	   pathLengthInNodes */	   
 	if (closedPath) {
-	    Point2D dir = new Point2D.Float((float)1.0,(float)1.0);
+	    Point2D dir = new Point2D.Double(1.0,1.0);
 	    Point2D entranceP = (Point2D)((Point2D)coordinates.get(coordinates.size()-1)).clone();
 	    ZNode firstNode = (ZNode)nodes[0].editor().getNode();
 	    Rectangle2D bounds = firstNode.getGlobalBounds();
-	    float halfWidth = ((float)bounds.getWidth())/(2.0f);
-	    float halfHeight = ((float)bounds.getHeight())/(2.0f);
+	    double halfWidth = (bounds.getWidth())/(2.0);
+	    double halfHeight = (bounds.getHeight())/(2.0);
 	    
-	    float curX = (float)entranceP.getX();
-	    float curY = (float)entranceP.getY();
+	    double curX = entranceP.getX();
+	    double curY = entranceP.getY();
 	    normalizeList(dir);
 
-	    Point2D curP = new Point2D.Float(curX, curY);
+	    Point2D curP = new Point2D.Double(curX, curY);
 	    halfDim.setLocation(halfWidth, halfHeight);
 
-	    closingLength = computeDimensionTranslation(halfDim,curP,new Point2D.Float(0.0f,0.0f),new Point2D.Float(0.0f,0.0f),dir,coordinates,false);   
+	    closingLength = computeDimensionTranslation(halfDim,curP,new Point2D.Double(0.0,0.0),new Point2D.Double(0.0,0.0),dir,coordinates,false);   
 	}
 
 
@@ -254,30 +261,30 @@ public class ZLayout implements Serializable {
 	   infinite loop or the path is too small for the nodes
 	 */
 	while (!done) {
-	    float pathLengthInNodes = 0.0f;
+	    double pathLengthInNodes = 0.0;
 	    // Start off with the direction that doesn't favor either dimension
-	    Point2D dir = new Point2D.Float((float)1.0,(float)1.0);
+	    Point2D dir = new Point2D.Double(1.0,1.0);
 
 	    index = 0;
 	    coords = (ArrayList)coordinates.clone();
 
 	    Point2D entranceP = (Point2D)((Point2D)coords.get(0)).clone();
-	    float remainderX = 0.0f;
-	    float remainderY = 0.0f;
-	    float curX = 0.0f;
-	    float curY = 0.0f;	    
+	    double remainderX = 0.0;
+	    double remainderY = 0.0;
+	    double curX = 0.0;
+	    double curY = 0.0;	    
 
 	    boolean determined = false;
-	    float centerX = 0.0f;
-	    float centerY = 0.0f;
+	    double centerX = 0.0;
+	    double centerY = 0.0;
 
 	    coords.remove(0);
 	    normalizeList(dir);	    	    
 	    
 	    if (closedPath) {
 		determined = true;
-		centerX = (float)entranceP.getX();
-		centerY = (float)entranceP.getY();
+		centerX = entranceP.getX();
+		centerY = entranceP.getY();
 	    }
 
 	    // Perform this loop once for each of the nodes
@@ -287,10 +294,10 @@ public class ZLayout implements Serializable {
 		Point2D curP;
 		Point2D remainderP;
 		
-		float halfWidth = (float)bounds.getWidth()/(float)2.0;
-		float halfHeight = (float)bounds.getHeight()/(float)2.0;
-		float entranceX = (float)entranceP.getX();
-		float entranceY = (float)entranceP.getY();
+		double halfWidth = bounds.getWidth()/2.0;
+		double halfHeight = bounds.getHeight()/2.0;
+		double entranceX = entranceP.getX();
+		double entranceY = entranceP.getY();
 
 		curX = entranceX;
 		curY = entranceY;
@@ -305,24 +312,23 @@ public class ZLayout implements Serializable {
 
 		    /* halfDim is a Point2D instead of a Dimension2D because
 		       the Java interface doesn't define any Dimension2D
-		       classes with floats */
-		    Point2D centerP = new Point2D.Float(centerX, centerY);
+		       classes with doubles */
+		    Point2D centerP = new Point2D.Double(centerX, centerY);
 
 		    halfDim.setLocation(halfWidth, halfHeight);
-		    curP = new Point2D.Float(curX, curY);	    
-		    remainderP = new Point2D.Float(remainderX, remainderY);
+		    curP = new Point2D.Double(curX, curY);	    
+		    remainderP = new Point2D.Double(remainderX, remainderY);
 		    
 		    pathLengthInNodes += computeDimensionTranslation(halfDim,curP,remainderP,centerP,dir,coords,true);
 
-		    curX = (float)curP.getX();
-		    curY = (float)curP.getY();
+		    curX = curP.getX();
+		    curY = curP.getY();
 
-		    remainderX = (float)remainderP.getX();
-		    remainderY = (float)remainderP.getY();
+		    remainderX = remainderP.getX();
+		    remainderY = remainderP.getY();
 
-		    centerX = (float)centerP.getX();
-		    centerY = (float)centerP.getY();
-
+		    centerX = centerP.getX();
+		    centerY = centerP.getY();
 		}
 		
 		determined = false;
@@ -337,12 +343,12 @@ public class ZLayout implements Serializable {
 		/* Actually Move the node to this center point */
 
 		ZTransformGroup transform = node.editor().getTransformGroup();
-		Point2D newLocalCenter = new Point2D.Float(centerX, centerY);
+		Point2D newLocalCenter = new Point2D.Double(centerX, centerY);
 		node.globalToLocal(newLocalCenter);
-		Point2D curLocalCenter = new Point2D.Float((float)bounds.getCenterX(),(float)bounds.getCenterY());
+		Point2D curLocalCenter = new Point2D.Double(bounds.getCenterX(),bounds.getCenterY());
 		node.globalToLocal(curLocalCenter);
 
-		transform.translate((float)(newLocalCenter.getX()-curLocalCenter.getX()),(float)(newLocalCenter.getY()-curLocalCenter.getY()));
+		transform.translate((newLocalCenter.getX()-curLocalCenter.getX()),(newLocalCenter.getY()-curLocalCenter.getY()));
 
 		/******************************************/
 		/* Part 2 - Now that we have the center - */
@@ -352,28 +358,28 @@ public class ZLayout implements Serializable {
 		/*   path leaves the node's bounding box  */
 		/******************************************/		
 
-		float boundaryX = 0.0f;
-		float boundaryY = 0.0f;
+		double boundaryX = 0.0;
+		double boundaryY = 0.0;
 		
 		/* This is a Point2D instead of a Dimension because
 		   the very consistent Java interface doesn't define
-		   any Dimension classes with floats */
-		Point2D boundaryP = new Point2D.Float(boundaryX, boundaryY);
+		   any Dimension classes with doubles */
+		Point2D boundaryP = new Point2D.Double(boundaryX, boundaryY);
 
 		halfDim.setLocation(halfWidth, halfHeight);
-		curP = new Point2D.Float(curX, curY);	    
-		remainderP = new Point2D.Float(remainderX, remainderY);
+		curP = new Point2D.Double(curX, curY);	    
+		remainderP = new Point2D.Double(remainderX, remainderY);
 
 		pathLengthInNodes += computeDimensionTranslation(halfDim,curP,remainderP,boundaryP,dir,coords,true);
 
-		curX = (float)curP.getX();
-		curY = (float)curP.getY();
+		curX = curP.getX();
+		curY = curP.getY();
 		
-		remainderX = (float)remainderP.getX();
-		remainderY = (float)remainderP.getY();
+		remainderX = remainderP.getX();
+		remainderY = remainderP.getY();
 		
-		boundaryX = (float)boundaryP.getX();
-		boundaryY = (float)boundaryP.getY();
+		boundaryX = boundaryP.getX();
+		boundaryY = boundaryP.getY();
 
 		/******************************************/
 		/* End Part 2                             */
@@ -392,57 +398,54 @@ public class ZLayout implements Serializable {
 		/******************************************/
 
 		boolean spaced = false;
-		float spaceSoFar = 0.0f;
-		curP = new Point2D.Float(curX,curY);
-		remainderP = new Point2D.Float(remainderX+curX,remainderY+curY);
+		double spaceSoFar = 0.0;
+		curP = new Point2D.Double(curX,curY);
+		remainderP = new Point2D.Double(remainderX+curX,remainderY+curY);
 		
-		if ((remainderX != 0.0f) || (remainderY != 0.0f)) {
+		if ((remainderX != 0.0) || (remainderY != 0.0)) {
 
 		    if (remainderP.distance(curP) > space) {
-			entranceP.setLocation(curX + space*(float)dir.getX(),curY + space*(float)dir.getY());
+			entranceP.setLocation(curX + space*dir.getX(),curY + space*dir.getY());
 			
 			spaced = true;
-			remainderX = remainderX - ((float)entranceP.getX() - curX);
-			remainderY = remainderY - ((float)entranceP.getY() - curY);
+			remainderX = remainderX - (entranceP.getX() - curX);
+			remainderY = remainderY - (entranceP.getY() - curY);
 		    }
 		    else {
-			spaceSoFar = (float)remainderP.distance(curP);
+			spaceSoFar = remainderP.distance(curP);
 			curP.setLocation(remainderP);
-			remainderX = 0.0f;
-			remainderY = 0.0f;
+			remainderX = 0.0;
+			remainderY = 0.0;
 		    }
-		    
 		}
 
 		while (!spaced) {
 
 		    if (!coords.isEmpty()) {
 			Point2D newP = (Point2D)((Point2D)coords.get(0)).clone();
-			float newX = (float)newP.getX();
-			float newY = (float)newP.getY();
+			double newX = newP.getX();
+			double newY = newP.getY();
 
 			coords.remove(0);			    
-			dir.setLocation(newX-(float)curP.getX(),newY-(float)curP.getY());
+			dir.setLocation(newX-curP.getX(),newY-curP.getY());
 			normalizeList(dir);
 
 			if (newP.distance(curP)+spaceSoFar > space) {
-			    entranceP.setLocation((float)curP.getX() + (space-spaceSoFar)*(float)dir.getX(),(float)curP.getY() + (space-spaceSoFar)*(float)dir.getY());
+			    entranceP.setLocation(curP.getX() + (space-spaceSoFar)*dir.getX(),curP.getY() + (space-spaceSoFar)*dir.getY());
 			    
 			    spaced = true;
-			    remainderX = (float)newP.getX() - (float)entranceP.getX();
-			    remainderY = (float)newP.getY() - (float)entranceP.getY();
+			    remainderX = newP.getX() - entranceP.getX();
+			    remainderY = newP.getY() - entranceP.getY();
 			}
 			else {
-			    spaceSoFar = (float)newP.distance(curP) + spaceSoFar;
+			    spaceSoFar = newP.distance(curP) + spaceSoFar;
 			    curP.setLocation(newX, newY);			    
 			}
-			
 		    }
 		    else {
-			entranceP.setLocation((float)curP.getX() + (space-spaceSoFar)*(float)dir.getX(),(float)curP.getY() + (space-spaceSoFar)*(float)dir.getY());			
+			entranceP.setLocation(curP.getX() + (space-spaceSoFar)*dir.getX(),curP.getY() + (space-spaceSoFar)*dir.getY());			
 			spaced = true;						
 		    }
-
 		}
 
 		/******************************************/
@@ -458,7 +461,7 @@ public class ZLayout implements Serializable {
 
 	    if (exact) {
 
-		float length;
+		double length;
 
 		/* Add in the closing path length for the case of a
 		   closed path (it's 0 anyway if path isn't closed) */
@@ -474,10 +477,9 @@ public class ZLayout implements Serializable {
 		    else {
 			length = pathLength;
 		    }
-		    
 		}
 
-		if ((float)Math.abs((length-pathLength)/(pathLength)) < tolerance) {
+		if (Math.abs((length-pathLength)/(pathLength)) < tolerance) {
 		    done = true;
 		}
 		else {
@@ -501,18 +503,16 @@ public class ZLayout implements Serializable {
 		    if (pathLength == 0) {
 			done = true;
 		    }
-
 		}
 		
 		/* This case was added in the event that the error is not
 		   decreasing - signaling a likely infinite loop */
-		if (currentError != -1.0f) {
-		    if (currentError <= (float)Math.abs(length-pathLength)) {
+		if (currentError != -1.0) {
+		    if (currentError <= Math.abs(length-pathLength)) {
 			done = true;
 		    }
 		}
-		currentError = (float)Math.abs(length-pathLength);
-
+		currentError = Math.abs(length-pathLength);
 	    }
 	    else {
 		done = true;
@@ -521,7 +521,6 @@ public class ZLayout implements Serializable {
 	    /******************************************/
 	    /* End Part 4                             */
 	    /******************************************/
-	    
 	}	
     }
     
@@ -541,30 +540,30 @@ public class ZLayout implements Serializable {
      * @param dir The current direction of the path
      * @param coordinates The coordinates of the path
      * @param ascending Look at the points of the path in ascending or descending order?
-     * @return A float equal to the length of the path in dim
+     * @return A double equal to the length of the path in dim
      */
-    static protected float computeDimensionTranslation(Point2D dim, Point2D currentP,
+    static protected double computeDimensionTranslation(Point2D dim, Point2D currentP,
 						       Point2D remainderP, Point2D finishedP,
 						       Point2D dir, ArrayList coordinates,
 						       boolean ascending) {		
 	boolean finished = false;
 
-	float width = (float)dim.getX();
-	float height = (float)dim.getY();	
+	double width = dim.getX();
+	double height = dim.getY();	
 	
-	float currentX = (float)currentP.getX();
-	float currentY = (float)currentP.getY();
+	double currentX = currentP.getX();
+	double currentY = currentP.getY();
 
-	float remainderX = (float)remainderP.getX();
-	float remainderY = (float)remainderP.getY();
+	double remainderX = remainderP.getX();
+	double remainderY = remainderP.getY();
 	
-	float finishedX = (float)finishedP.getX();
-	float finishedY = (float)finishedP.getY();	
+	double finishedX = finishedP.getX();
+	double finishedY = finishedP.getY();	
 	
-	float pathSoFarX = 0.0f;
-	float pathSoFarY = 0.0f;
+	double pathSoFarX = 0.0;
+	double pathSoFarY = 0.0;
 
-	float pathLengthInNodes = 0.0f;
+	double pathLengthInNodes = 0.0;
 	
 	int ArrayListPosition;
 
@@ -575,25 +574,25 @@ public class ZLayout implements Serializable {
 	    ArrayListPosition = coordinates.size()-2;
 	}
 
-	if (remainderX != 0.0f || remainderY != 0.0f) {
+	if (remainderX != 0.0 || remainderY != 0.0) {
 	    
-	    if (((float)Math.abs((double)remainderX) > width) || ((float)Math.abs((double)remainderY) > height)) {
+	    if ((Math.abs(remainderX) > width) || (Math.abs(remainderY) > height)) {
 		/* This case indicates that the remainder extends past
 		   the dimensions in one direction */
 
-		/* Here we add NaN checks because 0.0f/0.0f returns NaN
+		/* Here we add NaN checks because 0.0/0.0 returns NaN
 		   instead of infinity.  Thus, if not checked, we could
 		   get incorrect results - don't know if 0 will be passed
 		   as a dimension or not - better safe */
-		if (Float.isNaN(width/(float)Math.abs((double)dir.getX())) || Float.isNaN(height/(float)Math.abs((double)dir.getY()))) {
-		    if (Float.isNaN(width/(float)Math.abs((double)dir.getX()))) {
+		if (Double.isNaN(width/Math.abs(dir.getX())) || Double.isNaN(height/Math.abs(dir.getY()))) {
+		    if (Double.isNaN(width/Math.abs(dir.getX()))) {
 			/* This case means the length of the path
 			   along the current direction is
 			   smaller in the y direction
 			*/
 			
-			finishedX = currentX + (height)*((float)dir.getX()/(float)dir.getY())*((float)dir.getY()/(float)Math.abs((double)dir.getY()));
-			finishedY = currentY + (height)*((float)dir.getY()/(float)Math.abs((double)dir.getY()));
+			finishedX = currentX + (height)*(dir.getX()/dir.getY())*(dir.getY()/Math.abs(dir.getY()));
+			finishedY = currentY + (height)*(dir.getY()/Math.abs(dir.getY()));
 			
 		    }
 		    else {
@@ -602,20 +601,20 @@ public class ZLayout implements Serializable {
 			   x direction
 			*/
 			
-			finishedX = currentX + (width)*((float)dir.getX()/(float)Math.abs((double)dir.getX()));
-			finishedY = currentY + (width)*((float)dir.getY()/(float)dir.getX())*((float)dir.getX()/(float)Math.abs((double)dir.getX()));
+			finishedX = currentX + (width)*(dir.getX()/Math.abs(dir.getX()));
+			finishedY = currentY + (width)*(dir.getY()/dir.getX())*(dir.getX()/Math.abs(dir.getX()));
 		    }
 		}
 		else {
 		    
-		    if ((width/(float)Math.abs((double)dir.getX())) < (height/(float)Math.abs((double)dir.getY()))) {
+		    if ((width/Math.abs(dir.getX())) < (height/Math.abs(dir.getY()))) {
 			/* This case means the length of the path
 			   along the current direction is smaller in the
 			   x direction
 			*/
 			
-			finishedX = currentX + (width)*((float)dir.getX()/(float)Math.abs((double)dir.getX()));
-			finishedY = currentY + (width)*((float)dir.getY()/(float)dir.getX())*((float)dir.getX()/(float)Math.abs((double)dir.getX()));
+			finishedX = currentX + (width)*(dir.getX()/Math.abs(dir.getX()));
+			finishedY = currentY + (width)*(dir.getY()/dir.getX())*(dir.getX()/Math.abs(dir.getX()));
 		    }
 		    else {
 			/* This case means the length of the path
@@ -623,14 +622,14 @@ public class ZLayout implements Serializable {
 			   smaller in the y direction
 			*/
 			
-			finishedX = currentX + (height)*((float)dir.getX()/(float)dir.getY())*((float)dir.getY()/(float)Math.abs((double)dir.getY()));
-			finishedY = currentY + (height)*((float)dir.getY()/(float)Math.abs((double)dir.getY()));
+			finishedX = currentX + (height)*(dir.getX()/dir.getY())*(dir.getY()/Math.abs(dir.getY()));
+			finishedY = currentY + (height)*(dir.getY()/Math.abs(dir.getY()));
 		    }
 		}		    
 		finished = true;
 		remainderX = remainderX - (finishedX - currentX);
 		remainderY = remainderY - (finishedY - currentY);
-		pathLengthInNodes = pathLengthInNodes + (float)Point2D.distance(0.0f,0.0f,finishedX-currentX,finishedY-currentY);
+		pathLengthInNodes = pathLengthInNodes + Point2D.distance(0.0,0.0,finishedX-currentX,finishedY-currentY);
 	    }
 	    else {
 		/* In this case, the segment isn't long enough
@@ -640,9 +639,9 @@ public class ZLayout implements Serializable {
 		pathSoFarY = remainderY;
 		currentX = currentX + remainderX;
 		currentY = currentY + remainderY;
-		pathLengthInNodes = pathLengthInNodes + (float)Point2D.distance(0.0f,0.0f,remainderX,remainderY);
-		remainderX = 0.0f;
-		remainderY = 0.0f;
+		pathLengthInNodes = pathLengthInNodes + Point2D.distance(0.0,0.0,remainderX,remainderY);
+		remainderX = 0.0;
+		remainderY = 0.0;
 	    }
 	    
 	}
@@ -661,14 +660,14 @@ public class ZLayout implements Serializable {
 		    ArrayListPosition--;
 		}
 		
-		float newX = (float)newP.getX();
-		float newY = (float)newP.getY();
+		double newX = newP.getX();
+		double newY = newP.getY();
 		dir.setLocation(newX-currentX,newY-currentY);
 		normalizeList(dir);
 		
-		float curDistX = newX - currentX;
-		float curDistY = newY - currentY;
-		if (((float)Math.abs(curDistX+pathSoFarX) > width) || ((float)Math.abs(curDistY+pathSoFarY) > height)) {
+		double curDistX = newX - currentX;
+		double curDistY = newY - currentY;
+		if ((Math.abs(curDistX+pathSoFarX) > width) || (Math.abs(curDistY+pathSoFarY) > height)) {
 		    /* This case means that the
 		       current segment at least
 		       extends past the dimensions
@@ -676,14 +675,14 @@ public class ZLayout implements Serializable {
 		    */
 
 		    
-		    /* Generally floating point numbers in java are
+		    /* Generally double numbers in java are
 		       fairly cooperative in divide by zero
-		       instances, yielding "Float.POSITIVE_INFINITY"
-		       or "Float.NEGATIVE_INFINITY". These
+		       instances, yielding "Double.POSITIVE_INFINITY"
+		       or "Double.NEGATIVE_INFINITY". These
 		       "INFINITY" values even work for comparisons.
 
 		       However, if you perform operations on
-		       "INFINITY" you get "Float.NaN".  This value does
+		       "INFINITY" you get "Double.NaN".  This value does
 		       not cooperate with comparison statements so we
 		       have to check beforehand to see if
 		       we got any NaN.  We shouldn't get division by
@@ -695,43 +694,43 @@ public class ZLayout implements Serializable {
 		    */
 
 		    
-		    if (Float.isNaN(width/(float)Math.abs((double)dir.getX()) - pathSoFarX/(float)dir.getX()) || Float.isNaN(height/(float)Math.abs((double)dir.getY()) - pathSoFarY/(float)dir.getY())) {
-			if (Float.isNaN(width/(float)Math.abs((double)dir.getX()) - pathSoFarX/(float)dir.getX())) {
-			    if ((double)Math.abs((double)pathSoFarY/(double)dir.getY()) == (double)pathSoFarY/(double)dir.getY()) {
-				finishedX = currentX + (height - (float)Math.abs((double)pathSoFarY))*((float)dir.getX()/(float)dir.getY())*((float)dir.getY()/(float)Math.abs((double)dir.getY()));
-				finishedY = currentY + (height - (float)Math.abs((double)pathSoFarY))*((float)dir.getY()/(float)Math.abs((double)dir.getY()));
+		    if (Double.isNaN(width/Math.abs(dir.getX()) - pathSoFarX/dir.getX()) || Double.isNaN(height/Math.abs(dir.getY()) - pathSoFarY/dir.getY())) {
+			if (Double.isNaN(width/Math.abs(dir.getX()) - pathSoFarX/dir.getX())) {
+			    if (Math.abs(pathSoFarY/dir.getY()) == pathSoFarY/dir.getY()) {
+				finishedX = currentX + (height - Math.abs(pathSoFarY))*(dir.getX()/dir.getY())*(dir.getY()/Math.abs(dir.getY()));
+				finishedY = currentY + (height - Math.abs(pathSoFarY))*(dir.getY()/Math.abs(dir.getY()));
 			    }
 			    else {
-				finishedX = currentX + (height + (float)Math.abs((double)pathSoFarY))*((float)dir.getX()/(float)dir.getY())*((float)dir.getY()/(float)Math.abs((double)dir.getY()));
-				finishedY = currentY + (height + (float)Math.abs((double)pathSoFarY))*((float)dir.getY()/(float)Math.abs((double)dir.getY()));
+				finishedX = currentX + (height + Math.abs(pathSoFarY))*(dir.getX()/dir.getY())*(dir.getY()/Math.abs(dir.getY()));
+				finishedY = currentY + (height + Math.abs(pathSoFarY))*(dir.getY()/Math.abs(dir.getY()));
 			    }			    
 			}
 			else {
-			    if ((double)Math.abs((double)pathSoFarX/(double)dir.getX()) == (double)pathSoFarX/(double)dir.getX()) {
-				finishedX = currentX + (width - (float)Math.abs((double)pathSoFarX))*((float)dir.getX()/(float)Math.abs((double)dir.getX()));
-				finishedY = currentY + (width - (float)Math.abs((double)pathSoFarX))*((float)dir.getY()/(float)dir.getX())*((float)dir.getX()/(float)Math.abs((double)dir.getX()));
+			    if (Math.abs(pathSoFarX/dir.getX()) == pathSoFarX/dir.getX()) {
+				finishedX = currentX + (width - Math.abs(pathSoFarX))*(dir.getX()/Math.abs(dir.getX()));
+				finishedY = currentY + (width - Math.abs(pathSoFarX))*(dir.getY()/dir.getX())*(dir.getX()/Math.abs(dir.getX()));
 			    }
 			    else {
-				finishedX = currentX + (width + (float)Math.abs((double)pathSoFarX))*((float)dir.getX()/(float)Math.abs((double)dir.getX()));
-				finishedY = currentY + (width + (float)Math.abs((double)pathSoFarX))*((float)dir.getY()/(float)dir.getX())*((float)dir.getX()/(float)Math.abs((double)dir.getX()));
+				finishedX = currentX + (width + Math.abs(pathSoFarX))*(dir.getX()/Math.abs(dir.getX()));
+				finishedY = currentY + (width + Math.abs(pathSoFarX))*(dir.getY()/dir.getX())*(dir.getX()/Math.abs(dir.getX()));
 			    }
 			}
 		    }
 		    else {
 
-			if ((width/(float)Math.abs((double)dir.getX()) - pathSoFarX/(float)dir.getX()) < (height/(float)Math.abs((double)dir.getY()) - pathSoFarY/(float)dir.getY())) {
+			if ((width/Math.abs(dir.getX()) - pathSoFarX/dir.getX()) < (height/Math.abs(dir.getY()) - pathSoFarY/dir.getY())) {
 			    
 				/* Now we check whether the current
 				   direction is the same as the
 				   direction of the previous movements
 				*/
-			    if ((double)Math.abs((double)pathSoFarX/(double)dir.getX()) == (double)pathSoFarX/(double)dir.getX()) {
-				finishedX = currentX + (width - (float)Math.abs((double)pathSoFarX))*((float)dir.getX()/(float)Math.abs((double)dir.getX()));
-				finishedY = currentY + (width - (float)Math.abs((double)pathSoFarX))*((float)dir.getY()/(float)dir.getX())*((float)dir.getX()/(float)Math.abs((double)dir.getX()));
+			    if (Math.abs(pathSoFarX/dir.getX()) == pathSoFarX/dir.getX()) {
+				finishedX = currentX + (width - Math.abs(pathSoFarX))*(dir.getX()/Math.abs(dir.getX()));
+				finishedY = currentY + (width - Math.abs(pathSoFarX))*(dir.getY()/dir.getX())*(dir.getX()/Math.abs(dir.getX()));
 			    }
 			    else {
-				finishedX = currentX + (width + (float)Math.abs((double)pathSoFarX))*((float)dir.getX()/(float)Math.abs((double)dir.getX()));
-				finishedY = currentY + (width + (float)Math.abs((double)pathSoFarX))*((float)dir.getY()/(float)dir.getX())*((float)dir.getX()/(float)Math.abs((double)dir.getX()));
+				finishedX = currentX + (width + Math.abs(pathSoFarX))*(dir.getX()/Math.abs(dir.getX()));
+				finishedY = currentY + (width + Math.abs(pathSoFarX))*(dir.getY()/dir.getX())*(dir.getX()/Math.abs(dir.getX()));
 			    }
 			}
 			else {
@@ -741,13 +740,13 @@ public class ZLayout implements Serializable {
 				   as the direction of the previous
 				   movements
 				*/	    
-			    if ((double)Math.abs((double)pathSoFarY/(double)dir.getY()) == (double)pathSoFarY/(double)dir.getY()) {
-				finishedX = currentX + (height - (float)Math.abs((double)pathSoFarY))*((float)dir.getX()/(float)dir.getY())*((float)dir.getY()/(float)Math.abs((double)dir.getY()));
-				finishedY = currentY + (height - (float)Math.abs((double)pathSoFarY))*((float)dir.getY()/(float)Math.abs((double)dir.getY()));
+			    if (Math.abs(pathSoFarY/dir.getY()) == pathSoFarY/dir.getY()) {
+				finishedX = currentX + (height - Math.abs(pathSoFarY))*(dir.getX()/dir.getY())*(dir.getY()/Math.abs(dir.getY()));
+				finishedY = currentY + (height - Math.abs(pathSoFarY))*(dir.getY()/Math.abs(dir.getY()));
 			    }
 			    else {
-				finishedX = currentX + (height + (float)Math.abs((double)pathSoFarY))*((float)dir.getX()/(float)dir.getY())*((float)dir.getY()/(float)Math.abs((double)dir.getY()));
-				finishedY = currentY + (height + (float)Math.abs((double)pathSoFarY))*((float)dir.getY()/(float)Math.abs((double)dir.getY()));
+				finishedX = currentX + (height + Math.abs(pathSoFarY))*(dir.getX()/dir.getY())*(dir.getY()/Math.abs(dir.getY()));
+				finishedY = currentY + (height + Math.abs(pathSoFarY))*(dir.getY()/Math.abs(dir.getY()));
 			    }
 			}
 						
@@ -757,7 +756,7 @@ public class ZLayout implements Serializable {
 		    finished = true;
 		    remainderX = newX - finishedX;
 		    remainderY = newY - finishedY;
-		    pathLengthInNodes = pathLengthInNodes + (float)Point2D.distance(0.0f,0.0f,finishedX-currentX,finishedY-currentY);
+		    pathLengthInNodes = pathLengthInNodes + Point2D.distance(0.0,0.0,finishedX-currentX,finishedY-currentY);
 		}		
 		else {
 		    /* This case means that the
@@ -770,45 +769,45 @@ public class ZLayout implements Serializable {
 		    pathSoFarY = pathSoFarY + curDistY;
 		    currentX = currentX + curDistX;
 		    currentY = currentY + curDistY;
-		    pathLengthInNodes = pathLengthInNodes + (float)Point2D.distance(0.0f,0.0f,curDistX,curDistY);				
+		    pathLengthInNodes = pathLengthInNodes + Point2D.distance(0.0,0.0,curDistX,curDistY);				
 		}
 	    }
 	    else {
-		if (Float.isNaN(width/(float)Math.abs((double)dir.getX()) - pathSoFarX/(float)dir.getX()) || Float.isNaN(height/(float)Math.abs((double)dir.getY()) - pathSoFarY/(float)dir.getY())) {
-		    if (Float.isNaN(width/(float)Math.abs((double)dir.getX()) - pathSoFarX/(float)dir.getX())) {
-			if ((double)Math.abs((double)pathSoFarY/(double)dir.getY()) == (double)pathSoFarY/(double)dir.getY()) {
-			    finishedX = currentX + (height - (float)Math.abs((double)pathSoFarY))*((float)dir.getX()/(float)dir.getY())*((float)dir.getY()/(float)Math.abs((double)dir.getY()));
-			    finishedY = currentY + (height - (float)Math.abs((double)pathSoFarY))*((float)dir.getY()/(float)Math.abs((double)dir.getY()));
+		if (Double.isNaN(width/Math.abs(dir.getX()) - pathSoFarX/dir.getX()) || Double.isNaN(height/Math.abs(dir.getY()) - pathSoFarY/dir.getY())) {
+		    if (Double.isNaN(width/Math.abs(dir.getX()) - pathSoFarX/dir.getX())) {
+			if (Math.abs(pathSoFarY/dir.getY()) == pathSoFarY/dir.getY()) {
+			    finishedX = currentX + (height - Math.abs(pathSoFarY))*(dir.getX()/dir.getY())*(dir.getY()/Math.abs(dir.getY()));
+			    finishedY = currentY + (height - Math.abs(pathSoFarY))*(dir.getY()/Math.abs(dir.getY()));
 			}
 			else {
-			    finishedX = currentX + (height + (float)Math.abs((double)pathSoFarY))*((float)dir.getX()/(float)dir.getY())*((float)dir.getY()/(float)Math.abs((double)dir.getY()));
-			    finishedY = currentY + (height + (float)Math.abs((double)pathSoFarY))*((float)dir.getY()/(float)Math.abs((double)dir.getY()));
+			    finishedX = currentX + (height + Math.abs(pathSoFarY))*(dir.getX()/dir.getY())*(dir.getY()/Math.abs(dir.getY()));
+			    finishedY = currentY + (height + Math.abs(pathSoFarY))*(dir.getY()/Math.abs(dir.getY()));
 			}			
 		    }
 		    else {
-			if ((double)Math.abs((double)pathSoFarX/(double)dir.getX()) == (double)pathSoFarX/(double)dir.getX()) {
-			    finishedX = currentX + (width - (float)Math.abs((double)pathSoFarX))*((float)dir.getX()/(float)Math.abs((double)dir.getX()));
-			    finishedY = currentY + (width - (float)Math.abs((double)pathSoFarX))*((float)dir.getY()/(float)dir.getX())*((float)dir.getX()/(float)Math.abs((double)dir.getX()));
+			if (Math.abs(pathSoFarX/dir.getX()) == pathSoFarX/dir.getX()) {
+			    finishedX = currentX + (width - Math.abs(pathSoFarX))*(dir.getX()/Math.abs(dir.getX()));
+			    finishedY = currentY + (width - Math.abs(pathSoFarX))*(dir.getY()/dir.getX())*(dir.getX()/Math.abs(dir.getX()));
 			}
 			else {
-			    finishedX = currentX + (width + (float)Math.abs((double)pathSoFarX))*((float)dir.getX()/(float)Math.abs((double)dir.getX()));
-			    finishedY = currentY + (width + (float)Math.abs((double)pathSoFarX))*((float)dir.getY()/(float)dir.getX())*((float)dir.getX()/(float)Math.abs((double)dir.getX()));
+			    finishedX = currentX + (width + Math.abs(pathSoFarX))*(dir.getX()/Math.abs(dir.getX()));
+			    finishedY = currentY + (width + Math.abs(pathSoFarX))*(dir.getY()/dir.getX())*(dir.getX()/Math.abs(dir.getX()));
 			}
 		    }
 		}
 		else {
-		    if ((width/(float)Math.abs((double)dir.getX()) - pathSoFarX/(float)dir.getX()) < (height/(float)Math.abs((double)dir.getY()) - pathSoFarY/(float)dir.getY())) {
+		    if ((width/Math.abs(dir.getX()) - pathSoFarX/dir.getX()) < (height/Math.abs(dir.getY()) - pathSoFarY/dir.getY())) {
 			/* Now we check whether the current direction
 			   is the same as the direction of the
 			   previous movements
 			*/
-			if ((double)Math.abs((double)pathSoFarX/(double)dir.getX()) == (double)pathSoFarX/(double)dir.getX()) {
-			    finishedX = currentX + (width - (float)Math.abs((double)pathSoFarX))*((float)dir.getX()/(float)Math.abs((double)dir.getX()));
-			    finishedY = currentY + (width - (float)Math.abs((double)pathSoFarX))*((float)dir.getY()/(float)dir.getX())*((float)dir.getX()/(float)Math.abs((double)dir.getX()));
+			if (Math.abs(pathSoFarX/dir.getX()) == pathSoFarX/dir.getX()) {
+			    finishedX = currentX + (width - Math.abs(pathSoFarX))*(dir.getX()/Math.abs(dir.getX()));
+			    finishedY = currentY + (width - Math.abs(pathSoFarX))*(dir.getY()/dir.getX())*(dir.getX()/Math.abs(dir.getX()));
 			}
 			else {
-			    finishedX = currentX + (width + (float)Math.abs((double)pathSoFarX))*((float)dir.getX()/(float)Math.abs((double)dir.getX()));
-			    finishedY = currentY + (width + (float)Math.abs((double)pathSoFarX))*((float)dir.getY()/(float)dir.getX())*((float)dir.getX()/(float)Math.abs((double)dir.getX()));
+			    finishedX = currentX + (width + Math.abs(pathSoFarX))*(dir.getX()/Math.abs(dir.getX()));
+			    finishedY = currentY + (width + Math.abs(pathSoFarX))*(dir.getY()/dir.getX())*(dir.getX()/Math.abs(dir.getX()));
 			}
 		    }
 		    else {
@@ -818,18 +817,18 @@ public class ZLayout implements Serializable {
 			   movements
 			*/
 			
-			if ((double)Math.abs((double)pathSoFarY/(double)dir.getY()) == (double)pathSoFarY/(double)dir.getY()) {
-			    finishedX = currentX + (height - (float)Math.abs((double)pathSoFarY))*((float)dir.getX()/(float)dir.getY())*((float)dir.getY()/(float)Math.abs((double)dir.getY()));
-			    finishedY = currentY + (height - (float)Math.abs((double)pathSoFarY))*((float)dir.getY()/(float)Math.abs((double)dir.getY()));
+			if (Math.abs(pathSoFarY/dir.getY()) == pathSoFarY/dir.getY()) {
+			    finishedX = currentX + (height - Math.abs(pathSoFarY))*(dir.getX()/dir.getY())*(dir.getY()/Math.abs(dir.getY()));
+			    finishedY = currentY + (height - Math.abs(pathSoFarY))*(dir.getY()/Math.abs(dir.getY()));
 			}
 			else {
-			    finishedX = currentX + (height + (float)Math.abs((double)pathSoFarY))*((float)dir.getX()/(float)dir.getY())*((float)dir.getY()/(float)Math.abs((double)dir.getY()));
-			    finishedY = currentY + (height + (float)Math.abs((double)pathSoFarY))*((float)dir.getY()/(float)Math.abs((double)dir.getY()));
+			    finishedX = currentX + (height + Math.abs(pathSoFarY))*(dir.getX()/dir.getY())*(dir.getY()/Math.abs(dir.getY()));
+			    finishedY = currentY + (height + Math.abs(pathSoFarY))*(dir.getY()/Math.abs(dir.getY()));
 			}
 		    }
 		}
 		finished = true;
-		pathLengthInNodes = pathLengthInNodes + (float)Point2D.distance(0.0f,0.0f,finishedX-currentX,finishedY-currentY);			
+		pathLengthInNodes = pathLengthInNodes + Point2D.distance(0.0,0.0,finishedX-currentX,finishedY-currentY);			
 	    }
 	    
 	}
@@ -847,11 +846,11 @@ public class ZLayout implements Serializable {
      * @param coords The path for which to compute the length
      * @return The length of the given path 
      */
-    static protected float pathLength(ArrayList coords) {
-	float len = 0.0f;
+    static protected double pathLength(ArrayList coords) {
+	double len = 0.0;
 	if (coords.size() > 1) {
 	    for(int i=0; i<(coords.size()-1); i++) {
-		len = len + (float)((Point2D)coords.get(i)).distance((Point2D)coords.get(i+1));
+		len = len + ((Point2D)coords.get(i)).distance((Point2D)coords.get(i+1));
 	    }
 	}
 	return len;
@@ -863,12 +862,12 @@ public class ZLayout implements Serializable {
      * @param p ArrayList (ArrayList in the physics sense, actually a point) to be normalized
      */
     static protected void normalizeList(Point2D p) {
-	float len = (float)p.distance(0.0f, 0.0f);
-	if (len != 0.0f) {
-	    p.setLocation((float)p.getX()/len,(float)p.getY()/len);
+	double len = p.distance(0.0, 0.0);
+	if (len != 0.0) {
+	    p.setLocation(p.getX()/len,p.getY()/len);
 	}
 	else {
-	    p.setLocation(1.0f/(float)Point2D.distance(0.0f,0.0f,1.0f,1.0f),1.0f/(float)Point2D.distance(0.0f,0.0f,1.0f,1.0f));
+	    p.setLocation(1.0/Point2D.distance(0.0,0.0,1.0,1.0),1.0/Point2D.distance(0.0,0.0,1.0,1.0));
 	}
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz;
@@ -15,6 +15,13 @@ import edu.umd.cs.jazz.util.*;
 
 /**
  * <b>ZPathLayoutManager</b> positions a set of nodes along a path.
+ *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
  * @author  Lance Good
  * @author  Benjamin B. Bederson
@@ -41,18 +48,50 @@ public class ZPathLayoutManager implements ZLayoutManager, ZSerializable {
     private boolean exact = true;
 
     // The specified spacing
-    private float space = -1.0f;
+    private double space = -1.0;
 
     // The tolerance allowed if exact is specified
-    private float tolerance = -1.0f;
+    private double tolerance = -1.0;
     
     /**
      * Default Constructor - uses default values unless specifically set
      */
     public ZPathLayoutManager() {
+	this(new Line2D.Double(0.0,0.0,1.0,1.0));
+    }
+
+    /**
+     * Constructor that accepts a shape
+     * @param s The shape used for layout
+     */
+    public ZPathLayoutManager(Shape s) {
 	path = new ArrayList();
-	// The default shape is a line
-	setShape(new Line2D.Float(0.0f,0.0f,1.0f,1.0f));
+	setShape(s);
+    }
+
+    /** 
+    * Returns a clone of this layout manager. 
+    */
+    public Object clone() {
+	ZPathLayoutManager newObject;
+	try {
+	    newObject = (ZPathLayoutManager)super.clone();
+	} catch (CloneNotSupportedException e) {
+	    throw new RuntimeException("Object.clone() failed: " + e);
+	}
+
+	if (path != null) {
+	    newObject.path = (ArrayList)path.clone();
+	}
+
+	if (shape != null) {
+	    // JM - not done yet: The shape interface  doesn't include a clone() method,
+	    // so to clone a shape we either must cast it to a specific shape class
+	    // and call clone() on that, or use reflection to invoke the clone()
+	    // method. For now, we just continue referencing the old shape.	
+	}
+
+	return newObject;
     }
 
     /**
@@ -66,9 +105,20 @@ public class ZPathLayoutManager implements ZLayoutManager, ZSerializable {
     /**
      * Notify the layout manager that the layout for this node has finished
      * This is called after all children and the node itself are layed out.
-     * @param The node to apply this layout algorithm to.
+     * @param node The node to apply this layout algorithm to.
      */
     public void postLayout(ZGroup node) {
+    }
+
+    /**
+     * Apply this manager's layout algorithm to the specified node's children,
+     * and animate the changes over time.
+     * @param node The node to apply this layout algorithm to.
+     * @param millis The number of milliseconds over which to animate layout changes.
+     */
+    public void doLayout(ZGroup node, int millis) {
+	System.out.println("WARNING: Layout animation not implemented yet - layout being applied without animation.");
+	doLayout(node);
     }
 
     /**
@@ -96,6 +146,7 @@ public class ZPathLayoutManager implements ZLayoutManager, ZSerializable {
     }
 
     /**
+     * Determine whether the path is closed.
      * @return Is the path closed?
      */
     public boolean getClosed() {
@@ -103,30 +154,34 @@ public class ZPathLayoutManager implements ZLayoutManager, ZSerializable {
     }
 
     /**
-     * Sets whether the path is closed to <code>closed</code>
-     * @param closed Is the path closed?
+     * Sets the path open or closed.
+     * @param closed True to make this path closed.
      */
     public void setClosed(boolean closed) {
 	this.closed = closed;
     }
 
     /**
-     * @return The current flatness of the FlatteningPathIterator used to convert the Shape to points
+     * 
+     * Return the current flatness of the FlatteningPathIterator used to convert the Shape to points.
+     * @return the current flatness.
      */
-    public float getFlatness() {
-	return (float)flatness;
+    public double getFlatness() {
+	return flatness;
     }
 
     /**
-     * @param flatness Sets the flatness of the FlatteninPathIterator used to convert the Shape to points
+     * Sets the flatness of the FlatteninPathIterator used to convert the Shape to points.
+     * @param flatness the flatness.
      */
-    public void setFlatness(float flatness) {
-	this.flatness = (double)flatness;
+    public void setFlatness(double flatness) {
+	this.flatness = flatness;
 	setShape(shape);
     }
 
     /**
-     * @return Is exact spacing specified
+     * Determine if exact spacing was specified.
+     * @return true if exact spacing was specified, false otherwise.
      */
     public boolean getExact() {
 	return exact;
@@ -134,7 +189,7 @@ public class ZPathLayoutManager implements ZLayoutManager, ZSerializable {
 
     /**
      * Sets whether the algorithm should iterate to get exact spacing
-     * or should run once
+     * or should only run once.
      * @param exact Whether exact spacing is specified.
      */
     public void setExact(boolean exact) {
@@ -142,21 +197,25 @@ public class ZPathLayoutManager implements ZLayoutManager, ZSerializable {
     }
 
     /**
-     * @return The tolerance allowed if exact spacing is specified.
+     * Get the tolerance allowed if exact spacing is specified.
+     * @return The tolerance.
      */
-    public float getTolerance() {
+    public double getTolerance() {
 	return tolerance;
     }
 
     /**
+     * Sets the tolerance, ie the error allowed, in laying out objects
+     * on the path.
      * @param tolerance The tolerance allowed if exact spacing is specified.
      */
-    public void setTolerance(float tolerance) {
+    public void setTolerance(double tolerance) {
 	this.tolerance = tolerance;
     }
 
     /**
-     * @return The shape currently in use by this object.
+     * Get the shape currently in use by this object.
+     * @return The shape.
      */
     public Shape getShape() {
 	return shape;
@@ -177,20 +236,20 @@ public class ZPathLayoutManager implements ZLayoutManager, ZSerializable {
 		
 	path.clear();
 	while(!fp.isDone()) {
-	    float[] farr = new float[6];
+	    double[] farr = new double[6];
 	    int type = fp.currentSegment(farr);
 		    
 	    if (type == PathIterator.SEG_MOVETO || type == PathIterator.SEG_LINETO) {
-		path.add(new Point2D.Float(farr[0],farr[1]));
+		path.add(new Point2D.Double(farr[0],farr[1]));
 	    }
 	    if (type == PathIterator.SEG_QUADTO) {
 		for(int i=0; i<2; i++) {
-		    path.add(new Point2D.Float(farr[0],farr[1]));
+		    path.add(new Point2D.Double(farr[0],farr[1]));
 		}
 	    }
 	    if (type == PathIterator.SEG_CUBICTO) {
 		for(int i=0; i<3; i++) {
-		    path.add(new Point2D.Float(farr[2*i],farr[2*i+1]));
+		    path.add(new Point2D.Double(farr[2*i],farr[2*i+1]));
 		}
 	    }
 	    fp.next();
@@ -198,17 +257,18 @@ public class ZPathLayoutManager implements ZLayoutManager, ZSerializable {
     }
 
     /**
-     * @return The current spacing used by the layout algorithm during its first iteration.
+     * The current spacing used by the layout algorithm during its first iteration.
+     * @return The current spacing.
      */
-    public float getSpace() {
+    public double getSpace() {
 	return space;
     }
     
     /**
-     * @param space The spacing used by the layout algorithm during its first
-     *              iteration.
+     * Set the spacing used by the layout algorithm during its first iteration.
+     * @param space The spacing.
      */
-    public void setSpacing(float space) {
+    public void setSpacing(double space) {
 	this.space = space;
     }
 
@@ -247,6 +307,6 @@ public class ZPathLayoutManager implements ZLayoutManager, ZSerializable {
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 	in.defaultReadObject();
-	setShape(new Line2D.Float(0.0f,0.0f,1.0f,1.0f));
+	setShape(new Line2D.Double(0.0,0.0,1.0,1.0));
     }
 }

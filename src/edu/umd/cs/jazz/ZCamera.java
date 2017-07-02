@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz;
@@ -44,13 +44,46 @@ import edu.umd.cs.jazz.component.*;
  *	ZRectangle rect = new ZRectangle(100, 100, 200, 200);
  *	rect.setPenColor(Color.blue);
  *	rect.setFillColor(null);
- *	rect.setPenWidth(5.0f);
+ *	rect.setPenWidth(5.0);
  *	border.setFrontVisualComponent(rect);
  *	ZLayerGroup layer = new ZLayerGroup(border);
  *	canvas.getRoot().addChild(layer);
  *	canvas.getCamera().addLayer(layer);
  *	portal.addLayer(canvas.getLayer());
  * </pre>
+ * 
+ * <h2>Context-sensitive rendering</h2>
+ * It is possible to create visual components that appear differently in
+ * different cameras, or are dependent on camera paramters (or other context).
+ * An example of such context-sensitive rendering is a polyline with a
+ * constant-thickness pen.  As the camera view zooms in and out, the position
+ * of the points changes, but the pen thickness does not.  
+ * <P>
+ * At first glance, it might seem that all that is necessary for these special
+ * objects is to make the render method depend on camera parameters.  However,
+ * it is a bit more complex because the effective bounds of the object changes
+ * if the pen width of the object changes.  Thus, the bounds of the object
+ * must be computed depending on the properties of the camera it is being
+ * rendered within.
+ * <P>
+ * In order to compute bounds for different camera views, two things must be
+ * done specially.  First, the object must be set to have 'volatile bounds'
+ * (with the setVolatileBounds() method) which tells Jazz not to cache the
+ * bounds of the object, but to recompute them every time they are needed.
+ * The second thing is that the relevant camera must be consulted to get
+ * the camera state (such as view magnification).  This can be done through
+ * the 'current render context' which is maintained in the root of the
+ * scenegraph.  This can be found with getRoot().getCurrentRenderContext().
+ * Finally, certain objects may want to also redefine the pick method using
+ * the render context if the picking is dependent on some context-sensitive 
+ * attribute that is used for rendering.
+ *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
  * @author  Benjamin B. Bederson
  * @author  Britt McAlister
@@ -58,7 +91,9 @@ import edu.umd.cs.jazz.component.*;
  */
 
 public class ZCamera extends ZVisualComponent implements ZFillColor, Serializable {
-				// Default values
+    /**
+     * The default fill color.
+     */
     static public final Color  fillColor_DEFAULT = Color.white;
 
 				// The transform that specifies where in space this camera looks.
@@ -88,6 +123,9 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
 				// Debugging variable used for debugging region management
     private transient int debugRenderCount = 0;
 
+				// Render context for context-sensitive objects
+    private transient ZRenderContext renderContext = null;
+
     /**
      * List of event listeners for camera events.
      */
@@ -116,6 +154,16 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
         }
     }
 
+				// Create the default render context factory
+    static private ZRenderContextFactory renderContextFactory = new ZRenderContextFactory() {
+	public ZRenderContext createRenderContext(ZCamera camera) {
+	    return new ZRenderContext(camera);
+	}
+	public ZRenderContext createRenderContext(Graphics2D aG2, ZBounds visibleBounds, 
+						  ZDrawingSurface aSurface, int qualityRequested) {
+	    return new ZRenderContext(aG2, visibleBounds, aSurface, qualityRequested);
+	}
+    };
 
     //****************************************************************************
     //
@@ -143,74 +191,90 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
 	numLayers = 0;
 	layers = new ZLayerGroup[1];
 	paintBounds = new ZBounds();
+	renderContext = createRenderContext(this);
 	if (layer != null) {
 	    addLayer(layer);
 	}
     }
 
     /**
-     * Copies all object information from the reference object into the current
-     * object. This method is called from the clone method.
-     * All ZSceneGraphObjects objects contained by the object being duplicated
-     * are duplicated, except parents which are set to null.  This results
-     * in the sub-tree rooted at this object being duplicated.
+     * Clones this object.
      *
-     * @param refCamera The reference camera to copy
+     * <p>The cloned camera will continue to see the same 
+     * layers in the original scenegraph (the layers that the camera looks at
+     * are not cloned).
+     *
+     * <p>The cloned camera will not be attached to any surface, and must 
+     * be made visible by attaching to a new surface (or by being visible 
+     * through another camera.)
+     *
+     * @see ZSceneGraphObject#duplicateObject
      */
-    public void duplicateObject(ZCamera refCamera) {
-	super.duplicateObject(refCamera);
+    protected Object duplicateObject() {
+	ZCamera newCamera = (ZCamera)super.duplicateObject();
 
-	viewTransform = refCamera.getViewTransform();
-	fillColor = refCamera.getFillColor();
+	newCamera.viewTransform = getViewTransform();
+	newCamera.paintBounds = new ZBounds();
+	newCamera.tmpBounds = new ZBounds();
+	newCamera.surface = null;
+	newCamera.debugRenderCount = 0;
+	newCamera.inverseViewTransform = null;
+	newCamera.inverseViewTransformDirty = true;
 
-	ZLayerGroup[] refLayers = refCamera.getLayers();
-	numLayers = refCamera.getNumLayers();
-	for (int i=0; i<numLayers; i++) {
-	    addLayer(refLayers[i]);
+	if (layers != null) {
+	    newCamera.layers = (ZLayerGroup[])layers.clone();
 	}
 
-	if (refCamera.listenerList != null) {
-	    Object[] listeners = refCamera.listenerList.getListenerList();
-	    for (int i=0; i<listeners.length/2; i+=2) {
-		if (listenerList == null) {
-		    listenerList = new EventListenerList();
-		}
-		listenerList.add((Class)listeners[i], (EventListener)listeners[i+1]);
-	    }
-	}
-
-	paintBounds = new ZBounds();
+	return newCamera;
     }
 
     /**
-     * Duplicates the current object by using the copy constructor.
-     * The portion of the reference object that is duplicated is that necessary to reuse the object
-     * in a new place within the scenegraph, but the new object is not inserted into any scenegraph.
-     * The object must be attached to a live scenegraph (a scenegraph that is currently visible)
-     * or be registered with a camera directly in order for it to be visible.
-     * <P>
-     * In particular, the camera's layers are duplicated so that a copied
-     * camera will continue to see the same part of the scenegraph.
-     * However, if the reference camera was attached to a surface, the copied camera
-     * will not be attached to that surface, and must be made visible by attaching to a new surface (or by
-     * being visible through another camera.)
-     * <P>
-     * However, the event listeners for the duplicated camera are reused references
-     * to the original camera's event listeners.
+     * Called to update internal object references after a clone operation 
+     * by {@link ZSceneGraphObject#clone}.
      *
-     * @return A copy of this camera.
-     * @see #updateObjectReferences
+     * @see ZSceneGraphObject#updateObjectReferences
      */
-    public Object clone() {
-	ZCamera copy;
+    protected void updateObjectReferences(ZObjectReferenceTable objRefTable) {
+	super.updateObjectReferences(objRefTable);
+	
+	for (int i=0; i<numLayers; i++) {
+	    ZLayerGroup newLayer = (ZLayerGroup)objRefTable.getNewObjectReference(layers[i]);
+	    if (newLayer == null) {
+		// Cloned a camera, but did not clone a layer that it was looking at.
+		// Continue to look at the old layer.
+		layers[i].addCamera(this);
+	    } else {
+		// Cloned a camera and the layer - use the new layer
+		layers[i] = newLayer;
+	    }
+	}
+    }
+    
+    /**
+     * Define how render contexts should be created.  This specifies a factory
+     * that is used whenever a render context needs to be created.
+     * @param factory The new factory to create render contexts with.
+     * @see #createRenderContext
+     */
+    static public void setRenderContextFactory(ZRenderContextFactory factory) {
+	renderContextFactory = factory;
+    }
+    
+    /**
+     * This returns a new instance of a ZRenderContext for this node.
+     * @see #setRenderContextFactory
+     */
+    public ZRenderContext createRenderContext(ZCamera camera) {
+        return renderContextFactory.createRenderContext(camera);
+    }
 
-	objRefTable.reset();
-	copy = new ZCamera();
-	copy.duplicateObject(this);
-	objRefTable.addObject(this, copy);
-	objRefTable.updateObjectReferences();
-
-	return copy;
+    /**
+     * This returns a new instance of a ZRenderContext for this node.
+     * @see #setRenderContextFactory
+     */
+    public ZRenderContext createRenderContext(Graphics2D aG2, ZBounds visibleBounds, 
+					      ZDrawingSurface aSurface, int qualityRequested) {
+        return renderContextFactory.createRenderContext(aG2, visibleBounds, aSurface, qualityRequested);
     }
 
     /**
@@ -309,10 +373,10 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      * Internal method to return a reference to the actual layers of this camera.
      * It should not be modified by the caller.  Note that the actual number
      * of layers could be less than the size of the array.  Determine
-     * the actual number of layers with @link{#getNumLayers}.
+     * the actual number of layers with {@link #getNumLayers}.
      * @return the children of this node.
      */
-    ZLayerGroup[] getLayersReference() {
+    protected ZLayerGroup[] getLayersReference() {
 	return layers;
     }
 
@@ -390,8 +454,8 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      * Returns the current magnification of this camera.
      * @return The magnification factor.
      */
-    public float getMagnification() {
-	return (float)(Math.max(viewTransform.getScaleX(), viewTransform.getScaleY()));
+    public double getMagnification() {
+	return (Math.max(viewTransform.getScaleX(), viewTransform.getScaleY()));
     }
 
     /*
@@ -467,6 +531,65 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
     }
 
     /**
+     * This is an internal form of repaint that is only intended to be
+     * used by calls from within Jazz.  It passes repaint requests
+     * up through the camera to other interested camera, and the surface (if there is one).
+     * Note that the transform and clipBounds parameters may be modified as a result of this call.
+     *
+     * @param obj The object to repaint
+     * @param at  The affine transform
+     * @param clipBounds The bounds to clip to when repainting
+     */
+    public void repaint(ZSceneGraphObject obj, AffineTransform at, ZBounds clipBounds) {
+	if (ZDebug.debug && ZDebug.debugRepaint) {
+	    System.out.println("ZCamera.repaint(obj, at, bounds): this = " + this);
+	}
+
+				// Set render context based on this camera so that
+				// context-sensitive objects can compute bounds dependent on it
+	getRoot().setCurrentRenderContext(renderContext);
+
+	at.preConcatenate(viewTransform);
+
+				// Now, intersect clip bounds with the camera's bounds
+				// Note that Rectangle2D.intersect doesn't handle empty intersections properly
+	if (clipBounds == null) {
+	    clipBounds = getBounds();
+	} else {
+	    ZBounds bounds = getBoundsReference();
+	    ZTransformGroup.transform(clipBounds, viewTransform);
+	    double x1 = Math.max(clipBounds.getMinX(), bounds.getMinX());
+	    double y1 = Math.max(clipBounds.getMinY(), bounds.getMinY());
+	    double x2 = Math.min(clipBounds.getMaxX(), bounds.getMaxX());
+	    double y2 = Math.min(clipBounds.getMaxY(), bounds.getMaxY());
+	    clipBounds.setRect(x1, y1, x2 - x1, y2 - y1);
+	}
+
+				// Then, pass repaint up the tree
+	for (int i=0; i<numParents; i++) {
+	    parents[i].repaint(obj, at, clipBounds);
+	}
+
+				// Finally, if this camera is attached to a surface, repaint it.
+	if (surface != null) {
+	    tmpBounds.setRect(obj.getBoundsReference());
+	    ZTransformGroup.transform(tmpBounds, at);
+
+				// Now, intersect those bounds with the camera's bounds
+				// Note that Rectangle2D.intersect doesn't handle empty intersections properly
+	    float x1 = Math.max((float)tmpBounds.getMinX(), (float)clipBounds.getMinX());
+	    float y1 = Math.max((float)tmpBounds.getMinY(), (float)clipBounds.getMinY());
+	    float x2 = Math.min((float)tmpBounds.getMaxX(), (float)clipBounds.getMaxX());
+	    float y2 = Math.min((float)tmpBounds.getMaxY(), (float)clipBounds.getMaxY());
+	    if ((x1 < x2) && (y1 < y2)) {
+		tmpBounds.setRect(x1, y1, x2 - x1, y2 - y1);
+		surface.repaint(tmpBounds);
+	    }
+	}
+	getRoot().setCurrentRenderContext(null);
+    }
+
+    /**
      * Renders the view this camera sees.
      * <p>
      * The transform, clip, and composite will be set appropriately when this object
@@ -494,7 +617,7 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
 
 				// Want to avoid clipping if possible since it slows things down
 				// So, don't clip to camera if this is a top-level camera,
-	if (renderContext.getDrawingSurface() != surface) {
+	if (renderContext.getDrawingSurface().getCamera() != renderContext.getRenderingCamera()) {
 	    if (ZDebug.debug && ZDebug.debugRender) {
 		System.out.println("ZCamera.render: clipping to camera bounds = " + cameraBounds);
 	    }
@@ -565,12 +688,11 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
     }
 
     /**
-     * Returns the root of the scene graph that this camera is looking at
+     * Returns the root of the scene graph that this camera is looking at.
+     * Actually returns the root of the first layer this camera sees.
      */
     public ZRoot getRoot() {
-    	// Actually returns the root of the first parent
-        return (numParents > 0) ? parents[0].getRoot() : null;
-
+        return (numLayers > 0) ? layers[0].getRoot() : null;
     }
 
     /**
@@ -580,24 +702,27 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      * ZSceneGraphPath. Only nodes with "pickable" visual components
      * are returned.
      * @param rect Coordinates of pick rectangle in camera coordinates.
+     * @param path The path through the scenegraph to the picked node. Modified by this call.
      * @return true if pick succeeds.
      * @see ZDrawingSurface#pick(int, int)
      */
     public boolean pick(Rectangle2D rect, ZSceneGraphPath path) {
 	Rectangle2D viewRect = (Rectangle2D)(rect.clone());
-	Rectangle2D transformedRect = new Rectangle2D.Float();
+	Rectangle2D transformedRect = new Rectangle2D.Double();
 	ZLayerGroup layer;
 	AffineTransform localToGlobal, globalToLocal;
 
 				// First check if pick rectangle intersects this camera's bounds
-	if (!rect.intersects(getBounds())) {
+	if (!getBoundsReference().intersects(rect.getX(), rect.getY(), rect.getWidth(), rect.getHeight())) {
 	    return false;
 	}
 
 	//
 	// Setup the path
 	//
-	path.push(this); // add this object to the path
+	path.push(this);        // Add this camera to the path
+	path.pushCamera(this);
+	path.pushTransformer(this);
 
 				// Concatenate the camera's transform with the one stored in the path
 	AffineTransform origTm = path.getTransform();
@@ -627,8 +752,9 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
 	    }
 	}
 
-	path.setTransform(origTm);
         path.pop(this);
+	path.setCameraFound(true);
+
 	return false;
     }
 
@@ -794,7 +920,7 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
     /**
      * Sets the view transform associated with this camera.
      * This controls where in space this camera looks.
-     * @param transform
+     * @param transform the new transform.
      */
     public void setViewTransform(AffineTransform transform) {
 	AffineTransform origViewTransform = viewTransform;
@@ -810,7 +936,7 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      * Sets the view transform associated with this camera.
      * This controls where in space this camera looks.
      * @param m00,&nbsp;m01,&nbsp;m02,&nbsp;m10,&nbsp;m11,&nbsp;m12 the
-     * 6 floating point values that compose the 3x3 transformation matrix
+     * 6 values that compose the 3x3 transformation matrix
      */
     public void setViewTransform(double m00, double m10,
 				 double m01, double m11,
@@ -845,13 +971,13 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      *            under one of the camera's layers.
      * @see #localToCamera(Point2D, ZNode)
      */
-    public float cameraToLocal(Point2D pt, ZNode node) {
+    public double cameraToLocal(Point2D pt, ZNode node) {
 				// First transform point through camera's view
-	float dz;
+	double dz;
 	AffineTransform inverse;
         inverse = getInverseViewTransform();
 	inverse.transform(pt, pt);
-	dz = (float)Math.max(inverse.getScaleX(), inverse.getScaleY());
+	dz = Math.max(inverse.getScaleX(), inverse.getScaleY());
 	if (node != null) {
 				// Then, find the layer that is the ancestor of the specified node
 	    ZLayerGroup layer = null;
@@ -893,13 +1019,13 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      *            under one of the camera's layers.
      * @see #localToCamera(Rectangle2D, ZNode)
      */
-    public float cameraToLocal(Rectangle2D rect, ZNode node) {
+    public double cameraToLocal(Rectangle2D rect, ZNode node) {
 				// First transform rectangle through camera's view
-	float dz;
+	double dz;
 	AffineTransform inverse;
         inverse = getInverseViewTransform();
 	ZTransformGroup.transform(rect, inverse);
-	dz = (float)Math.max(inverse.getScaleX(), inverse.getScaleY());
+	dz = Math.max(inverse.getScaleX(), inverse.getScaleY());
 	if (node != null) {
 				// Then, find the layer that is the ancestor of the specified node
 	    ZLayerGroup layer = null;
@@ -942,8 +1068,8 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      *            under one of the camera's layers.
      * @see #cameraToLocal(Point2D, ZNode)
      */
-    public float localToCamera(Point2D pt, ZNode node) {
-	float dz = 1.0f;
+    public double localToCamera(Point2D pt, ZNode node) {
+	double dz = 1.0;
 	if (node != null) {
 				// First, find the layer that is the ancestor of the specified node
 	    ZLayerGroup layer = null;
@@ -962,7 +1088,7 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
 	}
 
 	viewTransform.transform(pt, pt);
-	dz *= (float)Math.max(viewTransform.getScaleX(), viewTransform.getScaleY());
+	dz *= Math.max(viewTransform.getScaleX(), viewTransform.getScaleY());
 
 	return dz;
     }
@@ -989,8 +1115,8 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      *            under one of the camera's layers.
      * @see #cameraToLocal(Rectangle2D, ZNode)
      */
-    public float localToCamera(Rectangle2D rect, ZNode node) {
-	float dz = 1.0f;
+    public double localToCamera(Rectangle2D rect, ZNode node) {
+	double dz = 1.0;
 	if (node != null) {
 				// First, find the layer that is the ancestor of the specified node
 	    ZLayerGroup layer = null;
@@ -1009,7 +1135,7 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
 	}
 
 	ZTransformGroup.transform(rect, viewTransform);
-	dz *= (float)Math.max(viewTransform.getScaleX(), viewTransform.getScaleY());
+	dz *= Math.max(viewTransform.getScaleX(), viewTransform.getScaleY());
 
 	return dz;
     }
@@ -1025,13 +1151,13 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
 	AffineTransform at = new AffineTransform();
 	ZBounds bounds = getBoundsReference();
 				// First compute transform that will result in bounds being centered
-	float dx = (float)(bounds.getWidth() / refBounds.getWidth());
-	float dy = (float)(bounds.getHeight() / refBounds.getHeight());
-	float scale = (dx < dy) ? dx : dy;
-	float ctrX = (float)(0.5f * bounds.getWidth());
-	float ctrY = (float)(0.5f * bounds.getHeight());
-	float refBoundsX = (float)(refBounds.getX() + (0.5f * refBounds.getWidth()));
-	float refBoundsY = (float)(refBounds.getY() + (0.5f * refBounds.getHeight()));
+	double dx = (bounds.getWidth() / refBounds.getWidth());
+	double dy = (bounds.getHeight() / refBounds.getHeight());
+	double scale = (dx < dy) ? dx : dy;
+	double ctrX = (0.5 * bounds.getWidth());
+	double ctrY = (0.5 * bounds.getHeight());
+	double refBoundsX = (refBounds.getX() + (0.5 * refBounds.getWidth()));
+	double refBoundsY = (refBounds.getY() + (0.5 * refBounds.getHeight()));
 
 	at.translate(ctrX + (- refBoundsX * scale), ctrY + (- refBoundsY * scale));
 	at.scale(scale, scale);
@@ -1040,40 +1166,145 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
 	animate(at, millis, aSurface);
     }
 
+
+    /**
+     * Animates the camera view so that a given global bounds appear
+     * within a specified screen bounds given in camera coordinates. The
+     * transformation is made in such a way that the width/height ratio
+     * of the source bounds is kept.
+     *
+     * @param millis Number of milliseconds over which to perform the animation.
+     * @param surface The surface to be updated during animation.
+     * @param srcBounds A bounds in global coordinates.
+     * @param destBounds Bounds of the region in camera coordinates that <code>bounds</code> should apperar in.     
+     *
+     */
+    public void center(Rectangle2D srcBounds, Rectangle2D destBounds, int millis, ZDrawingSurface surface) {
+				// Modify the reference bounds so it has the same aspect ratio as
+				// the destination bounds.
+	double dx = srcBounds.getWidth() / destBounds.getWidth();
+	double dy = srcBounds.getHeight() / destBounds.getHeight();
+	double bx, by, bw, bh;
+       
+	if (dx < dy) {
+	    bw = (destBounds.getWidth() / destBounds.getHeight()) * srcBounds.getHeight();
+	    bh = srcBounds.getHeight();
+	    bx = srcBounds.getX() + (0.5 * srcBounds.getWidth()) - (0.5 * bw);
+	    by = srcBounds.getY();
+	} else {
+	    bw = srcBounds.getWidth();
+	    bh = (destBounds.getHeight() / destBounds.getWidth()) * srcBounds.getWidth();
+	    bx = srcBounds.getX();
+	    by = srcBounds.getY() + (0.5 * srcBounds.getHeight()) - (0.5 * bh);
+	}
+
+	Rectangle2D.Double rect = new Rectangle2D.Double(bx, by, bw, bh);
+	centerWithAspectChange(rect, destBounds, millis, surface);
+    }
+
+    /**
+     * Animates the given camera view so that a given global bounds appear
+     * within a specified screen bounds given in camera coordinates. The
+     * source bounds is made to fit exactly inside the destination bounds,
+     * which may result in a change in width/height ratio.
+     *
+     * @param millis Number of milliseconds over which to perform the animation.
+     * @param surface The surface to be updated during animation.
+     * @param srcBounds A bounds in global coordinates.
+     * @param destBounds Bounds of the region in camera coordinates that <code>bounds</code> should apperar in.     
+     *
+     */
+    public void centerWithAspectChange(Rectangle2D srcBounds, Rectangle2D destBounds, int millis, ZDrawingSurface surface) {	
+	ZBounds  cameraBounds = getBounds();
+	
+				// Calculate the width and height (in global coords) of the
+				// resulting camera view bounds. The ratio between the
+				// width of the resulting bounds and the reference bounds should
+				// be equal to the ratio between the camera bounds and the destination
+				// bounds. Solving for the width of the resulting bounds:
+
+	double   gcw = (cameraBounds.getWidth() * srcBounds.getWidth()) / destBounds.getWidth();
+	double   gch = (cameraBounds.getHeight() * srcBounds.getHeight()) / destBounds.getHeight();
+
+				// Now calculate the x and y coordinates from the following
+				// identities:
+				//
+				// (destBoundsX - cameraBoundsX) / cameraBoundsWidth = (refBoundsX - resultX) / resultWidth
+				// (destBoundsY - cameraBoundsY) / cameraBoundsHeight = (refBoundsY - resultY) / resultHeight
+
+	double   gcx = srcBounds.getX() - (gcw * ((destBounds.getX() - cameraBounds.getX()) / cameraBounds.getWidth()));
+	double   gcy = srcBounds.getY() - (gch * ((destBounds.getY() - cameraBounds.getY()) / cameraBounds.getHeight()));
+
+	Rectangle2D rect = new Rectangle2D.Double(gcx, gcy, gcw, gch);
+	centerWithAspectChange(rect, millis, surface);
+    }
+
+
+    /**
+     * Animates the camera view so that the camera view
+     * will match the given bounds exactly. This may result in a
+     * change in width/height ratio.
+     *
+     * @param millis Number of milliseconds over which to perform the animation.
+     * @param surface The surface to be updated during animation.
+     * @param refBounds A bounds in global coordinates.
+     *
+     */
+    public void centerWithAspectChange(Rectangle2D refBounds, int millis, ZDrawingSurface aSurface) {
+	AffineTransform at = new AffineTransform();
+	ZBounds bounds = getBounds();
+				// First compute transform that will result in bounds being centered
+	double dx = (bounds.getWidth() / refBounds.getWidth());
+	double dy = (bounds.getHeight() / refBounds.getHeight());
+	double scaleX = dx;
+	double scaleY = dy;
+	double ctrX = (0.5 * bounds.getWidth());
+	double ctrY = (0.5 * bounds.getHeight());
+	double refBoundsX = (refBounds.getX() + (0.5 * refBounds.getWidth()));
+	double refBoundsY = (refBounds.getY() + (0.5 * refBounds.getHeight()));
+
+	at.translate(ctrX + (- refBoundsX * scaleX), ctrY + (- refBoundsY * scaleY));
+	at.scale(scaleX, scaleY);
+
+				// Then, change camera to new transform
+	animate(at, millis, aSurface);
+    }
+
+    
     /**
      * Returns the current translation of this object
      * @return the translation
      */
     public Point2D getTranslation() {
-	Point2D pt = new Point2D.Float((float)viewTransform.getTranslateX(), (float)viewTransform.getTranslateY());
+	Point2D pt = new Point2D.Double(viewTransform.getTranslateX(), viewTransform.getTranslateY());
 	return pt;
     }
 
     /**
      * Returns the current X translation of this object
-     * @return the translation
+     * @return the X translation
      */
-    public float getTranslateX() {
-        return (float)viewTransform.getTranslateX();
+    public double getTranslateX() {
+        return viewTransform.getTranslateX();
     }
     /**
      * Sets the current X translation of this object
      */
-    public void setTranslateX(float x) {
-        setTranslate(x, getTranslateY());
+    public void setTranslateX(double x) {
+        setTranslation(x, getTranslateY());
     }
     /**
      * Returns the current Y translation of this object
-     * @return the translation
+     * @return the Y translation
      */
-    public float getTranslateY() {
-        return (float)viewTransform.getTranslateY();
+    public double getTranslateY() {
+        return viewTransform.getTranslateY();
     }
     /**
      * Sets the current Y translation of this object
      */
-    public void setTranslateY(float y) {
-        setTranslate(getTranslateX(), y);
+    public void setTranslateY(double y) {
+        setTranslation(getTranslateX(), y);
     }
 
     /**
@@ -1081,7 +1312,7 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      * @param dx X-coord of translation
      * @param dy Y-coord of translation
      */
-    public void translate(float dx, float dy) {
+    public void translate(double dx, double dy) {
 	AffineTransform newTransform = new AffineTransform(viewTransform);
 	newTransform.translate(dx, dy);
 	setViewTransform(newTransform);
@@ -1094,7 +1325,7 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      * @param millis Number of milliseconds over which to perform the animation
      * @param surface The surface to updated during animation.
      */
-    public void translate(float dx, float dy, int millis, ZDrawingSurface surface) {
+    public void translate(double dx, double dy, int millis, ZDrawingSurface surface) {
 	AffineTransform at = new AffineTransform(viewTransform);
         at.translate(dx, dy);
 	CameraTransformable ct = new CameraTransformable();
@@ -1106,7 +1337,7 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      * @param x X-coord of translation
      * @param y Y-coord of translation
      */
-    public void setTranslate(float x, float y) {
+    public void setTranslation(double x, double y) {
 	double[] mat = new double[6];
 	viewTransform.getMatrix(mat);
 	mat[4] = x;
@@ -1122,7 +1353,7 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      * @param millis Number of milliseconds over which to perform the animation
      * @param surface The surface to updated during animation.
      */
-    public void setTranslate(float x, float y, int millis, ZDrawingSurface surface) {
+    public void setTranslation(double x, double y, int millis, ZDrawingSurface surface) {
 	AffineTransform at = new AffineTransform(viewTransform);
 	double[] mat = new double[6];
 
@@ -1143,7 +1374,7 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      * this method will be ill-defined.
      * @return the scale
      */
-    public float getScale() {
+    public double getScale() {
 	return getMagnification();
     }
 
@@ -1152,7 +1383,7 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      * by muliplying the current scale and dz.
      * @param dz scale factor
      */
-    public void scale(float dz) {
+    public void scale(double dz) {
 	AffineTransform newTransform = new AffineTransform(viewTransform);
 	newTransform.scale(dz, dz);
 	setViewTransform(newTransform);
@@ -1166,7 +1397,7 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      * @param x X coordinate of the point to scale around
      * @param y Y coordinate of the point to scale around
      */
-    public void scale(float dz, float x, float y) {
+    public void scale(double dz, double x, double y) {
 	AffineTransform newTransform = new AffineTransform(viewTransform);
 	newTransform.translate(x, y);
 	newTransform.scale(dz, dz);
@@ -1181,7 +1412,7 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      * @param millis Number of milliseconds over which to perform the animation
      * @param surface The surface to updated during animation.
      */
-    public void scale(float dz, int millis, ZDrawingSurface surface) {
+    public void scale(double dz, int millis, ZDrawingSurface surface) {
 	AffineTransform at = new AffineTransform(viewTransform);
 	at.scale(dz, dz);
 	CameraTransformable ct = new CameraTransformable();
@@ -1198,7 +1429,7 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      * @param millis Number of milliseconds over which to perform the animation
      * @param surface The surface to updated during animation.
      */
-    public void scale(float dz, float x, float y, int millis, ZDrawingSurface surface) {
+    public void scale(double dz, double x, double y, int millis, ZDrawingSurface surface) {
 	AffineTransform at = new AffineTransform(viewTransform);
 	at.translate(x, y);
 	at.scale(dz, dz);
@@ -1211,8 +1442,8 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      * Sets the scale of the view transform
      * @param the new scale
      */
-    public void setScale(float finalz) {
-	float dz = finalz / getScale();
+    public void setScale(double finalz) {
+	double dz = finalz / getScale();
 	scale(dz);
     }
 
@@ -1223,8 +1454,8 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      * @param x X coordinate of the point to scale around
      * @param y Y coordinate of the point to scale around
      */
-    public void setScale(float finalz, float x, float y) {
-	float dz = finalz / getScale();
+    public void setScale(double finalz, double x, double y) {
+	double dz = finalz / getScale();
 	scale(dz, x, y);
     }
 
@@ -1234,8 +1465,8 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      * @param millis Number of milliseconds over which to perform the animation
      * @param surface The surface to updated during animation.
      */
-    public void setScale(float finalz, int millis, ZDrawingSurface surface) {
-	float dz = finalz / getScale();
+    public void setScale(double finalz, int millis, ZDrawingSurface surface) {
+	double dz = finalz / getScale();
 	scale(dz, millis, surface);
     }
 
@@ -1248,8 +1479,8 @@ public class ZCamera extends ZVisualComponent implements ZFillColor, Serializabl
      * @param millis Number of milliseconds over which to perform the animation
      * @param surface The surface to updated during animation.
      */
-    public void setScale(float finalz, float x, float y, int millis, ZDrawingSurface surface) {
-	float dz = finalz / getScale();
+    public void setScale(double finalz, double x, double y, int millis, ZDrawingSurface surface) {
+	double dz = finalz / getScale();
 	scale(dz, x, y, millis, surface);
     }
 

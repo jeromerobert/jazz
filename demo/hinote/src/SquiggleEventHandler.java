@@ -25,11 +25,20 @@ public class SquiggleEventHandler implements ZEventHandler, ZMouseListener, ZMou
     private HiNoteCore hinote;
     private ZPolyline polyline;
     private Point2D pt;
+				                    // Mask out mouse and mouse/key chords
+    private int            all_button_mask   = (MouseEvent.BUTTON1_MASK | 
+						MouseEvent.BUTTON2_MASK | 
+						MouseEvent.BUTTON3_MASK | 
+						MouseEvent.ALT_GRAPH_MASK | 
+						MouseEvent.CTRL_MASK | 
+						MouseEvent.META_MASK | 
+						MouseEvent.SHIFT_MASK | 
+						MouseEvent.ALT_MASK);
 
     public SquiggleEventHandler(HiNoteCore hinote, ZNode node) {
 	this.hinote = hinote;
 	this.node = node;
-	pt = new Point2D.Float();
+	pt = new Point2D.Double();
     }
     
     /**
@@ -50,8 +59,16 @@ public class SquiggleEventHandler implements ZEventHandler, ZMouseListener, ZMou
 	}
     }
 
+    /**
+     * Determines if this event handler is active.
+     * @return True if active
+     */
+    public boolean isActive() {
+	return active;
+    }
+
     public void mousePressed(ZMouseEvent e) {
-	if ((e.getModifiers() & MouseEvent.BUTTON1_MASK) == MouseEvent.BUTTON1_MASK) {   // Left button only
+	if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
 	    ZSceneGraphPath path = e.getPath();
 	    ZCamera camera = path.getTopCamera();
 	    ZGroup layer = hinote.getDrawingLayer();
@@ -71,7 +88,7 @@ public class SquiggleEventHandler implements ZEventHandler, ZMouseListener, ZMou
     }
     
     public void mouseDragged(ZMouseEvent e) {
-	if ((e.getModifiers() & MouseEvent.BUTTON1_MASK) == MouseEvent.BUTTON1_MASK) {   // Left button only
+	if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
 	    ZSceneGraphPath path = e.getPath();
 	    pt.setLocation(e.getX(), e.getY());
 	    path.screenToGlobal(pt);
@@ -81,7 +98,7 @@ public class SquiggleEventHandler implements ZEventHandler, ZMouseListener, ZMou
     }
     
     public void mouseReleased(ZMouseEvent e) {
-	if ((e.getModifiers() & MouseEvent.BUTTON1_MASK) == MouseEvent.BUTTON1_MASK) {   // Left button only
+	if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
 	    ZSceneGraphPath path = e.getPath();
 	    path.getTopCamera().getDrawingSurface().setInteracting(false);
 	    polyline = null;

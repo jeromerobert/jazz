@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.component;
@@ -18,6 +18,13 @@ import edu.umd.cs.jazz.util.*;
 /**
  * <b>ZPolyline</b> is a visual component that represents a line
  * with one or more segments.
+ *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
  * @author  Benjamin B. Bederson
  */
@@ -66,7 +73,7 @@ public class ZPolyline extends ZCoordList implements Serializable {
      * Constructs a new ZPolyline with a single point.
      * @param <code>x,y</code> Initial point
      */
-    public ZPolyline(float x, float y) {
+    public ZPolyline(double x, double y) {
 	super(x, y);
     }
 
@@ -75,63 +82,38 @@ public class ZPolyline extends ZCoordList implements Serializable {
      * @param <code>x,y</code> First point
      * @param <code>x,y</code> Second point
      */
-    public ZPolyline(float x1, float y1, float x2, float y2) {
+    public ZPolyline(double x1, double y1, double x2, double y2) {
 	super(x1, y1, x2, y2);
     }
 
     /**
-     * Constructs a new ZPolyline.
+     * Constructs a new ZPolyline from an array of points.
      * The xp, yp parameters are stored within this polyline, so the caller
      * must not modify them after passing them in.
      * @param <code>xp</code> Array of X points
      * @param <code>yp</code> Array of Y points
      */
-    public ZPolyline(float[] xp, float[] yp) {
+    public ZPolyline(double[] xp, double[] yp) {
 	super(xp, yp);
     }
 
     /**
-     * Copies all object information from the reference object into the current
-     * object. This method is called from the clone method.
-     * All ZSceneGraphObjects objects contained by the object being duplicated
-     * are duplicated, except parents which are set to null.  This results
-     * in the sub-tree rooted at this object being duplicated.
+     * Returns a clone of this object.
      *
-     * @param refPoly The reference visual component to copy
+     * @see ZSceneGraphObject#duplicateObject
      */
-    public void duplicateObject(ZPolyline refPoly) {
-	super.duplicateObject(refPoly);
+    protected Object duplicateObject() {
+	ZPolyline newPoly = (ZPolyline)super.duplicateObject();
 
-	arrowHead = refPoly.arrowHead;
-	if (refPoly.firstArrowHead != null) {
-	    firstArrowHead = (GeneralPath)refPoly.firstArrowHead.clone();
+	if (firstArrowHead != null) {
+	    newPoly.firstArrowHead = (GeneralPath)firstArrowHead.clone();
 	}
-	if (refPoly.lastArrowHead != null) {
-	    lastArrowHead = (GeneralPath)refPoly.lastArrowHead.clone();
+	if (lastArrowHead != null) {
+	    newPoly.lastArrowHead = (GeneralPath)lastArrowHead.clone();
 	}
+	return newPoly;
     }
 
-    /**
-     * Duplicates the current object by using the copy constructor.
-     * The portion of the reference object that is duplicated is that necessary to reuse the object
-     * in a new place within the scenegraph, but the new object is not inserted into any scenegraph.
-     * The object must be attached to a live scenegraph (a scenegraph that is currently visible)
-     * or be registered with a camera directly in order for it to be visible.
-     *
-     * @return A copy of this visual component.
-     * @see #updateObjectReferences
-     */
-    public Object clone() {
-	ZPolyline copy;
-
-	objRefTable.reset();
-	copy = new ZPolyline();
-	copy.duplicateObject(this);
-	objRefTable.addObject(this, copy);
-	objRefTable.updateObjectReferences();
-
-	return copy;
-    }
 
     //****************************************************************************
     //
@@ -146,8 +128,8 @@ public class ZPolyline extends ZCoordList implements Serializable {
     protected void removeArrowHead(int ah) {
 	if ((ah == ARROW_FIRST) || (ah == ARROW_BOTH)) {
 	    if (firstArrowHeadPoint != null) {
-		xp[0] = (float)firstArrowHeadPoint.getX();
-		yp[0] = (float)firstArrowHeadPoint.getY();
+		xp[0] = firstArrowHeadPoint.getX();
+		yp[0] = firstArrowHeadPoint.getY();
 		firstArrowHeadPoint = null;
 		firstArrowHead = null;
 		setCoords(false, xp, yp);
@@ -156,8 +138,8 @@ public class ZPolyline extends ZCoordList implements Serializable {
 	if ((ah == ARROW_LAST)  || (ah == ARROW_BOTH)) {
 	    if (lastArrowHeadPoint != null) {
 		int last = np - 1;
-		xp[last] = (float)lastArrowHeadPoint.getX();
-		yp[last] = (float)lastArrowHeadPoint.getY();
+		xp[last] = lastArrowHeadPoint.getX();
+		yp[last] = lastArrowHeadPoint.getY();
 		lastArrowHeadPoint = null;
 		lastArrowHead = null;
 		setCoords(false, xp, yp);
@@ -165,6 +147,9 @@ public class ZPolyline extends ZCoordList implements Serializable {
 	}
     }
 
+    /**
+     * Get the arrowhead type used by this ZPolyline. ArrowHead is one of ARROW_NONE, ARROW_FIRST, ARROW_LAST, ARROW_BOTH.
+     */
     public int getArrowHead() {return arrowHead;}
 
     /**
@@ -208,7 +193,7 @@ public class ZPolyline extends ZCoordList implements Serializable {
      * Add a point to the end of this polyline.
      * @param x,y The new point
      */
-    public void add(float x, float y) {
+    public void add(double x, double y) {
 	super.add(x, y);
 
 	if (updateArrowHeads()) {	// Update arrowheads to reflect new polyline state
@@ -224,7 +209,7 @@ public class ZPolyline extends ZCoordList implements Serializable {
      * @param x,y The new point
      * @param index The index of the new point.
      */
-    public void add(float x, float y, int index) {
+    public void add(double x, double y, int index) {
 	super.add(x, y, index);
 
 	if (updateArrowHeads()) {	// Update arrowheads to reflect new polyline state
@@ -238,7 +223,7 @@ public class ZPolyline extends ZCoordList implements Serializable {
      * @param xp An array of the X coordinates of the new points.
      * @param yp An array of the Y coordinates of the new points.
      */
-    public void setCoords(float[] xp, float[] yp) {
+    public void setCoords(double[] xp, double[] yp) {
 	setCoords(true, xp, yp);
     }
 
@@ -248,12 +233,12 @@ public class ZPolyline extends ZCoordList implements Serializable {
      * @param pt2 The second first point of the polyline
      */
     public void setCoords(Point2D pt1, Point2D pt2) {
-	float[] xp = new float[2];
-	float[] yp = new float[2];
-	xp[0] = (float)pt1.getX();
-	yp[0] = (float)pt1.getY();
-	xp[1] = (float)pt2.getX();
-	yp[1] = (float)pt2.getY();
+	double[] xp = new double[2];
+	double[] yp = new double[2];
+	xp[0] = pt1.getX();
+	yp[0] = pt1.getY();
+	xp[1] = pt2.getX();
+	yp[1] = pt2.getY();
 	setCoords(true, xp, yp);
     }
 
@@ -264,7 +249,7 @@ public class ZPolyline extends ZCoordList implements Serializable {
      * @param yp An array of the Y coordinates of the new points.
      * @param updateArrowHeads Updates the internal representation of the arrowheads.
      */
-    protected void setCoords(boolean updateArrowHeads, float[] xp, float[] yp) {
+    protected void setCoords(boolean updateArrowHeads, double[] xp, double[] yp) {
 	super.setCoords(xp, yp);
 
 	if (updateArrowHeads) {
@@ -297,6 +282,10 @@ public class ZPolyline extends ZCoordList implements Serializable {
 	Graphics2D g2 = renderContext.getGraphics2D();
 
 	if (penColor != null) {
+	    if (absPenWidth) {
+		double pw = penWidth / renderContext.getCompositeMagnification();
+		stroke = new BasicStroke((float)pw, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
+	    }
 	    g2.setStroke(stroke);
 	    g2.setColor(penColor);
 	    g2.draw(path);
@@ -327,8 +316,8 @@ public class ZPolyline extends ZCoordList implements Serializable {
      */
     protected void computeBounds() {
 	int i;
-	float[] coords = new float[6];
-	float xmin, ymin, xmax, ymax;
+	double[] coords = new double[6];
+	double xmin, ymin, xmax, ymax;
 
 	bounds.reset();
 	if (np == 0) {
@@ -369,8 +358,14 @@ public class ZPolyline extends ZCoordList implements Serializable {
 
 				// Expand the bounds to accomodate the pen width
 	if (penColor != null) {
-	    float p2;
-	    p2 = 0.5f * penWidth;
+	    double p2;
+	    if (absPenWidth) {
+		ZRenderContext rc = getRoot().getCurrentRenderContext();
+		double mag = (rc == null) ? 1.0f : rc.getCameraMagnification();
+		p2 = 0.5 * penWidth / mag;
+	    } else {
+		p2 = 0.5 * penWidth;
+	    }
 	    xmin -= p2;
 	    ymin -= p2;
 	    xmax += p2;
@@ -382,7 +377,8 @@ public class ZPolyline extends ZCoordList implements Serializable {
 
     /**
      * Returns true if the specified rectangle is on the polyline.
-     * @param <code>rect</code> Pick rectangle of object coordinates.
+     * @param rect Pick rectangle of object coordinates.
+     * @param path The path through the scenegraph to the picked node. Modified by this call.
      * @return True if rectangle overlaps object.
      * @see ZDrawingSurface#pick(int, int)
      */
@@ -390,7 +386,15 @@ public class ZPolyline extends ZCoordList implements Serializable {
 	boolean picked = false;
 
 	if (pickBounds(rect)) {
-	    picked = ZUtil.rectIntersectsPolyline(rect, xp, yp, penWidth);
+	    double p;
+	    if (absPenWidth) {
+		ZRenderContext rc = getRoot().getCurrentRenderContext();
+		double mag = (rc == null) ? 1.0f : rc.getCameraMagnification();
+		p = penWidth / mag;
+	    } else {
+		p = penWidth;
+	    }
+	    picked = ZUtil.rectIntersectsPolyline(rect, xp, yp, p);
 	}
 
 	return picked;
@@ -405,9 +409,9 @@ public class ZPolyline extends ZCoordList implements Serializable {
     protected boolean updateArrowHeads() {
 	GeneralPath head = null;
 	PathIterator i = path.getPathIterator(null);
-	float[] coords = new float[6];
-	Point2D p1 = new Point2D.Float();
-	Point2D p2 = new Point2D.Float();
+	double[] coords = new double[6];
+	Point2D p1 = new Point2D.Double();
+	Point2D p2 = new Point2D.Double();
 	boolean updated = false;
 
 				// Arrowheads are represented by keeping a shape for each active arrow head.
@@ -454,10 +458,10 @@ public class ZPolyline extends ZCoordList implements Serializable {
      */
     protected GeneralPath computeArrowHead(int ah, Point2D p1, Point2D p2) {
 	GeneralPath head;
-	Point2D p3 = new Point2D.Float();
-	Point2D q1 = new Point2D.Float();
-	Point2D q2 = new Point2D.Float();
-	float arrowWidth = penWidth * 2.0f;
+	Point2D p3 = new Point2D.Double();
+	Point2D q1 = new Point2D.Double();
+	Point2D q2 = new Point2D.Double();
+	double arrowWidth = penWidth * 2.0;
 
 				// BBB 12/98: There is a bug with Sun's JDK1.2 where if we create a Shape
 				// of zero area (due to the two points being equal, and then add
@@ -490,15 +494,15 @@ public class ZPolyline extends ZCoordList implements Serializable {
 	    // Save line endpoint, shorten line to beginning of arrowhead.
 	    // Restore line length when arrowhead is removed.
 	    if (ah == ARROW_FIRST) {
-		firstArrowHeadPoint = new Point2D.Float(xp[0], yp[0]);
-		xp[0] = (float)p3.getX();
-		yp[0] = (float)p3.getY();
+		firstArrowHeadPoint = new Point2D.Double(xp[0], yp[0]);
+		xp[0] = p3.getX();
+		yp[0] = p3.getY();
 		setCoords(false, xp, yp);
 	    } else if (ah == ARROW_LAST) {
 		int last = np - 1;
-		lastArrowHeadPoint = new Point2D.Float(xp[last], yp[last]);
-		xp[last] = (float)p3.getX();
-		yp[last] = (float)p3.getY();
+		lastArrowHeadPoint = new Point2D.Double(xp[last], yp[last]);
+		xp[last] = p3.getX();
+		yp[last] = p3.getY();
 		setCoords(false, xp, yp);
 	    }
 	}
@@ -514,36 +518,36 @@ public class ZPolyline extends ZCoordList implements Serializable {
 	    out.writeBoolean(false);
 	} else {
 	    out.writeBoolean(true);
-	    out.writeFloat((float)firstArrowHeadPoint.getX());
-	    out.writeFloat((float)firstArrowHeadPoint.getY());
+	    out.writeDouble(firstArrowHeadPoint.getX());
+	    out.writeDouble(firstArrowHeadPoint.getY());
 	}
 				// write Point2D lastArrowHeadPoint
 	if (lastArrowHeadPoint == null) {
 	    out.writeBoolean(false);
 	} else {
 	    out.writeBoolean(true);
-	    out.writeFloat((float)lastArrowHeadPoint.getX());
-	    out.writeFloat((float)lastArrowHeadPoint.getY());
+	    out.writeDouble(lastArrowHeadPoint.getX());
+	    out.writeDouble(lastArrowHeadPoint.getY());
 	}
     }	
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 	in.defaultReadObject();
 
-	float x, y;
+	double x, y;
 
 				// read Point2D firstArrowHeadPoint
 	if (in.readBoolean()) {
-	    x = in.readFloat();
-	    y = in.readFloat();
-	    firstArrowHeadPoint = new Point2D.Float(x, y);
+	    x = in.readDouble();
+	    y = in.readDouble();
+	    firstArrowHeadPoint = new Point2D.Double(x, y);
 	}
 
 				// read Point2D lastArrowHeadPoint
 	if (in.readBoolean()) {
-	    x = in.readFloat();
-	    y = in.readFloat();
-	    lastArrowHeadPoint = new Point2D.Float(x, y);
+	    x = in.readDouble();
+	    y = in.readDouble();
+	    lastArrowHeadPoint = new Point2D.Double(x, y);
 	}
 
 

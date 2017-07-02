@@ -260,7 +260,7 @@ public class TreeLayoutTest extends JFrame {
 	    if (node instanceof ZGroup) {
 		group = (ZGroup)node;
 
-		vis  = new ZRectangle(0.0f, 0.0f, 40.0f, 40.0f);
+		vis  = new ZRectangle(0.0, 0.0, 40.0, 40.0);
 		child = new ZVisualGroup(vis, null);
 		ZLayoutGroup layout = child.editor().getLayoutGroup();
 		layout.setLayoutChild(child);

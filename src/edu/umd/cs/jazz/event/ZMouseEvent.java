@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.event;
@@ -49,16 +49,25 @@ import edu.umd.cs.jazz.util.*;
  * <code>ZMouseMotionListener</code> interface.) Each such listener object 
  * gets a <code>ZMouseEvent</code> containing the mouse motion event.
  *   
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
+ *
  * @see ZMouseAdapter
  * @see ZMouseListener
  * @see ZMouseMotionAdapter
  * @see ZMouseMotionListener
  */
-public class ZMouseEvent extends MouseEvent {
-    private int id;		   // The id that specifies the event trigger (press, release, etc.)
-    private ZNode node;		   // The node that the event occurred on
-    private ZSceneGraphPath path;  // The path the event took from the ZCanvas to the visual component
-
+public class ZMouseEvent extends MouseEvent implements Serializable {
+    private int id;		         // The id that specifies the event trigger (press, release, etc.)
+    private ZNode node;		         // The node that the event occurred on
+    private ZSceneGraphPath path;        // The path the event took from the ZCanvas to the visual component
+    private ZNode target;                // The target node, usually of a MOUSE_RELEASED event
+    private ZSceneGraphPath targetPath;  // The target path, usually of a MOUSE_RELEASED event
+    
     /**
      * Constructs a new ZMouse event from a Java MouseEvent.
      * @param id The event type (MOUSE_PRESSED, MOUSE_RELEASED, MOUSE_CLICKED, MOUSE_ENTERED, MOUSE_EXITED, MOUSE_MOVED, MOUSE_DRAGGED)
@@ -74,6 +83,61 @@ public class ZMouseEvent extends MouseEvent {
     }
 
     /**
+     * Constructs a new ZMouseEvent from a Java MouseEvent.  This constructor
+     * is specifically designed for a MOUSE_RELEASED event.
+     * @param id The event type (MOUSE_PRESSED, MOUSE_RELEASED, MOUSE_CLICKED, MOUSE_ENTERED, MOUSE_EXITED, MOUSE_MOVED, MOUSE_DRAGGED)
+     * @param node The node the event occurred on
+     * @param e The original Java mouse event
+     * @param path The path the event took from the ZCanvas to the visual component
+     * @param target The target node of the event
+     * @param targetPath The target path of the event
+     */
+    public ZMouseEvent(int id,
+		       ZNode node,
+		       MouseEvent e,
+		       ZSceneGraphPath path,
+		       ZNode target, ZSceneGraphPath targetPath) {
+	super((Component)e.getSource(), e.getID(), e.getWhen(), e.getModifiers(), e.getX(), e.getY(), e.getClickCount(), e.isPopupTrigger());
+	this.id = id;
+	this.node = node;
+	this.path = path;
+	this.target = target;
+	this.targetPath = targetPath;
+    }
+
+    /**
+     * Returns the x,y position of the event in the local coordinate system of the node
+     * the event occurred on.
+     * @return a Point2D object containing the x and y coordinates local to the node.
+     */
+    public Point2D getLocalPoint() {
+	Point2D.Double point = new Point2D.Double(); 
+	point.setLocation(getX(), getY());
+	path.screenToLocal(point);
+	return point;
+    }
+
+    /**
+     * Returns the horizontal x position of the event in the local coordinate system 
+     * of the node the event occurred on.
+     * @return x a double indicating horizontal position local to the node.
+     */
+    public double getLocalX() {
+	Point2D point = getLocalPoint();
+	return point.getX();
+    }
+
+    /**
+     * Returns the vertical y position of the event in the local coordinate system
+     * of the node the event occurred on.
+     * @return y a double indicating vertical position local to the node.
+     */
+    public double getLocalY() {
+	Point2D point = getLocalPoint();
+	return point.getY();
+    }
+    
+    /**
      * Determine the event type.
      * @return the id
      */
@@ -83,7 +147,7 @@ public class ZMouseEvent extends MouseEvent {
 
     /**
      * Determine the node the event ocurred on
-     * @return the node.
+     * @return the node
      */
     public ZNode getNode() {
 	return node;
@@ -91,8 +155,27 @@ public class ZMouseEvent extends MouseEvent {
 
     /**
      * Determine the path the event took from the ZCanvas down to the visual component.
+     * @return the path
      */
     public ZSceneGraphPath getPath() {
 	return path;
+    }
+
+    /**
+     * Determine the target of the event.  This may be null if there is
+     * no valid target node or if this is not a MOUSE_RELEASED event.
+     * @return the target
+     */
+    public ZNode getTarget() {
+	return target;
+    }
+
+    /**
+     * Determine the path from the ZCanvas down to the target visual component.
+     * This may be null if this is not a MOUSE_RELEASED event.
+     * @return the target path
+     */
+    public ZSceneGraphPath getTargetPath() {
+	return targetPath;
     }
 }

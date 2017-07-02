@@ -1,3 +1,289 @@
+Jazz-1.0 ChangeLog (Released July 4, 2000)
+------------------------------------------
+
+  * INCOMPATIBLE CHANGE: Added a method to ZLayoutManager for the
+    future to support animation of layout changes.  It is not yet
+    implemented, but added this now to avoid future incompatible
+    changes.  This only affects you if you implemented a new layout
+    manager.
+
+  * Fixed bug in implementation of ZVisualGroup.updateVolatility().
+
+  * Fixed some bugs in scenegraph browser used for debugging
+    (ZSceneGraphTreeModel).  Now the first letter of the class name
+    isn't cut off.  Also, ZNameGroup displays the name of the group.
+   
+  * Made some methods access less restrictive - from package access
+    to protected access, giving subclasses the opportunity to access them.
+
+  * Updated API documentation to be generally clearer.
+
+  * Added ZLayerGroup.getCameras() and ZLayerGroup.getNumCameras() methods.
+
+  * Fixed bug in hinote where new views wouldn't look at
+    same location as original view.
+
+  * Fixed several bugs relating to picking through internal cameras:
+    - Added camera list to ZSceneGraphPath so it maintains a special
+      list of cameras along the path.  For picking, the camera list
+      contains the cameras under the mouse pointer even if the 
+      path is empty.
+    - Fixed bug with picking objects through internal cameras.  The
+      terminal object in the path would be the internal camera
+      rather than object that was picked.  Now it properly contains
+      the picked object.
+    - Fixed bug with picking through internal cameras where the path
+      would not contain the transforms of the internal cameras if
+      nothing was picked.  Now, the path goes through all the cameras
+      the mouse pointer is over, regardless of whether anything was
+      picked.
+
+Jazz-1.0rc1 ChangeLog (Released June 19, 2000)
+----------------------------------------------
+
+  * INCOMPATIBLE CHANGE: Jazz now uses doubles instead of floats wherever
+    possible, including all API calls. This results in increased resolution,
+    from about 10 to about 20 orders of magnitude of zooming, at the cost of
+    increased memory usage. This should not require any application source
+    code changes since floats get cast to doubles automatically.  However,
+    you may choose to change your applications to use doubles to avoid the
+    casting cost - and to take advantage of the higher resolution.
+
+    Old .jazz probably will not load correctly now, because of a casting problem:
+    ClassCastException: java.lang.Float. You can fix this by editing
+    the old .jazz files, changing all instances of "float" to "double", and
+    changing all floating point values followed by "f" to be followed by "d" instead.
+    You can do the latter change using emacs Regexp Replacement command:
+    M-x replace-regexp <return> \(\.[0-9]+\)f <return> \1d <return>
+	
+  * INCOMPATIBLE CHANGE: ZVisualLeaf now supports a list of visual components
+    under a single leaf node, instead of just one visual component per leaf.
+    You can now create a group of visual components that are indivisible
+    (e.g. a rectangle with a label). See ZVisualLeaf documentation for details.
+    To update old code: replace getVisualComponent() with getFirstVisualComponent()
+
+  * INCOMPATIBLE CHANGE: ZGroup.remove() has been renamed ZGroup.extract().
+    The behavior has not changed, ZGroup.extract() removes one node from the
+    tree, any children are reparented.  
+
+    WARNING: A new method named remove has been added which removes
+    the entire subtree (see below).  If you do not rename your
+    application 'remove' calls to 'extract' you will likely introduce
+    bugs into your application.
+
+  * INCOMPATIBLE CHANGE:  Added method globalBoundsChanged() to
+    the ZNodeListener interface.  This method notifies listeners of global
+    bounds events that get fired when the global bounds of a node change.
+    These events function much the same as BOUNDS_CHANGED events and
+    percolate up the scenegraph until they are consumed.  Implementers of
+    this interface must now also implement this method.
+
+  * INCOMPATIBLE CHANGE:  Renamed ZCamera.setTranslate() to
+    ZCamera.setTranslation() to be consistent with the getter
+    and with ZTransformGroup terminology.
+
+  * INCOMPATIBLE CHANGE: Added isActive to the ZEventHandler interface, 
+    and implemented it in all of Jazz's event handlers
+
+  * INCOMPATIBLE CHANGE: Added setAbsPenWidth() and getAbsPenWidth() methods
+    to the ZStroke interface.  Added support for absolute pen widths
+    (independent of camera magnification) to ZPolyline, ZPolygon, ZRectangle,
+    ZEllipse, and ZShape.
+
+  * HiNote bug fix: When a full screen hinote view is closed, it's camera is
+    removed from the scenegraph.
+
+  * New method: ZGroup.removeChild(int index). Removes the child node at the specified
+    position from the group node's children.
+	
+  * makefiles no longer copy hinote hinote/resources into hinote/src/classes/resources
+
+  * HiNote bug fix: When a scenegraph tree browser window is closed, it can now
+    be re-opened.
+
+  * New visual component: ZLabel: supports a node containing a simple text label.
+
+  * New group node: ZNameGroup: Provides the ability to name a portion of the
+    scenegraph. You can assign a name to a ZNameGroup, then retrieve a
+    reference to this group node using the name. Any ZNameGroup node
+    can be retrieved by a static call to ZNameGroup.getNameGroup(String name).
+
+  * ZMouseEvent now has methods for retrieving the mouse position in the
+    coordinate system of the object that the mouse is over.
+	
+  * ZCanvas now supports scrollBars when it is added to a JScrollPane.
+  		
+  * Modified method that ZDrawingSurface uses to determine the render
+    quality.  In a backwards compatible way, there is now a regular
+    and an interacting quality.  The interacting quality is used whenever
+    the user is interacting with the surface *or* objects are being
+    animated on the surface.  The regular quality is used other times.
+    There are new methods for accessing the interacting render quality.
+
+  * Method mouseReleased() in ZoomEventHandler and in ZPanEventHandler
+    now cause the camera to fire a CAMERA_VIEW_CHANGED event. You can now
+    use a ZCameraListener to detect when zooming or panning is finished
+    by checking ZDrawingSurface.isInteracting() in this method.
+	
+  * ZText and ZImage now contain an x/y translation offset. This allows use of
+    multiple image/text nodes under a single ZGroup without needing separate
+    transforms for each one. 
+
+  * ZAnchorGroup links are now updated when their destination node's global
+    bounds change.
+	
+  * New method: ZGroup.removeAllChildren(): Removes all children from a group node.
+	
+  * New method: ZNode.remove(): remove this node and its children from the tree.
+
+  * Added ZGroupEvent.isModificationEvent() to better determine if a group
+    event is part of a movement/modification or if it represents a true
+    addition or removal.  This bit allows a program to distinguish between
+    the ZNode.reparent(), ZGroup.insertAbove(), and ZGroup.remove()
+    modification operations and the regular ZGroup.addChild() and
+    ZGroup.removeChild() operations.
+	
+  * Added GraphIt, a new Jazz demo program, in the demo directory.
+    This is a simple program that lets users draw graphs with circular
+    nodes and then connect them with lines.  It keeps the graph edges
+    connected when the nodes are moved.  It supports grouping and multiple
+    views.  This program was intended to be a simpler starting point for
+    new Jazz users than HiNote which is fairly complex.
+	
+  * ZFadeGroup now implements four types of fading:
+    a) Fade on camera magnification
+    b) Fade on composite magnification
+    c) Fade on absolute screen size in pixels
+    d) Fade on percentage of window size in pixels
+    Set the type of fading with setFadeType.
+	
+  * ZGroupEvents are now only fired by Jazz classes at a point in which
+    the scenegraph is temporarily stable.  Therefore, to determine whether 
+    a node has been *truly* added or removed, you can now check to see
+    if the node in question is still a descendent of a given ancestor.  
+    This change affects the methods ZNode.reparent(), ZGroup.insertAbove(),
+    ZGroup.remove(), ZGroup.addChild(), and ZGroup.removeChild().  See
+    the ZGroupEvent documentation for a simple code example.
+	
+  * Changed repaint mechanism to prepare for support for fixed penwidth lines,
+    and other context-dependent objects.  I left in the repaint(Bounds) methods,
+    but added new ones of repaint(ZSceneGraphObject obj, AffineTransform at, ZBounds clip).
+    Now, when an object is repainted, instead of passing up its bounds, it passes
+    up itself plus its transform.  Only when it gets up to the camera is the
+    bounds looked at.  In this way, the camera can set the rendercontext
+    appropriately to refer to itself when retrieving the bounds.  This way,
+    bounds computation can be implemented per camera.
+    This is a backwards-compatible change.
+
+  * Fixed bug in ZCamera.getRoot().  It was implemented by getting the root
+    of the tree the camera was in rather than the root of the tree the
+    camera looked at (as was documented).
+
+  * Added ZVisualComponent.getRoot() which returns the root of the
+    tree the component's first parent is in.
+
+  * Fixed bug in computation of volatile bounds for ZVisualLeaf, ZGroup,
+    and ZVisualGroup.  They were never computed properly.  However, now
+    than absolute pen width objects actually use volatility, they need
+    to work!
+
+  * Added ZVisualLeaf.removeVisualComponent().  This method was 
+    just missing - apparently it was never added when ZVisualLeaf
+    went from one to multiple visual components.
+
+  * Made a factory class for creating new instances of ZRenderContext.
+    Now that they are more important, and are used for general-purpose
+    context-sensitive rendering, it is important that applications
+    have the ability to define their own in case they want to define
+    new kinds of context.
+
+Jazz-1.0b ChangeLog (Released April 14, 2000)
+---------------------------------------------
+  * Moved SceneGraphBrowser from HiNote to Jazz. Added new jazz class
+    ZSceneGraphTreeView.
+	
+  * Added support in ZMouseEvent for getting the target of a MOUSE_RELEASED
+    event.
+
+  * Jazz and HiNote now mask out mouse button events that are in combination
+    with other buttons or keys, like SHIFT or CONTROL. This allows developers
+    to use these combinations for their custom controls.
+	
+  * New visual component ZEllipse added to jazz, along with an ellipse tool for
+    HiNote. Code donated by Wayne Westerman.
+
+  * Fixed several of the "set" methods (eg. setLayer()) in ZCanvas
+	
+  * Fixed ZGroup.indexOf() to check its own children instead of its
+    parent's children.
+	
+  * Added new ZVisualComponent ZShape. Users can create a new visual component
+    from a java.awt.Shape
+	
+  * Added workaround for bug in JDK1.3rc1 and earlier where it 
+    would occasionly get in an infinite loop in Rectangle2D.intersectsLine().
+    This could happen in ZPolygon.pick.  I reported the bug to Sun
+    March 10, 2000, and added a correct implementation in
+    ZUtil.rectIntersectsLine(), and use that instead.
+
+  * When a ZIndexGroup event ADD_NODE or REMOVE_NODE is fired on a node, the
+    event is percolated up the scenegraph, looking for listeners at each node,
+    until the event is consumed.
+
+  * New event creator and listener added: ZNodeEvent and ZNodeListener,
+    providing a new event BOUNDS_CHANGED.
+    This event is fired whenever a node's bounds change. It is percolated up
+    the scenegraph, looking for listeners, until consumed. ZSpatialIndexGroup
+    use these events to detect when indexed nodes bounds have changed, by
+    attaching a listener to the ZTransformGroup edit node of any spatial-indexed node.
+
+  * The "Browse Scene Graph" viewer on the debug menu now lets you 
+    edit the properties of selected nodes.
+
+  * Rewrote the Jazz cloning code. From an application standpoint, the
+    ZSceneGraphObject.clone() method is functioally the same, except that
+    cloning an object no longer clones the listener table for the object 
+    into the new object (cloned objects start out with no listeners). However, 
+    there are several bug fixes and efficiency improvements.
+
+  * There is now a ZDebug.dumpString method, which obtains a textual printout
+    of a node as a string.
+
+  * Added a new debugging tool to HiNote for browsing the Jazz scene
+    graph (see Help->Debug->Browse Scene graph). 
+ 
+  * Fixed Copy/Paste bug in HiNote. Now you can copy/paste groups. Pasting
+    multiple times also works properly.
+
+  * Fixed bug in ZFadeGroup where magnified objects that had fade groups
+    did not get picked properly.
+
+  * Smooth fading is currently unbearably slow if many objects are
+    being faded, so I added the ability to specify the "fadeRange"
+    of a ZFadeGroup.  Default is 0.3 (fade in/out over 30% of its
+    magnification).  However, setting it to 0 makes objects jump
+    in and out of visibility as they reach their min/max size.
+
+  * Added a new group node: ZSpatialIndexGroup, which can be managed by 
+    ZSceneGraphEditor. The purpose of this group node is to provide faster
+    rendering when an application must display a large number of visual components. 
+    It implements the algorithm "RTree Indexing" to quickly find which nodes
+    are currently visible. The indexing algorithm applies to the children of the
+    primary node that has a ZSpatialIndexGroup in its edit chain. 
+
+    Note: A ZSpatialIndexGroup node must appear at the bottom of the edit node chain:
+    ie its child must be a ZGroup node. ZSceneGraphEditor supports this constraint.
+
+  * Fixed bug in ZCamera where internal cameras were not being clipped properly.
+
+  * Added test code for internal cameras - see test/PortalTest.java
+
+  * Fixed bug in Swing event handler caused by calling 'cameraToLocal'
+    for a node after the node had been deleted (eg. when the node was
+    deleted on mouse pressed).
+	
+  * Added a constructor in ZPathLayoutManager to accept a Shape
+
 Jazz-0.6 ChangeLog (Released October 22, 1999)
 ----------------------------------------------
 
@@ -361,6 +647,9 @@ Jazz-0.5 ChangeLog (Released July 30, 1999)
 	
   HINOTE
   ------
+  * 11/23/1999: JJM - Added "File" option to "Insert" Menu. Saved Jazz
+    files can now be added to the current scenegraph.
+	
   * 08/19/1999: JJM - Added color chooser tool to toolbar.
 
   * 08/06/1999: JJM - HiNoteApplet will load a .jazz file on

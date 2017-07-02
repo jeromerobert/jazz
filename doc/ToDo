@@ -9,11 +9,25 @@ Jazz ToDo List
   FEATURES NEEDED
   ---------------
 
-  * 10/22/1999: BBB - Add (x, y) offset to ZText and ZImage
-    Requested by Carol Chapman, Lockheed Martin
+  * 7/1/2000:   BBB - Layout manager should support optionally enable
+    layout changes to be animated over time.  I added 
+    ZLayoutManager.doLayout(ZGroup node, int millis) so this can
+    be added without incompatible changes in the future.
 
-  * 09/15/1999: BBB - Add spatial index node to improve rendering of nodes
-    with a lot of children.
+  * 5/28/2000:  BBB - There should be some kind of text label that
+    display at a fixed size, but disappear when there is not enough
+    space for them.  They should appear at a fixed (or possibly two
+    sizes) when there is enough space.  (Requested by Jon Meyer)
+
+  * 1/23/2000:  BBB - Implement resizing for the selection class.
+
+  * 1/22/2000:  BBB - Make the editor a bit more sophisticated so that
+    it supports user-defined types better, and also multiple instances
+    of the same type.  See jazz-chat thread on Multiple Hyperlinks.
+
+  * 10/23/1999: BBB - Add property change events to all components
+    so applications can be notified when, for example, rectangle
+    coordinates change.
 
   * 09/15/1999: BBB - Add support for Advanced Imaging API
 
@@ -21,12 +35,5 @@ Jazz ToDo List
     asynchronous animation.
 
   * 07/15/1999: BBB - Add tutorial chapter describing how to build and install jazz.
-
-  * 06/10/1999: BBB - Make volatile objects use a more general kind ZContext
-    class so that we can have general context-sensitive objects, that define
-    rendering, bounds, and other stuff.  The crucial part is that bounds should
-    be able to be determined by the context so, for example, we can have 
-    single-pixel thick lines within *all* cameras, instead of just one.
-      - Suggested by Susanne Jul
 
   * 05/07/1999: BBB - Design complex composable Lenses

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.event;
@@ -36,11 +36,13 @@ import javax.swing.*;
 public interface ZGroupListener extends EventListener {
     /**
      * Invoked when a node has been added to this group.
+     * @param e The group event.
      */
     public void nodeAdded(ZGroupEvent e);
 
     /**
      * Invoked when a node has been removed from this group.
+     * @param e The group event.
      */    
     public void nodeRemoved(ZGroupEvent e);
 }

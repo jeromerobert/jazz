@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.event;
@@ -16,15 +16,28 @@ import edu.umd.cs.jazz.component.ZRectangle;
 
 /**
  * <b>ZSelectionEventHandler</b> provides event handlers for basic
- * selection interaction.
- * Click to select/unselect an item.
- * Shift-click to extend the selection.
- * Click-and-drag on the background to marquee select.
- * Drag a selected item to move all of the selected items.
+ * selection interaction.<br>
+ * <ul><b>Selection Actions</b> (operates on the current selection):
+ * <li> Click to select/unselect an item.
+ * <li> Shift-click to extend the selection.
+ * <li> Click-and-drag on the background to marquee select.
+ * <li> Drag a selected item to move all of the selected items.
+ * <li> Selected nodes may be moved with the mouse by dragging.
+ * <li> Delete current selection with the DEL key.
+ * <li> Translate items in currrent selection (nudge) with arrow keys.
+ * <li> Scale items in current selection with PgUp / PgDown.
+ * </ul>
+ *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
  * @author  Benjamin B. Bederson
  */
-public class ZSelectionEventHandler implements ZEventHandler, ZMouseListener, ZMouseMotionListener, KeyListener {
+public class ZSelectionEventHandler implements ZEventHandler, ZMouseListener, ZMouseMotionListener, KeyListener, Serializable {
     private boolean     active = false;      // True when event handlers are attached to a node
     private ZNode       node = null;         // The node the event handlers are attached to
     private ZCanvas     canvas = null;       // The canvas this event handler is associated with
@@ -46,8 +59,25 @@ public class ZSelectionEventHandler implements ZEventHandler, ZMouseListener, ZM
     private int        translateUpKey    = KeyEvent.VK_UP;        // Key that translates selected objects up a bit
     private int        translateDownKey  = KeyEvent.VK_DOWN;      // Key that translates selected objects down a bit
     private int        deleteKey         = KeyEvent.VK_DELETE;    // Key that deletes selected objects
+				                                  // Mask out mouse and mouse/key chords
+    private int        all_button_mask   = (MouseEvent.BUTTON1_MASK | 
+					    MouseEvent.BUTTON2_MASK | 
+					    MouseEvent.BUTTON3_MASK | 
+					    MouseEvent.ALT_GRAPH_MASK | 
+					    MouseEvent.CTRL_MASK | 
+					    MouseEvent.META_MASK | 
+					    MouseEvent.SHIFT_MASK | 
+					    MouseEvent.ALT_MASK);
 
-ArrayList invisibleNodes = new ArrayList();
+    private int        all_button_but_shift_mask   = (MouseEvent.BUTTON1_MASK | 
+					              MouseEvent.BUTTON2_MASK | 
+					              MouseEvent.BUTTON3_MASK | 
+					              MouseEvent.ALT_GRAPH_MASK | 
+					              MouseEvent.CTRL_MASK | 
+					              MouseEvent.META_MASK | 
+					              MouseEvent.ALT_MASK);
+
+    ArrayList invisibleNodes = new ArrayList();
 
     /**
      * Constructs a new ZSelectionEventHandler.
@@ -58,11 +88,11 @@ ArrayList invisibleNodes = new ArrayList();
     public ZSelectionEventHandler(ZNode node, ZCanvas canvas, ZGroup marqueeLayer) {
 	this.node = node;
 	this.canvas = canvas;
-	pt1 = new Point2D.Float();
-	pt2 = new Point2D.Float();
-	pressPt = new Point2D.Float();
-	dragPt = new Point2D.Float();
-	prevPt = new Point2D.Float();
+	pt1 = new Point2D.Double();
+	pt2 = new Point2D.Double();
+	pressPt = new Point2D.Double();
+	dragPt = new Point2D.Double();
+	prevPt = new Point2D.Double();
 	prevMotionSelection = new ArrayList();
 	itemsToRemove = new ArrayList();
 	this.marqueeLayer = marqueeLayer;
@@ -94,6 +124,14 @@ ArrayList invisibleNodes = new ArrayList();
     }
 
     /**
+     * Determines if this event handler is active.
+     * @return True if active
+     */
+    public boolean isActive() {
+	return active;
+    }
+
+    /**
      * Specify the node that the selection "marquee" should be put on.
      * The marquee is the rectangle that the user drags around to select things within.
      * @param layer The node that the marquee should be put under
@@ -109,11 +147,11 @@ ArrayList invisibleNodes = new ArrayList();
     public void keyPressed(KeyEvent e) {
 	ZCamera camera = canvas.getCamera();
 	int     keyCode = e.getKeyCode();
-	float   scaleDelta = 1.1f;    // Magnification factor by for incremental scales
-	float   panDelta = 1.0f;      // Translation amount for incremental scales
-	float   scaleZ = 1.0f;
-	float   panX = 0.0f;
-	float   panY = 0.0f;
+	double   scaleDelta = 1.1f;    // Magnification factor by for incremental scales
+	double   panDelta = 1.0;      // Translation amount for incremental scales
+	double   scaleZ = 1.0;
+	double   panX = 0.0;
+	double   panY = 0.0;
 	boolean scale = false;
 	boolean pan = false;
 	boolean delete = false;
@@ -124,23 +162,23 @@ ArrayList invisibleNodes = new ArrayList();
 	    scaleZ = scaleDelta;
 	} else if (keyCode == scaleDownKey) {
 	    scale = true;
-	    scaleZ = 1.0f / scaleDelta;
+	    scaleZ = 1.0 / scaleDelta;
 	} else if (keyCode == translateLeftKey) {
 	    pan = true;
-	    panX = -1.0f * panDelta;
-	    panY = 0.0f;
+	    panX = -1.0 * panDelta;
+	    panY = 0.0;
 	} else if (keyCode == translateRightKey) {
 	    pan = true;
-	    panX = 1.0f * panDelta;
-	    panY = 0.0f;
+	    panX = 1.0 * panDelta;
+	    panY = 0.0;
 	} else if (keyCode == translateUpKey) {
 	    pan = true;
-	    panX = 0.0f;
-	    panY = -1.0f * panDelta;
+	    panX = 0.0;
+	    panY = -1.0 * panDelta;
 	} else if (keyCode == translateDownKey) {
 	    pan = true;
-	    panX = 0.0f;
-	    panY = 1.0f * panDelta;
+	    panX = 0.0;
+	    panY = 1.0 * panDelta;
 	} else if (keyCode == deleteKey) {
 	    delete = true;
 	}
@@ -149,7 +187,7 @@ ArrayList invisibleNodes = new ArrayList();
 	ArrayList selection = ZSelectionGroup.getSelectedNodes(camera);
 
 	if (pan) {
-	    float dx, dy;
+	    double dx, dy;
 	    ZNode node;
 	    ZTransformGroup transform;
 				// Pan each selected node
@@ -157,12 +195,12 @@ ArrayList invisibleNodes = new ArrayList();
 		node = (ZNode)i.next();
 		transform = node.editor().getTransformGroup();
 				// First convert vector to node coordinate system
-		pt1.setLocation(0.0f, 0.0f);
+		pt1.setLocation(0.0, 0.0);
 		camera.cameraToLocal(pt1, transform);
 		pt2.setLocation(panX, panY);
 		camera.cameraToLocal(pt2, transform);
-		dx = (float)(pt2.getX() - pt1.getX());
-		dy = (float)(pt2.getY() - pt1.getY());
+		dx = (pt2.getX() - pt1.getX());
+		dy = (pt2.getY() - pt1.getY());
 				// Then, translate in the node's local coordinate system
 		transform.translate(dx, dy);
 	    }
@@ -184,7 +222,7 @@ ArrayList invisibleNodes = new ArrayList();
 		node.globalToLocal(pt1);
 				// Then, scale in node's local coordinate system
 		transform = node.editor().getTransformGroup();
-		transform.scale(scaleZ, (float)pt1.getX(), (float)pt1.getY());
+		transform.scale(scaleZ, pt1.getX(), pt1.getY());
 	    }
 	} else if (delete) {
 	    ZNode node;
@@ -216,7 +254,7 @@ ArrayList invisibleNodes = new ArrayList();
      * @param <code>e</code> The event.
      */
     public void mousePressed(ZMouseEvent e) {
-	if ((e.getModifiers() & MouseEvent.BUTTON1_MASK) == MouseEvent.BUTTON1_MASK) {   // Left button only
+	if ((e.getModifiers() & all_button_but_shift_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
 	    ZSceneGraphPath path = e.getPath();
 	    ZCamera camera = path.getCamera();
 	    boolean marqueeSelect = false;
@@ -257,12 +295,12 @@ ArrayList invisibleNodes = new ArrayList();
 	    }
 
 	    if (marqueeSelect) {
-		float dz;
+		double dz;
 		ZRectangle rect;
 		pt1.setLocation(pressPt);
 		dz = camera.cameraToLocal(pt1, marqueeLayer);
-		rect = new ZRectangle((float)pt1.getX(), (float)pt1.getY());
-		rect.setPenWidth(1.0f * dz);
+		rect = new ZRectangle(pt1.getX(), pt1.getY());
+		rect.setPenWidth(1.0 * dz);
 		rect.setPenColor(Color.black);
 		rect.setFillColor(null);
 		marquee = new ZVisualLeaf(rect);
@@ -278,7 +316,7 @@ ArrayList invisibleNodes = new ArrayList();
      * @param <code>e</code> The event.
      */
     public void mouseDragged(ZMouseEvent e) {
-	if ((e.getModifiers() & MouseEvent.BUTTON1_MASK) == MouseEvent.BUTTON1_MASK) {   // Left button only
+	if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
 	    ZSceneGraphPath path = e.getPath();
 	    ZCamera camera = path.getCamera();
 
@@ -289,7 +327,7 @@ ArrayList invisibleNodes = new ArrayList();
 		    return;
 		}
 
-		float dx, dy;
+		double dx, dy;
 		ZNode node;
 		ZTransformGroup transform;
 		ArrayList selection = ZSelectionGroup.getSelectedNodes(camera);
@@ -301,8 +339,8 @@ ArrayList invisibleNodes = new ArrayList();
 		    camera.cameraToLocal(pt1, transform);
 		    pt2.setLocation(dragPt);
 		    camera.cameraToLocal(pt2, transform);
-		    dx = (float)(pt2.getX() - pt1.getX());
-		    dy = (float)(pt2.getY() - pt1.getY());
+		    dx = (pt2.getX() - pt1.getX());
+		    dy = (pt2.getY() - pt1.getY());
 				// Then, translate node
 		    transform.translate(dx, dy);
 		}
@@ -310,18 +348,18 @@ ArrayList invisibleNodes = new ArrayList();
 	    } else {
 				// Select by marquee:
 				// First, modify marquee
-		float x, y, width, height;
+		double x, y, width, height;
 
 		pt1.setLocation(dragPt);
 		camera.cameraToLocal(pt1, selNode);
 		pt2.setLocation(pressPt);
 		camera.cameraToLocal(pt2, selNode);
 
-		x = (float)Math.min(pt2.getX(), pt1.getX());
-		y = (float)Math.min(pt2.getY(), pt1.getY());
-		width = (float)Math.abs(pt2.getX() - pt1.getX());
-		height = (float)Math.abs(pt2.getY() - pt1.getY());
-		ZRectangle rect = (ZRectangle)marquee.getVisualComponent();
+		x = Math.min(pt2.getX(), pt1.getX());
+		y = Math.min(pt2.getY(), pt1.getY());
+		width = Math.abs(pt2.getX() - pt1.getX());
+		height = Math.abs(pt2.getY() - pt1.getY());
+		ZRectangle rect = (ZRectangle)marquee.getFirstVisualComponent();
 		rect.setRect(x, y, width, height);
 
 				// Then, update the selected items overlapping the rectangle
@@ -364,7 +402,7 @@ ArrayList invisibleNodes = new ArrayList();
      * @param <code>e</code> The event.
      */
     public void mouseReleased(ZMouseEvent e) {
-	if ((e.getModifiers() & MouseEvent.BUTTON1_MASK) == MouseEvent.BUTTON1_MASK) {   // Left button only
+	if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
 	    ZSceneGraphPath path = e.getPath();
 
 	    selNode = null;

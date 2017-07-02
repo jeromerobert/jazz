@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz;
@@ -14,15 +14,25 @@ import edu.umd.cs.jazz.event.*;
 import edu.umd.cs.jazz.component.*;
 
 /**
- * <b>ZAnchorGroup</b> is a group that manages a hyperlink from the edit node below it.
- * It references another node, or an area in space.  It has
- * methods to visually show that there is a link (typically used by an application when the user
- * mouses over the visual component), and to follow a link.
+ * <b>ZAnchorGroup</b> holds the information for a spatial hyperlink. An anchor
+ * represents a hyperlink from its children to an internally specified destination.
+ * Anchors can link to either another node, or to a bounds. There is an associated
+ * event handler ZLinkEventHandler that provides interaction for specifying these links. 
  * <p>
  * ZAnchorGroup indicates the link with a visual component that can be defined by extending
  * this class and overriding createLinkComponent.  By default, it creates an arrow pointing
  * to the destination of the link.
+ * <P>
+ * {@link edu.umd.cs.jazz.util.ZSceneGraphEditor} provides a convenience mechanism to locate, create 
+ * and manage nodes of this type.
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
+ * @see edu.umd.cs.jazz.event.ZLinkEventHandler
  * @author  Benjamin B. Bederson
  */
 public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Serializable {
@@ -31,7 +41,7 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
     static private final int  DEFAULT_CONNECTOR_WIDTH = 5;
     static private Color      nodeColor = new Color(150, 150, 0);
     static private Color      boundsColor = new Color(150, 150, 150);
-
+    
     /**
      * The destination node of this link (for link traversal), if there is one.
      */
@@ -58,9 +68,14 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
     private transient ZVisualLeaf linkNode = null;
 
     /**
-     * The listener used to if the destination node changes.
+     * The listener that catches destination node transform changes.
      */
-    private transient ZTransformListener destNodeListener = null;
+    private transient ZTransformListener destNodeTransformListener = null;
+
+    /**
+     * The listener that catches destination node global bounds changes.
+     */
+    private transient ZNodeListener destNodeGlobalBoundsListener = null;
 
     //****************************************************************************
     //
@@ -84,43 +99,47 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
     }
 
     /**
-     * Copies all object information from the reference object into the current
-     * object. This method is called from the clone method.
-     * All ZSceneGraphObjects objects contained by the object being duplicated
-     * are duplicated, except parents which are set to null.  This results
-     * in the sub-tree rooted at this object being duplicated.
+     * Returns a clone of this object.
      *
-     * @param refNode The reference node to copy
+     * @see ZSceneGraphObject#duplicateObject
      */
-    public void duplicateObject(ZAnchorGroup refNode) {
-	super.duplicateObject(refNode);
+    protected Object duplicateObject() {
+	ZAnchorGroup newObject = (ZAnchorGroup)super.duplicateObject();
 
-	destNode = refNode.destNode;
-	if (refNode.destBounds != null) {
-	    destBounds = (Rectangle2D)refNode.destBounds.clone();
+	if (destBounds != null) {
+	    newObject.destBounds = (Rectangle2D)destBounds.clone();
 	}
+
+	newObject.destNodeTransformListener = null;
+	newObject.destNodeGlobalBoundsListener = null;
+
+	return newObject;
     }
 
     /**
-     * Duplicates the current node by using the copy constructor.
-     * The portion of the reference node that is duplicated is that necessary to reuse the node
-     * in a new place within the scenegraph, but the new node is not inserted into any scenegraph.
-     * The node must be attached to a live scenegraph (a scenegraph that is currently visible)
-     * or be registered with a camera directly in order for it to be visible.
+     * Called to update internal object references after a clone operation 
+     * by {@link ZSceneGraphObject#clone}.
      *
-     * @return A copy of this node.
-     * @see #updateObjectReferences
+     * @see ZSceneGraphObject#updateObjectReferences
      */
-    public Object clone() {
-	ZAnchorGroup copy;
+    protected void updateObjectReferences(ZObjectReferenceTable objRefTable) {
+	super.updateObjectReferences(objRefTable);
 
-	objRefTable.reset();
-	copy = new ZAnchorGroup();
-	copy.duplicateObject(this);
-	objRefTable.addObject(this, copy);
-	objRefTable.updateObjectReferences();
+	if (destNode != null) {    
+	    ZNode clonedNode = (ZNode)objRefTable.getNewObjectReference(destNode);
+	    
+	    if (clonedNode == null) {
+		// Cloned a ZAnchorGroup, but did not clone the destNode being linked to.
+		// Just leave destNode linked to the old node.
+	    } else {
+		// Cloned a ZAnchorGroup and also the node it links to. Update destNode
+		// to point to the cloned version rather than the original version.
+		destNode = clonedNode;
+	    } 
 
-	return copy;
+	    // Listen for chages in transform on the dest node.
+	    registerDestNodeListeners();
+	}
     }
 
     /**
@@ -128,10 +147,7 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      */
     public void finalize() {
 				// Remove the destination transform listener if there is one
-	if ((destNode != null) && (destNodeListener != null)) {
-	    destNode.editor().getTransformGroup().removeTransformListener(destNodeListener);
-	    destNodeListener = null;
-	}
+	removeDestinationNodeListeners();
     }
 
     //****************************************************************************
@@ -156,27 +172,59 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @see #setDestBounds
      */
     public void setDestNode(ZNode node, ZCamera camera) {
-				// First, remove the old listener if there is one
-	if ((destNode != null) && (destNodeListener != null)) {
-	    destNode.editor().getTransformGroup().removeTransformListener(destNodeListener);
-	    destNodeListener = null;
-	}
+	removeDestinationNodeListeners();
 
-				// Then, set up the new destination node
+				// Set up the new destination node
 	destNode = node;
 	destBounds = null;
 	updateLinkComponent(camera);
 
-				// Finally, create a new transform listener so we get
+	if (node != null) {
+	}
+
+				// Finally, register a transform listener on destNode
+	registerDestNodeListeners();
+    }
+
+
+    /**
+     * Remove transform and global bounds listeners from destination node.
+     */
+    private void removeDestinationNodeListeners() {
+	if (destNode != null) {
+	    if (destNodeTransformListener != null) {
+		destNode.editor().getTransformGroup().removeTransformListener(destNodeTransformListener);
+		destNodeTransformListener = null;
+	    }
+	    if (destNodeGlobalBoundsListener != null) {
+		destNode.removeNodeListener(destNodeGlobalBoundsListener);
+		destNodeGlobalBoundsListener = null;
+	    }
+	}
+    }
+
+    private void registerDestNodeListeners() {
+				// Create a new transform listener so we get
 				// notified whenever the destination node transform changes
 	if (destNode != null) {
-	    destNodeListener = new ZTransformListener() {
+	    destNodeTransformListener = new ZTransformListener() {
 		public void transformChanged(ZTransformEvent e) {
 		    destPt = null;
 		    updateLinkComponent(null);
 		}
 	    };
-	    destNode.editor().getTransformGroup().addTransformListener(destNodeListener);
+	    destNode.editor().getTransformGroup().addTransformListener(destNodeTransformListener);
+
+				// Also listen for global bounds changes on destination node
+	    destNodeGlobalBoundsListener = new ZNodeListener() {
+		public void boundsChanged(ZNodeEvent e) {
+		}
+		public void globalBoundsChanged(ZNodeEvent e) {
+		    destPt = null;
+		    updateLinkComponent(null);
+		}
+	    };
+	    destNode.addNodeListener(destNodeGlobalBoundsListener);
 	}
     }
 
@@ -196,11 +244,7 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      * @see #setDestNode
      */
     public void setDestBounds(Rectangle2D bounds, ZCamera camera) {
-				// First, remove the old node listener if there is one
-	if ((destNode != null) && (destNodeListener != null)) {
-	    destNode.editor().getTransformGroup().removeTransformListener(destNodeListener);
-	    destNodeListener = null;
-	}
+	removeDestinationNodeListeners();
 
 	destNode = null;
 	destBounds = bounds;
@@ -208,7 +252,7 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
 	updateLinkComponent(camera);
 
 	if (linkNode != null) {
-	    ZVisualComponent linkComponent = linkNode.getVisualComponent();
+	    ZVisualComponent linkComponent = linkNode.getFirstVisualComponent();
 	    if (linkComponent instanceof ZPenColor) {
 		((ZPenColor)linkComponent).setPenColor(boundsColor);
 	    }
@@ -254,12 +298,12 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      */
     public void setSrcPt(Point2D pt) {
 	if (srcPt == null) {
-	    srcPt = new Point2D.Float();
+	    srcPt = new Point2D.Double();
 	}
 	srcPt.setLocation(pt);
 
 	if ((destPt != null) && (linkNode != null)) {
-	    ZVisualComponent linkComponent = linkNode.getVisualComponent();
+	    ZVisualComponent linkComponent = linkNode.getFirstVisualComponent();
 	    if (linkComponent instanceof ZPolyline) {
 		((ZPolyline)linkComponent).setCoords(srcPt, destPt);
 	    }
@@ -272,12 +316,12 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
      */
     public void setDestPt(Point2D pt) {
 	if (destPt == null) {
-	    destPt = new Point2D.Float();
+	    destPt = new Point2D.Double();
 	}
 	destPt.setLocation(pt);
 
 	if ((srcPt != null) && (linkNode != null)) {
-	    ZVisualComponent linkComponent = linkNode.getVisualComponent();
+	    ZVisualComponent linkComponent = linkNode.getFirstVisualComponent();
 	    if (linkComponent instanceof ZPolyline) {
 		((ZPolyline)linkComponent).setCoords(srcPt, destPt);
 	    }
@@ -300,7 +344,7 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
 	}
 
 				// First set the pen width and color
-	ZVisualComponent linkComponent = linkNode.getVisualComponent();
+	ZVisualComponent linkComponent = linkNode.getFirstVisualComponent();
 	if (linkComponent instanceof ZPenColor) {
 	    if (destBounds != null) {
 		((ZPenColor)linkComponent).setPenColor(boundsColor);
@@ -322,7 +366,7 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
 		bounds.add(children[i].getBounds());
 	    }
 	    if (!bounds.isEmpty()) {
-		pt = new Point2D.Float((float)(bounds.getX() + 0.5*bounds.getWidth()), (float)(bounds.getY() + 0.5*bounds.getHeight()));
+		pt = new Point2D.Double((bounds.getX() + 0.5*bounds.getWidth()), (bounds.getY() + 0.5*bounds.getHeight()));
 		localToGlobal(pt);
 	    }
 	}
@@ -343,7 +387,7 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
 	    }
 	    if ((bounds != null) && !bounds.isEmpty()) {
 		globalToLocal(bounds);
-		pt = new Point2D.Float((float)(bounds.getX() + 0.5*bounds.getWidth()), (float)(bounds.getY() + 0.5*bounds.getHeight()));
+		pt = new Point2D.Double((bounds.getX() + 0.5*bounds.getWidth()), (bounds.getY() + 0.5*bounds.getHeight()));
 		localToGlobal(pt);
 	    }
 	}
@@ -490,6 +534,10 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
 	}
     }
 
+    /**
+     * Write out all of this object's state.
+     * @param out The stream that this object writes into
+     */
     private void writeObject(ObjectOutputStream out) throws IOException {
 				// write local class
 	out.defaultWriteObject();
@@ -506,6 +554,10 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
 	}
     }	
 
+    /**
+     * Read in all of this object's state.
+     * @param in The stream that this object reads from.
+     */
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
 				// read local class
 	in.defaultReadObject();
@@ -517,7 +569,7 @@ public class ZAnchorGroup extends ZVisualGroup implements ZSerializable, Seriali
 	    y = in.readDouble();
 	    w = in.readDouble();
 	    h = in.readDouble();
-	    destBounds = new Rectangle2D.Float((float)x, (float)y, (float)w, (float)h);
+	    destBounds = new Rectangle2D.Double(x, y, w, h);
 	}
     }
 }

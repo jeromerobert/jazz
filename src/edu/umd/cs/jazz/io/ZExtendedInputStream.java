@@ -1,6 +1,21 @@
+/**
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
+ * All rights reserved.
+ */
+
 package edu.umd.cs.jazz.io;
 
 import java.io.*;
+
+/**
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
+ *
+ */
 
 public class ZExtendedInputStream implements Serializable {
     protected InputStream stream; 

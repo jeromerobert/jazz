@@ -25,11 +25,20 @@ public class RectEventHandler implements ZEventHandler, ZMouseListener, ZMouseMo
     private ZRectangle rect;
     private Point2D pt;
     private Point2D pressObjPt;	// Event coords of mouse press (in object space)
+				                    // Mask out mouse and mouse/key chords
+    private int            all_button_mask   = (MouseEvent.BUTTON1_MASK | 
+						MouseEvent.BUTTON2_MASK | 
+						MouseEvent.BUTTON3_MASK | 
+						MouseEvent.ALT_GRAPH_MASK | 
+						MouseEvent.CTRL_MASK | 
+						MouseEvent.META_MASK | 
+						MouseEvent.SHIFT_MASK | 
+						MouseEvent.ALT_MASK);
 
     public RectEventHandler(HiNoteCore hinote, ZNode node) {
 	this.hinote = hinote;
 	this.node = node;
-	pt = new Point2D.Float();
+	pt = new Point2D.Double();
     }
     
     /**
@@ -50,8 +59,16 @@ public class RectEventHandler implements ZEventHandler, ZMouseListener, ZMouseMo
 	}
     }
 
+    /**
+     * Determines if this event handler is active.
+     * @return True if active
+     */
+    public boolean isActive() {
+	return active;
+    }
+
     public void mousePressed(ZMouseEvent e) {
-	if ((e.getModifiers() & MouseEvent.BUTTON1_MASK) == MouseEvent.BUTTON1_MASK) {   // Left button only
+	if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
 	    ZSceneGraphPath path = e.getPath();
 	    ZCamera camera = path.getTopCamera();
 	    ZGroup layer = hinote.getDrawingLayer();
@@ -61,7 +78,7 @@ public class RectEventHandler implements ZEventHandler, ZMouseListener, ZMouseMo
 	    path.screenToGlobal(pt);
 	    pressObjPt = (Point2D)pt.clone();
 	    
-	    rect = new ZRectangle((float)pt.getX(), (float)pt.getY(), 0.0f, 0.0f);
+	    rect = new ZRectangle(pt.getX(), pt.getY(), 0.0, 0.0);
 	    ZVisualLeaf leaf = new ZVisualLeaf(rect);
 	    rect.setPenWidth(hinote.penWidth  / camera.getMagnification());
 	    rect.setPenColor(hinote.penColor);
@@ -71,24 +88,24 @@ public class RectEventHandler implements ZEventHandler, ZMouseListener, ZMouseMo
     }
     
     public void mouseDragged(ZMouseEvent e) {
-	if ((e.getModifiers() & MouseEvent.BUTTON1_MASK) == MouseEvent.BUTTON1_MASK) {   // Left button only
+	if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
 	    ZSceneGraphPath path = e.getPath();
 	    ZGroup layer = hinote.getDrawingLayer();
 	    pt.setLocation(e.getX(), e.getY());
 	    path.screenToGlobal(pt);
 	    
-	    float x, y, width, height;
-	    x = (float)Math.min(pressObjPt.getX(), pt.getX());
-	    y = (float)Math.min(pressObjPt.getY(), pt.getY());
-	    width = (float)Math.abs(pressObjPt.getX() - pt.getX());
-	    height = (float)Math.abs(pressObjPt.getY() - pt.getY());
+	    double x, y, width, height;
+	    x = Math.min(pressObjPt.getX(), pt.getX());
+	    y = Math.min(pressObjPt.getY(), pt.getY());
+	    width = Math.abs(pressObjPt.getX() - pt.getX());
+	    height = Math.abs(pressObjPt.getY() - pt.getY());
 	    
 	    rect.setRect(x, y, width, height);
 	}
     }
     
     public void mouseReleased(ZMouseEvent e) {
-	if ((e.getModifiers() & MouseEvent.BUTTON1_MASK) == MouseEvent.BUTTON1_MASK) {   // Left button only
+	if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
 	    ZSceneGraphPath path = e.getPath();
 	    path.getTopCamera().getDrawingSurface().setInteracting(false);
 	    rect = null;

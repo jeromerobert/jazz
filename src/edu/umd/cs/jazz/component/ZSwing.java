@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.component;
@@ -106,23 +106,61 @@ import edu.umd.cs.jazz.util.*;
 
 /**
  * <b>ZSwing</b> is a Visual Component wrapper used to add
- * Swing Components to a Jazz ZCanvas
+ * Swing Components to a Jazz ZCanvas.
+ * <P>
+ * Example: adding a swing JButton to a ZCanvas:
+ * <pre>
+ *     ZCanvas canvas = new ZCanvas();
+ *     JButton button = new JButton("Button");
+ *     swing = new ZSwing(canvas, button);
+ *     leaf = new ZVisualLeaf(swing);
+ *     canvas.getLayer().addChild(leaf);
+ * <pre>
+ *
+ * NOTE: ZSwing has the current limitation that it does not listen for
+ *       Container events.  This is only an issue if you create a ZSwing
+ *       and later add Swing components to the ZSwing's component hierarchy
+ *       that do not have double buffering turned off or have a smaller font
+ *       size than the minimum font size of the original ZSwing's component
+ *       hierarchy.
+ *   
+ *       For instance, the following bit of code will give unexpected
+ *       results:
+ *       <pre>
+ *            JPanel panel = new JPanel();
+ *            ZSwing swing = new ZSwing(panel);
+ *            JPanel newChild = new JPanel();
+ *            newChild.setDoubleBuffered(true);
+ *            panel.add(newChild);
+ *       </pre>
+ *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
  * @author Benjamin B. Bederson
  * @author Lance E. Good
  */
-public class ZSwing extends ZVisualComponent implements Serializable {
+public class ZSwing extends ZVisualComponent implements Serializable, PropertyChangeListener {
 
     /**
      * The cutoff at which the Swing component is rendered greek
      */
-    protected float renderCutoff = 0.3f;
+    protected double renderCutoff = 0.3f;
 
     /**
      * The Swing component that this Visual Component wraps
      */
-    private JComponent component = null;
+    protected JComponent component = null;
 
+    /**
+     * The minimum font size in the Swing hierarchy rooted at the component
+     */
+    protected double minFontSize = Double.MAX_VALUE;
+    
     /**
      * Used as a hashtable key for this object in the Swing component's     
      * client properties. 
@@ -141,7 +179,7 @@ public class ZSwing extends ZVisualComponent implements Serializable {
 
 	this.component = component;	
 	component.putClientProperty(VISUAL_COMPONENT_KEY, this);
-	unDoubleBuffer(component);
+	init(component);
 	zbc.getSwingWrapper().add(component);
 	
 	reshape();
@@ -149,7 +187,7 @@ public class ZSwing extends ZVisualComponent implements Serializable {
 
     /**
      * Determines if the Swing component should be rendered normally or
-     * as a filled rectangle (Greek?).
+     * as a filled rectangle.
      * <p>
      * The transform, clip, and composite will be set appropriately when this object
      * is rendered.  It is up to this object to restore the transform, clip, and composite of
@@ -162,8 +200,9 @@ public class ZSwing extends ZVisualComponent implements Serializable {
     public void render(ZRenderContext renderContext) {
 	Graphics2D g2 = renderContext.getGraphics2D();
 	
-	if (renderContext.getCompositeMagnification() < renderCutoff &&
-	    renderContext.getDrawingSurface().isInteracting()) {
+	if ((renderContext.getCompositeMagnification() < renderCutoff &&
+	    renderContext.getDrawingSurface().isInteracting()) ||
+	    (minFontSize*renderContext.getCompositeMagnification() < 0.5)) {
 	    paintAsGreek(g2);
 	}
 	else {
@@ -179,10 +218,10 @@ public class ZSwing extends ZVisualComponent implements Serializable {
     public void paintAsGreek(Graphics2D g2) {
 	Color background = component.getBackground();
 	Color foreground = component.getForeground();
-	Rectangle2D rect = new Rectangle2D.Float((float)bounds.getX(),
-						 (float)bounds.getY(),
-						 (float)bounds.getWidth(),
-						 (float)bounds.getHeight());
+	Rectangle2D rect = new Rectangle2D.Double(bounds.getX(),
+						 bounds.getY(),
+						 bounds.getWidth(),
+						 bounds.getHeight());
 	
 	if (background != null) {
 	    g2.setColor(background);
@@ -247,33 +286,49 @@ public class ZSwing extends ZVisualComponent implements Serializable {
     public JComponent getComponent() {
 	return component;
     }
-    
+
     /**
-     * We can't support double buffering of Swing components within
+     * We need to turn off double buffering of Swing components within
      * Jazz since all components contained within a native container
      * use the same buffer for double buffering.  With normal Swing
      * widgets this is fine, but for Swing components within Jazz this
      * causes problems.  This function recurses the component tree
-     * rooted at c, and turns off any double buffering in use.
+     * rooted at c, and turns off any double buffering in use.  It also
+     * updates the minimum font size based on the font size of c and adds
+     * a property change listener to listen for changes to the font.
      * @param c The Component to be recursively unDoubleBuffered
      */
-    void unDoubleBuffer(Component c) {
+    void init(Component c) {
         Component[] children = null;
         if (c instanceof Container) {
-            children = ((Container)c).getComponents();
+            children = ((Container)c).getComponents();	    
         }
 
+	if (c.getFont() != null) {
+	    minFontSize = Math.min(minFontSize,c.getFont().getSize());
+	}
+	
         if (children != null) {
             for (int j=0; j<children.length; j++) {
-                unDoubleBuffer(children[j]);
+                init(children[j]);
             }
         }                                  
 
         if (c instanceof JComponent) {
             ((JComponent)c).setDoubleBuffered(false);
+	    c.addPropertyChangeListener("font",this);
         }
     }
 
+    /**
+     * Listens for changes in font on components rooted at this ZSwing
+     */
+    public void propertyChange(PropertyChangeEvent evt) {
+	if (component.isAncestorOf((Component)evt.getSource()) &&
+	    ((Component)evt.getSource()).getFont() != null) {
+	    minFontSize = Math.min(minFontSize,((Component)evt.getSource()).getFont().getSize());
+	}
+    }
 }
 
 

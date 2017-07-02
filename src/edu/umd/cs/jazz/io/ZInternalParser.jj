@@ -376,20 +376,20 @@ void ObjectStateBuiltInItem(ZInternalParser p, String forObject) :
 	    } else if (itemType.equals("java.awt.geom.Rectangle2D")) {
 	        Object[] rectAttributes = ((Vector)iv).toArray();
 	    
-	        valueObject = new java.awt.geom.Rectangle2D.Float (((Number)rectAttributes[0]).floatValue(),
-							           ((Number)rectAttributes[1]).floatValue(),
-							           ((Number)rectAttributes[2]).floatValue(),
-							           ((Number)rectAttributes[3]).floatValue());
+	        valueObject = new java.awt.geom.Rectangle2D.Double (((Number)rectAttributes[0]).doubleValue(),
+							            ((Number)rectAttributes[1]).doubleValue(),
+							            ((Number)rectAttributes[2]).doubleValue(),
+							            ((Number)rectAttributes[3]).doubleValue());
 	   
 	    } else if (itemType.equals("java.awt.geom.AffineTransform")) {
 	        Object[] atAttributes = ((Vector)iv).toArray();
 	    
-	        valueObject = new java.awt.geom.AffineTransform	(((Number)atAttributes[0]).floatValue(),
-							         ((Number)atAttributes[1]).floatValue(),
-							         ((Number)atAttributes[2]).floatValue(),
-							         ((Number)atAttributes[3]).floatValue(),
-							         ((Number)atAttributes[4]).floatValue(),
-							         ((Number)atAttributes[5]).floatValue());
+	        valueObject = new java.awt.geom.AffineTransform	(((Number)atAttributes[0]).doubleValue(),
+							         ((Number)atAttributes[1]).doubleValue(),
+							         ((Number)atAttributes[2]).doubleValue(),
+							         ((Number)atAttributes[3]).doubleValue(),
+							         ((Number)atAttributes[4]).doubleValue(),
+							         ((Number)atAttributes[5]).doubleValue());
 	   
 	    } else {
 	        valueObject = null;

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz;
@@ -20,6 +20,13 @@ import edu.umd.cs.jazz.event.*;
  * Jazz scenegraph. It has very limited functionality, and
  * primarily exists to support sub-classes.
  *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
+ *
  * @author Ben Bederson
  */
 public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializable {
@@ -27,6 +34,7 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
     static public final boolean savable_DEFAULT = true;      // True if this node gets saved
     static public final boolean pickable_DEFAULT = true;     // True if this node is pickable
     static public final boolean findable_DEFAULT = true;     // True if this node is findable
+    static final boolean hasNodeListener_DEFAULT = false; // True if this node has a global bounds listener
 
 				// Create the default editor factory
     static private ZSceneGraphEditorFactory editorFactory = new ZSceneGraphEditorFactory() {
@@ -54,6 +62,12 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      *  True if this node is findable
      */
     private boolean findable = findable_DEFAULT;
+
+    /**
+     * True if this node has a global bounds listener
+     * (package private for access in ZGroup)
+     */
+    boolean hasNodeListener = hasNodeListener_DEFAULT;
 
     /**
      * Set of client-specified properties for this node.
@@ -85,65 +99,52 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
     }
 
     /**
-     * Copies all object information from the reference object into the current
-     * object. This method is called from the clone method.
-     * All ZSceneGraphObjects objects contained by the object being duplicated
-     * are duplicated, except parents which are set to null.  This results
-     * in the sub-tree rooted at this object being duplicated.
+     * Returns a clone of this object.
      *
-     * @param refNode The reference node to copy
+     * @see ZSceneGraphObject#duplicateObject
      */
-    public void duplicateObject(ZNode refNode) {
-	super.duplicateObject(refNode);
+    protected Object duplicateObject() {
+	ZNode newNode = (ZNode)super.duplicateObject();
 
-	parent = null;
-	savable = refNode.savable;
-	pickable = refNode.pickable;
-	findable = refNode.findable;
 				// Do a deep copy of client properties (if some)
-	if (refNode.numClientProperties > 0) {
-	    numClientProperties = refNode.numClientProperties;
-	    clientProperties = new ZProperty[numClientProperties];
-	    ZProperty prop, propCopy;
+	if (numClientProperties > 0) {
+	    newNode.clientProperties = new ZProperty[numClientProperties];
 	    for (int i=0; i<numClientProperties; i++) {
-		clientProperties[i] = (ZProperty)refNode.clientProperties[i].clone();
+		newNode.clientProperties[i] = (ZProperty)clientProperties[i].clone();
 	    }
 	}
 
-	if (refNode.listenerList != null) {
-	    Object[] listeners = refNode.listenerList.getListenerList();
-	    for (int i=0; i<listeners.length/2; i+=2) {
-		if (listenerList == null) {
-		    listenerList = new EventListenerList();
-		}
-		listenerList.add((Class)listeners[i], (EventListener)listeners[i+1]);
-	    }
-	}
+	newNode.parent = null;  // No parent - but see ZGroup.duplicateObject.
+
+	return newNode;
+
+	// JM - don't think we should copy listeners.
+	//if (refNode.listenerList != null) {
+	//    Object[] listeners = refNode.listenerList.getListenerList();
+	//    for (int i=0; i<listeners.length/2; i+=2) {
+	//	if (listenerList == null) {
+	//	    listenerList = new EventListenerList();
+	//	}
+	//	listenerList.add((Class)listeners[i], (EventListener)listeners[i+1]);
+	//    }
+	//}
     }
 
     /**
-     * Duplicates the current node by using the copy constructor.
-     * The portion of the reference node that is duplicated is that necessary to reuse the node
-     * in a new place within the scenegraph, but the new node is not inserted into any scenegraph.
-     * The node must be attached to a live scenegraph (a scenegraph that is currently visible)
-     * or be registered with a camera directly in order for it to be visible.
-     * <P>
-     * The event listeners for the duplicated node are reused references
-     * to the original node's event listeners.
+     * Called to update internal object references after a clone operation 
+     * by {@link edu.umd.cs.jazz.ZSceneGraphObject#clone}.
      *
-     * @return A copy of this node.
-     * @see #updateObjectReferences
+     * @see ZSceneGraphObject#updateObjectReferences
      */
-    public Object clone() {
-	ZNode copy;
-
-	objRefTable.reset();
-	copy = new ZNode();
-	copy.duplicateObject(this);
-	objRefTable.addObject(this, copy);
-	objRefTable.updateObjectReferences();
-
-	return copy;
+    protected void updateObjectReferences(ZObjectReferenceTable objRefTable) {
+	super.updateObjectReferences(objRefTable);
+	
+	// Update client properties
+	ZProperty prop;
+	for (int i=0; i<numClientProperties; i++) {
+	    prop = clientProperties[i];
+	    clientProperties[i].updateObjectReferences(objRefTable);
+	}
     }
 
     /**
@@ -161,26 +162,7 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
 	clientProperties = newClientProperties;
     }
 
-    /**
-     * Manage dangling references when scenegraph objects are cloned.
-     * This gets called after a sub-graph of the scenegraph has been cloned,
-     * and it is this method's responsibility to update any internal references
-     * to the original portions of the scenegraph.  Subtypes that define new
-     * references should override this method to manage their references.
-     * @param objRefTable The table that maintains the relationships between cloned objects.
-     */
-    public void updateObjectReferences(ZObjectReferenceTable objRefTable) {
-	ZProperty prop;
-	ZSceneGraphObject origObj;
-	ZSceneGraphObject newObj;
-	for (int i=0; i<numClientProperties; i++) {
-	    prop = clientProperties[i];
-	    origObj = (ZSceneGraphObject)prop.getValue();
-	    newObj = objRefTable.getNewObjectReference(origObj);
-	    prop.setValue(newObj);
-	}
-    }
-
+    
     //****************************************************************************
     //
     // Convenience methods to manage node decorators
@@ -190,7 +172,7 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
     /**
      * Define how editors should be created.  This specifies a factory
      * that is used whenever an editor needs to be created.
-     * @param factory The new factory to created editors with.
+     * @param factory The new factory to create editors with.
      * @see #editor
      */
     static public void setEditorFactory(ZSceneGraphEditorFactory factory) {
@@ -351,11 +333,122 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
         }
     }
 
+    /**
+     * Adds the specified node listener to receive node events from this node.
+     * Also updates the hasNodeListener bit.
+     *
+     * @param l the node listener
+     */
+    public void addNodeListener(ZNodeListener l) {
+	if (listenerList == null) {
+	    listenerList = new EventListenerList();
+	}
+        listenerList.add(ZNodeListener.class, l);
+
+	if (!hasNodeListener) {
+	    hasNodeListener = true;
+	    if (parent != null) {
+		parent.updateHasNodeListener();
+	    }
+	}
+    }
+
+    /**
+     * Removes the specified node listener so that it no longer
+     * receives node events from this node. Also updates the hasNodeListener
+     * bit and notifies its parent of the change, if necessary.
+     *
+     * @param l the node listener
+     */
+    public void removeNodeListener(ZNodeListener l) {	
+        listenerList.remove(ZNodeListener.class, l);
+	if (listenerList.getListenerCount() == 0) {
+	    listenerList = null;
+	}
+
+	if (listenerList == null || 
+	    listenerList.getListenerCount(ZNodeListener.class) == 0) {
+	    hasNodeListener = false;
+	    if (parent != null) {
+		parent.updateHasNodeListener();
+	    }
+	}
+    }
+
+    /**
+     * fire a ZNodeEvent event on any listener listenening for it on this node.
+     * Stop when event is consumed.
+     */
+    protected void fireEvent(ZNodeEvent e, int id, ZNode node) {
+	                        // Guaranteed to return a non-null array
+	if (node.listenerList != null) {
+	    Object[] listeners = node.listenerList.getListenerList();
+	    
+				// Process the listeners last to first, notifying
+				// those that are interested in this event
+	    for (int i = listeners.length-2; i>=0; i-=2) {
+		if (listeners[i]==ZNodeListener.class) {
+		    switch (id) {
+		    case ZNodeEvent.BOUNDS_CHANGED:
+			((ZNodeListener)listeners[i+1]).boundsChanged(e);
+			break;
+		    case ZNodeEvent.GLOBAL_BOUNDS_CHANGED:
+			((ZNodeListener)listeners[i+1]).globalBoundsChanged(e);
+		    }
+		}
+		if (e.isConsumed()) {
+		    break;
+		}
+	    }
+	}
+    }
+
+    /**
+     * Notifies all listeners that have registered interest for
+     * notification on this event type, percolate up the scenegraph
+     * looking for listeners. Stop when the event is consumed. The event 
+     * instance is lazily created using the parameters passed into
+     * the fire method.  The listener list is processed in last to
+     * first order.
+     * @param id The event id (BOUNDS_CHANGED or GLOBAL_BOUNDS_CHANGED)
+     * @param node The node being affected.
+     * @see EventListenerList
+     */
+    protected void fireNodeEvent(int id, ZNode node) {
+	ZNodeEvent e = new ZNodeEvent(node, id);
+	do {
+	    if (node.hasNodeListener) {
+		fireEvent(e, id, node);
+	    }
+	    node = node.getParent();
+	} while ((node != null) && (! e.isConsumed()));
+    }
+
     //****************************************************************************
     //
     //                  Other Methods
     //
     //****************************************************************************
+
+    /**
+     * Remove this node, and any subtree, from the scenegraph.
+     */
+    public void remove() {
+	if (parent != null) {
+	    getParent().removeChild(this);
+	}
+    }
+
+    /**
+     * Extract this node from the tree, merging back in any children. As ZNode's
+     * do not have any children, ZNode.extract() has the same function as ZNode.remove().
+     * However, extract() on subclasses such as ZGroup truly extract a node, merging 
+     * any children back into the scenegraph.
+     * @see ZGroup#extract()
+     */
+    public void extract() {
+	remove();
+    }
 
     /**
      * Swaps this node out of the scenegraph tree, and replaces it with the specified
@@ -406,7 +499,7 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * If the specified node is not a sibling of this, then this call does nothing.
      * <p>
      * If the specified node is null, then this node is raised to be the
-     * last node rendered of its siblings (i.e., equivalent to calling {link #raise}
+     * last node rendered of its siblings (i.e., equivalent to calling {@link #raise}
      *
      * @param afterNode The node to raise this node after.
      */
@@ -438,7 +531,7 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * If the specified node is not a sibling of this, then this call does nothing.
      * <p>
      * If the specified node is null, then this node is lowered to be the
-     * first node rendered of its siblings (i.e., equivalent to calling {link #lower}
+     * first node rendered of its siblings (i.e., equivalent to calling {@link #lower}
      *
      * @param beforeNode The node to lower this node before.
      */
@@ -478,8 +571,17 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * Set the parent of this node, and transform the node in such a way that it
      * doesn't move in global coordinates.  If the node does not already have a
      * transform node associated with it, then one will be created.
-     * This method operates on the handle (top) node of a decorator chain.
+     * This method operates on the handle (top) node of a decorator chain.     
+     * <P>
+     * This method may fire NODE_ADDED or NODE_REMOVED ZGroupEvents.
+     * ZGroupEvents now contain a method <code>isModificationEvent()</code> to
+     * distinguish a modification event from a <bold>true</bold> node addition
+     * or removal.  A modification event is one in which a node changes
+     * position in a single scenegraph or between two different scenegraphs.
+     * A true addition or removal event is one in which a node is first
+     * added to or removed from a scenegraph.     
      * @param newParent The new parent of this node.
+     * @see ZGroupEvent
      */
     public void reparent(ZGroup newParent) {
 	AffineTransform origAT;
@@ -499,7 +601,34 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
 	}
 	newAT.concatenate(origAT);
 
-	setParent(newParent);
+	ZGroup origParent = parent;	
+	if (parent != null) {
+	    parent.removeChild(this,false);
+	}
+	if (newParent != null) {
+	    newParent.addChildImpl(this,false);
+	}
+
+	// If the new parent is null - then this was just a normal
+	// removeChild and not a modification
+	if (origParent != null &&
+	    newParent == null) {
+	    origParent.fireGroupEvent(ZGroupEvent.NODE_REMOVED,this,false);
+	}
+	else if (origParent != null) {
+	    origParent.fireGroupEvent(ZGroupEvent.NODE_REMOVED,this,true);
+	}
+
+	// If the original parent was null - then this was just a normal
+	// addChild and not a modification
+	if (newParent != null &&
+	    origParent == null) {
+	    parent.fireGroupEvent(ZGroupEvent.NODE_ADDED,this,false);
+	}
+	else if (newParent != null) {
+	    parent.fireGroupEvent(ZGroupEvent.NODE_ADDED,this,true);
+	}
+	
 	transform = node.editor().getTransformGroup();
 	transform.setTransform(newAT);
     }
@@ -583,6 +712,15 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
 	return findable;
     }
 
+    /**
+     * Determines if this node has a node listener.
+     * If this node does not have a node listener, it will not
+     * receive global bounds events.
+     */
+    public final boolean hasNodeListener() {
+	return hasNodeListener;
+    }
+
     //****************************************************************************
     //
     // Painting related methods
@@ -627,13 +765,13 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @return dz The change in scale from global coordinates to the node's local coordinate system.
      * @see #localToGlobal
      */
-    public float globalToLocal(Point2D pt) {
-	float dz = 1.0f;
+    public double globalToLocal(Point2D pt) {
+	double dz = 1.0;
 	AffineTransform at = getLocalToGlobalTransform();
 	try {
 	    AffineTransform inverse = at.createInverse();
 	    inverse.transform(pt, pt);
-	    dz = (float)Math.max(inverse.getScaleX(), inverse.getScaleY());
+	    dz = Math.max(inverse.getScaleX(), inverse.getScaleY());
 	} catch (NoninvertibleTransformException e) {
 	    System.out.println(e);
 	}
@@ -650,13 +788,13 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @return dz The change in scale from global coordinates to the node's local coordinate system.
      * @see #localToGlobal
      */
-    public float globalToLocal(Rectangle2D rect) {
-	float dz = 1.0f;
+    public double globalToLocal(Rectangle2D rect) {
+	double dz = 1.0;
 	AffineTransform at = getLocalToGlobalTransform();
 	try {
 	    AffineTransform inverse = at.createInverse();
 	    ZTransformGroup.transform(rect, inverse);
-	    dz = (float)Math.max(inverse.getScaleX(), inverse.getScaleY());
+	    dz = Math.max(inverse.getScaleX(), inverse.getScaleY());
 	} catch (NoninvertibleTransformException e) {
 	    System.out.println(e);
 	}
@@ -672,11 +810,11 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @return dz The change in scale from global coordinates to the node's local coordinate system.
      * @see #globalToLocal
      */
-    public float localToGlobal(Point2D pt) {
-	float dz;
+    public double localToGlobal(Point2D pt) {
+	double dz;
 	AffineTransform at = getLocalToGlobalTransform();
 	at.transform(pt, pt);
-	dz = (float)Math.max(at.getScaleX(), at.getScaleY());
+	dz = Math.max(at.getScaleX(), at.getScaleY());
 
 	return dz;
     }
@@ -689,11 +827,11 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @return dz The change in scale from global coordinates to the node's local coordinate system.
      * @see #globalToLocal
      */
-    public float localToGlobal(Rectangle2D rect) {
-	float dz;
+    public double localToGlobal(Rectangle2D rect) {
+	double dz;
 	AffineTransform at = getLocalToGlobalTransform();
 	ZTransformGroup.transform(rect, at);
-	dz = (float)Math.max(at.getScaleX(), at.getScaleY());
+	dz = Math.max(at.getScaleX(), at.getScaleY());
 
 	return dz;
     }
@@ -759,7 +897,7 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
 	}
 
 	if (parent != null) {
-	    parent.repaint(getBounds());
+	    parent.repaint(this, new AffineTransform(), null);
 	}
     }
 
@@ -781,13 +919,39 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
     }
 
     /**
+     * Method to pass repaint methods up the tree.  Repaints the area
+     * of the surface that is covered by the bounds of this object.
+     * Note that the transform and clipBounds parameters may be modified as a result of this call.
+     * @param obj The object to repaint
+     * @param at  The affine transform
+     * @param clipBounds The bounds to clip to when repainting
+     */
+    public void repaint(ZSceneGraphObject obj, AffineTransform at, ZBounds clipBounds) {
+	if (ZDebug.debug && ZDebug.debugRepaint) {
+	    System.out.println("ZNode.repaint(obj, at, bounds): this = " + this);
+	    System.out.println("ZNode.repaint(obj, at, bounds): obj = " + obj);
+	    System.out.println("ZNode.repaint(obj, at, bounds): at = " + at);
+	    System.out.println("ZNode.repaint(obj, at, bounds): clipBounds = " + clipBounds);
+	}
+
+	if (parent != null) {
+	    parent.repaint(obj, at, clipBounds);
+	}
+    }
+
+    /**
      * Internal method that causes this node and all of its ancestors
      * to recompute their bounds.
      */
     protected void updateBounds() {
 	computeBounds();
+	fireNodeEvent(ZNodeEvent.BOUNDS_CHANGED, this);
+	fireNodeEvent(ZNodeEvent.GLOBAL_BOUNDS_CHANGED, this);
 	if (parent != null) {
+	    boolean hadListener = hasNodeListener;
+	    hasNodeListener = false;
 	    parent.updateBounds();
+	    hasNodeListener = hadListener;
 	}
     }
 
@@ -802,9 +966,9 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * in the subtree rooted with this as searched in reverse (front-to-back) order.
      * Only returns "pickable" nodes.
      * @param rect Coordinates of pick rectangle in local coordinates
-     * @param mag The magnification of the camera being picked within.
+     * @param path The path through the scenegraph to the picked node. Modified by this call.
      * @return The picked node, or null if none
-     * @see ZDrawingSurface#pick(int, int);
+     * @see ZDrawingSurface#pick(int, int)
      */
 
    public boolean pick(Rectangle2D rect, ZSceneGraphPath path) {
@@ -830,7 +994,7 @@ public class ZNode extends ZSceneGraphObject implements ZSerializable, Serializa
      * @see #isFindable()
      * @see ZFindFilter
      */
-    int findNodes(ZFindFilter filter, ArrayList nodes) {
+    protected int findNodes(ZFindFilter filter, ArrayList nodes) {
 	int nodesSearched = 1;
 
 				// Only search if node is findable.

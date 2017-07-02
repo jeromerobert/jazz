@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.event;
@@ -32,19 +32,26 @@ import edu.umd.cs.jazz.util.*;
  *   Each camera change is animated over 250 milliseconds
  *   The camera is zoomed around the cursor
  *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
+ *
  * @author  Benjamin B. Bederson
  */
-public class ZNavEventHandlerKeyBoard implements ZEventHandler, ZMouseMotionListener, KeyListener {
+public class ZNavEventHandlerKeyBoard implements ZEventHandler, ZMouseMotionListener, KeyListener, Serializable {
     private boolean active = false;       // True when event handlers are attached to a node
     private ZNode   node = null;          // The node the event handlers are attached to
     private ZCanvas canvas = null;        // The canvas this event handler is associated with
 
     private boolean autoNav = false;      // True while this autonav is on
-    private float   scaleDelta = 1.25f;   // Magnification factor by for incremental zooms
-    private float   panDelta = 25;        // Number of pixels to pan for incremental pans
-    private float   autoPanXDelta;        // Amount to pan in X by for auto-nav
-    private float   autoPanYDelta;        // Amount to pan in Y by for auto-nav
-    private float   autoZoomDelta;        // Amount to zoom by for auto-nav
+    private double   scaleDelta = 1.25f;   // Magnification factor by for incremental zooms
+    private double   panDelta = 25;        // Number of pixels to pan for incremental pans
+    private double   autoPanXDelta;        // Amount to pan in X by for auto-nav
+    private double   autoPanYDelta;        // Amount to pan in Y by for auto-nav
+    private double   autoZoomDelta;        // Amount to zoom by for auto-nav
     private Point2D pointerPosition;      // Event coords of current mouse position (in screen coordinates)
     private int     animTime = 250;       // Time for animated zooms in milliseconds
     private int     zoomInKey   = KeyEvent.VK_PAGE_UP;    // Key that zooms in a bit
@@ -56,8 +63,8 @@ public class ZNavEventHandlerKeyBoard implements ZEventHandler, ZMouseMotionList
     private int     homeKey     = KeyEvent.VK_HOME;       // Key that navigates to home
     private int     prevKeyPress = 0;     // The previous key pressed (or 0 if previous key event not a press)
     private int     delay = 20;           // Delay (in milliseconds) between auto-nav increments
-    private float   minMag = 0.0f;        // The minimum allowed magnification
-    private float   maxMag = -1.0f;       // The maximum allowed magnification (or disabled if less than 0)
+    private double   minMag = 0.0;        // The minimum allowed magnification
+    private double   maxMag = -1.0;       // The maximum allowed magnification (or disabled if less than 0)
     
     /**
      * Constructs a new ZNavEventHandlerKeyBoard.
@@ -69,7 +76,7 @@ public class ZNavEventHandlerKeyBoard implements ZEventHandler, ZMouseMotionList
 	this.canvas = canvas;
         canvas.requestFocus();
     
-	pointerPosition = new Point2D.Float();
+	pointerPosition = new Point2D.Double();
     }
 
     /**
@@ -91,6 +98,14 @@ public class ZNavEventHandlerKeyBoard implements ZEventHandler, ZMouseMotionList
 		canvas.addKeyListener(this);
 	    }
 	}
+    }
+
+    /**
+     * Determines if this event handler is active.
+     * @return True if active
+     */
+    public boolean isActive() {
+	return active;
     }
 
     /**
@@ -135,9 +150,9 @@ public class ZNavEventHandlerKeyBoard implements ZEventHandler, ZMouseMotionList
     public void keyPressed(KeyEvent e) {
 	// System.out.println("Key press: " + e);
 
-	float delta = 0.0f;
-	float panX = 0.0f;
-	float panY = 0.0f;
+	double delta = 0.0;
+	double panX = 0.0;
+	double panY = 0.0;
 	boolean pan  = false;
 	boolean zoom = false;
 	int keyCode = e.getKeyCode();
@@ -154,26 +169,26 @@ public class ZNavEventHandlerKeyBoard implements ZEventHandler, ZMouseMotionList
 	    if (!isAutoNav()) {
 				// Set amount to zoom for this increment
 		if (keyCode == zoomInKey) {
-		    autoZoomDelta = 1.0f + 0.3f * (scaleDelta - 1.0f);
+		    autoZoomDelta = 1.0 + 0.3f * (scaleDelta - 1.0);
 		    zoom = true;
 		} else if (keyCode == zoomOutKey) {
-		    autoZoomDelta = 1.0f / (1.0f + 0.3f * (scaleDelta - 1.0f));
+		    autoZoomDelta = 1.0 / (1.0 + 0.3f * (scaleDelta - 1.0));
 		    zoom = true;
 		} else if (keyCode == panLeftKey) {
-		    autoPanXDelta = (1.0f * panDelta) / camera.getMagnification();
-		    autoPanYDelta = 0.0f;
+		    autoPanXDelta = (1.0 * panDelta) / camera.getMagnification();
+		    autoPanYDelta = 0.0;
 		    pan = true;
 		} else if (keyCode == panRightKey) {
-		    autoPanXDelta = (-1.0f * panDelta) / camera.getMagnification();
-		    autoPanYDelta = 0.0f;
+		    autoPanXDelta = (-1.0 * panDelta) / camera.getMagnification();
+		    autoPanYDelta = 0.0;
 		    pan = true;
 		} else if (keyCode == panUpKey) {
-		    autoPanXDelta = 0.0f;
-		    autoPanYDelta = (1.0f * panDelta) / camera.getMagnification();
+		    autoPanXDelta = 0.0;
+		    autoPanYDelta = (1.0 * panDelta) / camera.getMagnification();
 		    pan = true;
 		} else if (keyCode == panDownKey) {
-		    autoPanXDelta = 0.0f;
-		    autoPanYDelta = (-1.0f * panDelta) / camera.getMagnification();
+		    autoPanXDelta = 0.0;
+		    autoPanYDelta = (-1.0 * panDelta) / camera.getMagnification();
 		    pan = true;
 		}
 		if (zoom || pan) {
@@ -193,23 +208,23 @@ public class ZNavEventHandlerKeyBoard implements ZEventHandler, ZMouseMotionList
 		delta = scaleDelta;
 		zoom = true;
 	    } else if (keyCode == zoomOutKey) {
-		delta = 1.0f / scaleDelta;
+		delta = 1.0 / scaleDelta;
 		zoom = true;
 	    } else if (keyCode == panLeftKey) {
-		panX = (1.0f * panDelta) / camera.getMagnification();
-		panY = 0.0f;
+		panX = (1.0 * panDelta) / camera.getMagnification();
+		panY = 0.0;
 		pan = true;
 	    } else if (keyCode == panRightKey) {
-		panX = (-1.0f * panDelta) / camera.getMagnification();
-		panY = 0.0f;
+		panX = (-1.0 * panDelta) / camera.getMagnification();
+		panY = 0.0;
 		pan = true;
 	    } else if (keyCode == panUpKey) {
-		panX = 0.0f;
-		panY = (1.0f * panDelta) / camera.getMagnification();
+		panX = 0.0;
+		panY = (1.0 * panDelta) / camera.getMagnification();
 		pan = true;
 	    } else if (keyCode == panDownKey) {
-		panX = 0.0f;
-		panY = (-1.0f * panDelta) / camera.getMagnification();
+		panX = 0.0;
+		panY = (-1.0 * panDelta) / camera.getMagnification();
 		pan = true;
 	    } else if (keyCode == homeKey) {
 		AffineTransform at = new AffineTransform();
@@ -220,8 +235,8 @@ public class ZNavEventHandlerKeyBoard implements ZEventHandler, ZMouseMotionList
 		surface.setInteracting(true);
 		if (zoom) {
 				// Check for magnification bounds
-		    float currentMag = camera.getMagnification();
-		    float newMag = currentMag * delta;
+		    double currentMag = camera.getMagnification();
+		    double newMag = currentMag * delta;
 		    if (newMag < minMag) {
 			delta = minMag / currentMag;
 		    }
@@ -231,7 +246,7 @@ public class ZNavEventHandlerKeyBoard implements ZEventHandler, ZMouseMotionList
 
 		    Point2D pt = new Point2D.Double(pointerPosition.getX(), pointerPosition.getY());
 		    camera.cameraToLocal(pt, null);
-		    camera.scale(delta, (float)pt.getX(), (float)pt.getY(), animTime, surface);
+		    camera.scale(delta, pt.getX(), pt.getY(), animTime, surface);
 		} else {
 		    camera.translate(panX, panY, animTime, surface);
 		}
@@ -249,7 +264,7 @@ public class ZNavEventHandlerKeyBoard implements ZEventHandler, ZMouseMotionList
 	// System.out.println("Key release: " + e);
 
 	prevKeyPress = 0;
-	autoZoomDelta = 0.0f;
+	autoZoomDelta = 0.0;
 	autoPanXDelta = 0;
 	autoPanYDelta = 0;
 				// Stop auto-zoom if it was going
@@ -323,7 +338,7 @@ public class ZNavEventHandlerKeyBoard implements ZEventHandler, ZMouseMotionList
      * at its current magnification.
      * @param newMinMag the new minimum magnification
      */
-    public void setMinMagnification(float newMinMag) {
+    public void setMinMagnification(double newMinMag) {
 	minMag = newMinMag;
     }
 
@@ -335,7 +350,7 @@ public class ZNavEventHandlerKeyBoard implements ZEventHandler, ZMouseMotionList
      * at its current magnification.
      * @param newMaxMag the new maximum magnification
      */
-    public void setMaxMagnification(float newMaxMag) {
+    public void setMaxMagnification(double newMaxMag) {
 	maxMag = newMaxMag;
     }
 
@@ -348,9 +363,9 @@ public class ZNavEventHandlerKeyBoard implements ZEventHandler, ZMouseMotionList
 	if (autoNav) {
 	    if (autoZoomDelta > 0) {
 				// Check for magnification bounds
-		float delta = autoZoomDelta;
-		float currentMag = camera.getMagnification();
-		float newMag = currentMag * autoZoomDelta;
+		double delta = autoZoomDelta;
+		double currentMag = camera.getMagnification();
+		double newMag = currentMag * autoZoomDelta;
 		if (newMag < minMag) {
 		    delta = minMag / currentMag;
 		}
@@ -358,9 +373,9 @@ public class ZNavEventHandlerKeyBoard implements ZEventHandler, ZMouseMotionList
 		    delta = maxMag / currentMag;
 		}
 
-		Point2D pt = new Point2D.Float((float)pointerPosition.getX(), (float)pointerPosition.getY());
+		Point2D pt = new Point2D.Double(pointerPosition.getX(), pointerPosition.getY());
 		camera.cameraToLocal(pt, null);
-		camera.scale(delta, (float)pt.getX(), (float)pt.getY());
+		camera.scale(delta, pt.getX(), pt.getY());
 	    }
 	    if ((autoPanXDelta != 0) || (autoPanYDelta != 0)) {
 		camera.translate(autoPanXDelta, autoPanYDelta);

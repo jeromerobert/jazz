@@ -88,8 +88,8 @@ public class TwoSurfacesTest extends JFrame {
         ZVisualLeaf leaf4 = new ZVisualLeaf(rect);
         layer.addChild(leaf4.editor().getTop());
 
-	float[] xp = new float[2];
-	float[] yp = new float[2];
+	double[] xp = new double[2];
+	double[] yp = new double[2];
 	xp[0] = 0;   yp[0] = 0;
 	xp[1] = 50;  yp[1] = 50;
         ZPolyline poly = new ZPolyline(xp, yp);

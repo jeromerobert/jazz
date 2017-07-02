@@ -84,7 +84,7 @@
   {
     java.awt.Color caretColor [0.0 0.0 0.0 1.0]
     java.awt.Font font ["Arial" 0 40]
-    String text "Version 0.6"
+    String text "Version 1.0"
   }
 ]
 [OBJECT @Z7 # edu.umd.cs.jazz.ZTransformGroup
@@ -264,8 +264,8 @@
 [OBJECT @Z34 # edu.umd.cs.jazz.component.ZRectangle
   {
     java.awt.Color penColor [0.0 0.0 0.6 1.0]
-    float penWidth 1.6559439f
-    rectangle rect [194.5455f 208.7053f 60.02797f 0.4139862f]
+    double penWidth 1.6559439d
+    rectangle rect [194.5455d 208.7053d 60.02797d 0.4139862d]
   }
 ]
 [OBJECT @Z35 # edu.umd.cs.jazz.ZTransformGroup
@@ -320,7 +320,7 @@
   {
     List children [@Z43]
     boolean hasOneChild true
-    float maxMag -1.0f
+    double maxMag -1.0d
   }
 ]
 [OBJECT @Z43 # edu.umd.cs.jazz.ZVisualLeaf

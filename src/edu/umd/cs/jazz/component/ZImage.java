@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.component;
@@ -19,7 +19,14 @@ import edu.umd.cs.jazz.io.*;
 import edu.umd.cs.jazz.util.*;
 
 /**
- * <b>ZImage</b> is a graphic object that represents a raster image
+ * <b>ZImage</b> is a graphic object that represents a raster image.
+ *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
  * @author  Benjamin B. Bederson
  */
@@ -27,90 +34,108 @@ public class ZImage extends ZVisualComponent implements Serializable {
     public static final boolean writeEmbeddedImage_DEFAULT = true;
     protected static final Component staticComponent = new Canvas();
 
-    protected int width, height;		// Dimensions of image.  -1 if not known yet
+    /**
+     * The dimensions of the image.  -1 if not known yet.
+     */
+    protected int width, height;
     protected transient Image image = null;
     protected ZImageObserver observer;
+
+    /**
+     * Embed image in save file, or just it's filename.
+     */
     protected boolean writeEmbeddedImage = writeEmbeddedImage_DEFAULT;
+
+    /**
+     * FileName of the image, if it came from a file.
+     */
     protected transient String fileName = null;
+
+    /**
+     * URL of the image, if it came from a URL.
+     */
     protected URL url = null;
     
     private static final Component sComponent = new Component() {};
     private static final MediaTracker sTracker = new MediaTracker(sComponent);
     private static int sID = 0;
-  
     /**
-     * Constructs a new Image.
+     * Translation offset X.
+     */
+    protected double translateX = 0.0;
+
+    /**
+     * Translation offset Y.
+     */
+    protected double translateY = 0.0;
+
+  
+    class ZImageObserver implements ImageObserver, Serializable {        	
+
+	public boolean imageUpdate(Image i, int infoflags, int x, int y, int width, int height) {
+	    if (((infoflags & WIDTH) != 0) || ((infoflags & HEIGHT) != 0)) {
+		ZImage.this.setDimension(width, height);
+		ZImage.this.setLoaded(true);
+	    }
+
+	    return false;
+	}
+    }
+
+    /**
+     * Constructs a new ZImage.
      */
     public ZImage() {
-        observer = new ZImageObserver(this);
+        observer = new ZImageObserver();
     }
     
+    /**
+     * Constructs a new ZImage from an Image.
+     */
     public ZImage(Image i) {
 	this();
+	loadImage(i);
 	setImage(i);
     }
 
+    /**
+     * Constructs a new ZImage from a file.
+     */
     public ZImage(String aFileName) {
 	this();
 	setImage(aFileName);
     }
 
+    /**
+     * Constructs a new ZImage from a URL.
+     */
     public ZImage(URL aUrl) {
 	this();
 	url = aUrl;
 	setImage(aUrl);
     }
 
+    /**
+     * Constructs a new ZImage from a byte array.
+     */
     public ZImage(byte[] bytes) {
 	this();
 	setImage(bytes);
     }
 
     /**
-     * Copies all object information from the reference object into the current
-     * object. This method is called from the clone method.
-     * All ZSceneGraphObjects objects contained by the object being duplicated
-     * are duplicated, except parents which are set to null.  This results
-     * in the sub-tree rooted at this object being duplicated.
+     * Returns a clone of this object.
      *
-     * @param refImage The reference visual component to copy
+     * @see ZSceneGraphObject#duplicateObject
      */
-    public void duplicateObject(ZImage refImage) {
-	super.duplicateObject(refImage);
+    protected Object duplicateObject() {
+	ZImage newImage = (ZImage)super.duplicateObject();
 
-        observer = new ZImageObserver(this);
-	writeEmbeddedImage = refImage.writeEmbeddedImage;
-	fileName = new String(refImage.fileName);
-	try {
-	    url = new URL(refImage.url, null);
-	} catch (MalformedURLException e) {
-	    url = null;
-	}
-	setImage(refImage.getImage());
+        newImage.observer = new ZImageObserver();
+	
+	return newImage;
     }
 
-    /**
-     * Duplicates the current object by using the copy constructor.
-     * The portion of the reference object that is duplicated is that necessary to reuse the object
-     * in a new place within the scenegraph, but the new object is not inserted into any scenegraph.
-     * The object must be attached to a live scenegraph (a scenegraph that is currently visible)
-     * or be registered with a camera directly in order for it to be visible.
-     *
-     * @return A copy of this visual component.
-     * @see #updateObjectReferences 
-     */
-    public Object clone() {
-	ZImage copy;
-
-	objRefTable.reset();
-	copy = new ZImage();
-
-	copy.duplicateObject(this);
-	objRefTable.addObject(this, copy);
-	objRefTable.updateObjectReferences();
-
-	return copy;
-    }
 
     /**
      * Given a directory path plus some path relative to it,
@@ -146,10 +171,19 @@ public class ZImage extends ZVisualComponent implements Serializable {
      */
     public String getRelativePath(String fileName, String basePath) {
 	// Make a relative path: count how many subdirectories are
-	// the same between aFileName and basePath
+	// the same between fileName and basePath
 	// relativeFileName = this many "../.." or "..\.."
-	// Then tack on the tail part of aFileName.
+	// Then tack on the tail part of fileName.
 
+        // If the files are on different disks, than just write out the absolute path
+        // Make an assumption here that if the second character is ':', then it is
+        // PC file name, and so the first letter is a disk name.
+        if ((fileName.charAt(1) == ':') && (basePath.charAt(1) == ':')) {
+	    if (fileName.charAt(0) != basePath.charAt(0)) {
+				// Different PC disks
+		return fileName;
+	    }
+	}
 	boolean ignoreCase = File.separator.equals("/") ? false : true;
 
 	char sc = File.separatorChar;
@@ -182,7 +216,75 @@ public class ZImage extends ZVisualComponent implements Serializable {
 	return(upDirs1 + fileName);
     }
 
-    
+    /**
+     * Set image translation offset X.
+     * @param x the X translation.
+     */
+    public void setTranslateX(double x) {
+	translateX = x;
+	reshape();
+    }
+
+    /**
+     * Get the X offset translation.
+     * @return the X translation.
+     */
+    public double getTranslateX() {
+	return translateX;
+    }
+
+    /**
+     * Set image translation offset Y.
+     * @param y the Y translation.
+     */
+    public void setTranslateY(double y) {
+	translateY = y;
+	reshape();
+    }
+
+    /**
+     * Get the Y offset translation.
+     * @return the Y translation.
+     */
+    public double getTranslateY() {
+	return translateY;
+    }
+
+    /**
+     * Set the image translation offset to the specified position.
+     * @param x the X-coord of translation
+     * @param y the Y-coord of translation
+     */
+    public void setTranslation(double x, double y) {
+	translateX = x;
+	translateY = y;
+	reshape();
+    }
+
+    /**
+     * Set the image translation offset to point p.
+     * @param p The translation offset.
+     */
+    public void setTranslation(Point2D p) {
+	translateX = p.getX();
+	translateY = p.getY();
+	reshape();
+    }
+
+    /**
+     * Get the image translation offset.
+     * @return The translation offset.
+     */
+    public Point2D getTranslation() {
+	Point2D p = new Point2D.Double(translateX, translateY);
+	return p;
+    }
+
+    /**
+     * Set the image to the one consisting of the specified image.
+     * Wait until the image is loaded before returning.
+     * @param <code>i</code> the image.
+     */
     public boolean setImage(Image i) {
 	width = -1;
 	height = -1;
@@ -196,6 +298,11 @@ public class ZImage extends ZVisualComponent implements Serializable {
 	return isLoaded();
     }
 
+    /**
+     * Set the image to the one consisting of the specified bytes.
+     * Wait until the image is loaded before returning.
+     * @param <code>bytes</code> the bytes of the image.
+     */
     public boolean setImage(byte[] bytes) {
 	Image im = Toolkit.getDefaultToolkit().createImage(bytes);
   	loadImage(im);
@@ -203,8 +310,9 @@ public class ZImage extends ZVisualComponent implements Serializable {
     }
 
     /**
-     * loads an image
-     * @param <code>aFileName</code> the file name of the image.
+     * Set the image to the one at the specified URL or filename.
+     * Wait until the image is loaded before returning.
+     * @param <code>aFileName</code> the URL or file name of the image.
      */
     public boolean setImage(String aFileName) {
         fileName = aFileName;
@@ -212,7 +320,12 @@ public class ZImage extends ZVisualComponent implements Serializable {
 	loadImage(im);
 	return setImage(im);
     }
-    
+
+    /**
+     * Set the image to the one at the specified URL.
+     * Wait until the image is loaded before returning.
+     * @param <code>aURL</code> the URL of the image.
+     */    
     public boolean setImage(URL aUrl) {
 	url = aUrl;
 	Image im = Toolkit.getDefaultToolkit().getImage(url);
@@ -220,7 +333,9 @@ public class ZImage extends ZVisualComponent implements Serializable {
 	return setImage(im);
     }
 
-    
+    /**
+     * Utility method to wait until the specified image is loaded, and then return.
+     */    
     protected void loadImage(Image im) {
 	MediaTracker tracker = new MediaTracker(staticComponent);
   	tracker.addImage(im, 0);
@@ -303,7 +418,7 @@ public class ZImage extends ZVisualComponent implements Serializable {
      */
     protected void computeBounds() {
 	Rectangle2D rect = new Rectangle2D.Double();
-	rect.setRect(0, 0, getWidth(), getHeight());
+	rect.setRect(translateX, translateY, getWidth(), getHeight());
 	
 	bounds.setRect(rect);
     }
@@ -322,7 +437,17 @@ public class ZImage extends ZVisualComponent implements Serializable {
     public void render(ZRenderContext renderContext) {
 	if (image != null) {
 	    Graphics2D g2 = renderContext.getGraphics2D();
+	    boolean translated = false;
+	    AffineTransform at = null;
+	    if ((translateX != 0.0) || (translateY != 0.0)) {
+		at = g2.getTransform();	// save transform
+		g2.translate(translateX, translateY);
+		translated = true;
+	    }
 	    g2.drawImage(image, null, observer);
+	    if (translated) {
+		g2.setTransform(at); // restore transform
+	    }
 	}
     }
     
@@ -368,7 +493,7 @@ public class ZImage extends ZVisualComponent implements Serializable {
 	return height;
     }
 
-    /*
+    /**
      * Determines if the image has been loaded yet or not.
      * @return true if loaded
      */
@@ -507,11 +632,21 @@ public class ZImage extends ZVisualComponent implements Serializable {
 		  fn = fn.replace('/','\\');
 	      }
 
-		  // Image filenames are saved as relative to the directory
-		  // the .jazz file is in. That directory should be
-		  // the current value of the user.dir property.
-	      String cwd = System.getProperty("user.dir");
-	      fileName = getAbsolutePath(cwd+File.separator+fn);
+				// Image filenames are saved as relative to the directory
+				// the .jazz file is in. That directory should be
+				// the current value of the user.dir property.
+				// However, if the image is on a different disk, then it
+				// is specified as an absolute pathname - so we will check
+				// for absolute paths by assuming that if the second character
+				// is a ':', then it is a PC disk.
+	      if (fn.charAt(1) != ':') {
+				// Not absolute, so convert relative pathname
+		  String cwd = System.getProperty("user.dir");
+		  fileName = getAbsolutePath(cwd+File.separator+fn);
+	      } else {
+				// Absolute, so don't convert
+		  fileName = fn;
+	      }
 	      setImage(fileName);
 	  }
 	} else if (fieldName.compareTo("url") == 0) {
@@ -595,11 +730,18 @@ public class ZImage extends ZVisualComponent implements Serializable {
 		    fileName = fileName.replace('/','\\');
 		}
 	
-				// Image filenames are saved as relative to the directory
+				// Image filenames are usually saved as relative to the directory
 				// the .jazz file is in. That directory should be
 				// the current value of the user.dir property.
-		String cwd = System.getProperty("user.dir");
-		fileName = getAbsolutePath(cwd+File.separator+fileName);
+				// However, if the image is on a different disk, then it
+				// is specified as an absolute pathname - so we will check
+				// for absolute paths by assuming that if the second character
+				// is a ':', then it is a PC disk.
+		if (fileName.charAt(1) != ':') {
+				// Not absolute, so convert relative pathname
+		    String cwd = System.getProperty("user.dir");
+		    fileName = getAbsolutePath(cwd+File.separator+fileName);
+		}
 
 		image = Toolkit.getDefaultToolkit().getImage(fileName);
 		MediaTracker tracker = new MediaTracker(staticComponent);
@@ -617,24 +759,5 @@ public class ZImage extends ZVisualComponent implements Serializable {
 
 				// BBB: Should deal with jar files and resources
 				// BBB: Should read in binary if writeEmbeddedImage is true
-    }
-}
-
-
-class ZImageObserver implements ImageObserver, Serializable {
-    
-    protected ZImage image;
-    
-    public ZImageObserver(ZImage i) {
-	image = i;
-    }
-    
-    public boolean imageUpdate(Image i, int infoflags, int x, int y, int width, int height) {
-	if (((infoflags & WIDTH) != 0) || ((infoflags & HEIGHT) != 0)) {
-	    image.setDimension(width, height);
-	    image.setLoaded(true);
-	}
-
-	return false;
     }
 }

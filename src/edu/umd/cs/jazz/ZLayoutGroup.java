@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz;
@@ -14,8 +14,19 @@ import edu.umd.cs.jazz.io.*;
 import edu.umd.cs.jazz.util.*;
 
 /**
- * <b>ZLayoutGroup</b> is a group node that can layout the children
- * of a specified node.
+ * <b>ZLayoutGroup</b> is a visual group that wraps a layout manager that can position
+ * the node's children. The layout manager may also include a visual
+ * component that aids the layout. For instance, the tree layout manager adds links 
+ * connecting the tree nodes.  
+ * <P>
+ * {@link edu.umd.cs.jazz.util.ZSceneGraphEditor} provides a convenience mechanism to locate, create 
+ * and manage nodes of this type.
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
  * @author Ben Bederson
  */
@@ -76,43 +87,38 @@ public class ZLayoutGroup extends ZVisualGroup implements ZSerializable, Seriali
     }
 
     /**
-     * Copies all object information from the reference object into the current
-     * object. This method is called from the clone method.
-     * All ZSceneGraphObjects objects contained by the object being duplicated
-     * are duplicated, except parents which are set to null.  This results
-     * in the sub-tree rooted at this object being duplicated.
+     * Returns a clone of this object.
      *
-     * @param refNode The reference node to copy
+     * @see ZSceneGraphObject#duplicateObject
      */
-    public void duplicateObject(ZLayoutGroup refNode) {
-	super.duplicateObject(refNode);
-
-	layoutChild = refNode.layoutChild;
+    protected Object duplicateObject() {
+	ZLayoutGroup newGroup = (ZLayoutGroup)super.duplicateObject();
+	if (layoutManager != null) {
+	    newGroup.layoutManager = (ZLayoutManager)layoutManager.clone();
+	}
+	newGroup.validated = false;
+	return newGroup;
     }
 
+
     /**
-     * Duplicates the current node by using the copy constructor.
-     * The portion of the reference node that is duplicated is that necessary to reuse the node
-     * in a new place within the scenegraph, but the new node is not inserted into any scenegraph.
-     * The node must be attached to a live scenegraph (a scenegraph that is currently visible)
-     * or be registered with a camera directly in order for it to be visible.
-     * <P>
-     * In particular, the visual component associated with this group gets duplicated
-     * along with the subtree.
+     * Called to update internal object references after a clone operation 
+     * by {@link ZSceneGraphObject#clone}.
      *
-     * @return A copy of this node.
-     * @see #updateObjectReferences
+     * @see ZSceneGraphObject#updateObjectReferences
      */
-    public Object clone() {
-	ZLayoutGroup copy;
+    protected void updateObjectReferences(ZObjectReferenceTable objRefTable) {
+	if (layoutChild != null) {
+	    
+	    layoutChild = (ZGroup)objRefTable.getNewObjectReference(layoutChild);
+	    
+	    if (layoutChild == null) {
+		// Cloning this object also clones the children - so we can	    
+		// should be certain to get a layout child.
+		throw new RuntimeException("Problem in updateObjectReferences: " + this);
+	    }
 
-	objRefTable.reset();
-	copy = new ZLayoutGroup();
-	copy.duplicateObject(this);
-	objRefTable.addObject(this, copy);
-	objRefTable.updateObjectReferences();
-
-	return copy;
+	}
     }
 
     //****************************************************************************

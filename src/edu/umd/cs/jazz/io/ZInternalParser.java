@@ -9,7 +9,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.InvocationTargetException;
 
-public class ZInternalParser implements ZInternalParserConstants, Serializable {
+public class ZInternalParser implements ZInternalParserConstants {
     static protected final Class[] NULL_ARGS = {};
 
     protected Hashtable objectTable;
@@ -234,20 +234,20 @@ public class ZInternalParser implements ZInternalParserConstants, Serializable {
             } else if (itemType.equals("java.awt.geom.Rectangle2D")) {
                 Object[] rectAttributes = ((Vector)iv).toArray();
 
-                valueObject = new java.awt.geom.Rectangle2D.Float (((Number)rectAttributes[0]).floatValue(),
-                                                                   ((Number)rectAttributes[1]).floatValue(),
-                                                                   ((Number)rectAttributes[2]).floatValue(),
-                                                                   ((Number)rectAttributes[3]).floatValue());
+                valueObject = new java.awt.geom.Rectangle2D.Double (((Number)rectAttributes[0]).doubleValue(),
+                                                                    ((Number)rectAttributes[1]).doubleValue(),
+                                                                    ((Number)rectAttributes[2]).doubleValue(),
+                                                                    ((Number)rectAttributes[3]).doubleValue());
 
             } else if (itemType.equals("java.awt.geom.AffineTransform")) {
                 Object[] atAttributes = ((Vector)iv).toArray();
 
-                valueObject = new java.awt.geom.AffineTransform (((Number)atAttributes[0]).floatValue(),
-                                                                 ((Number)atAttributes[1]).floatValue(),
-                                                                 ((Number)atAttributes[2]).floatValue(),
-                                                                 ((Number)atAttributes[3]).floatValue(),
-                                                                 ((Number)atAttributes[4]).floatValue(),
-                                                                 ((Number)atAttributes[5]).floatValue());
+                valueObject = new java.awt.geom.AffineTransform (((Number)atAttributes[0]).doubleValue(),
+                                                                 ((Number)atAttributes[1]).doubleValue(),
+                                                                 ((Number)atAttributes[2]).doubleValue(),
+                                                                 ((Number)atAttributes[3]).doubleValue(),
+                                                                 ((Number)atAttributes[4]).doubleValue(),
+                                                                 ((Number)atAttributes[5]).doubleValue());
 
             } else {
                 valueObject = null;
@@ -576,8 +576,10 @@ public class ZInternalParser implements ZInternalParserConstants, Serializable {
     return retval;
   }
 
-  static final private boolean jj_3_1() {
-    if (jj_3R_6()) return true;
+  static final private boolean jj_3R_6() {
+    if (jj_scan_token(LBRACKET)) return true;
+    if (jj_la == 0 && jj_scanpos == jj_lastpos) return false;
+    if (jj_scan_token(OBJECT)) return true;
     if (jj_la == 0 && jj_scanpos == jj_lastpos) return false;
     return false;
   }
@@ -590,10 +592,8 @@ public class ZInternalParser implements ZInternalParserConstants, Serializable {
     return false;
   }
 
-  static final private boolean jj_3R_6() {
-    if (jj_scan_token(LBRACKET)) return true;
-    if (jj_la == 0 && jj_scanpos == jj_lastpos) return false;
-    if (jj_scan_token(OBJECT)) return true;
+  static final private boolean jj_3_1() {
+    if (jj_3R_6()) return true;
     if (jj_la == 0 && jj_scanpos == jj_lastpos) return false;
     return false;
   }

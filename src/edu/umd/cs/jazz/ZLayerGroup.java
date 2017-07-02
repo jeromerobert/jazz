@@ -1,18 +1,27 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz;
 
 import java.io.*;
 import java.util.*;
+import java.awt.geom.*;
 
 import edu.umd.cs.jazz.io.*;
 import edu.umd.cs.jazz.util.*;
 
 /**
- * <b>ZLayerGroup</b> is a group node that can be a paint start point of a camera.
+ * <b>ZLayerGroup</b> is used exclusively to specify the portion of the scenegraph
+ * that a camera can see. It has no other function.
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
+ * @see ZCamera
  * @author Ben Bederson
  */
 public class ZLayerGroup extends ZGroup implements ZSerializable, Serializable {
@@ -49,43 +58,49 @@ public class ZLayerGroup extends ZGroup implements ZSerializable, Serializable {
 	super(child);
     }
 
+
     /**
-     * Copies all object information from the reference object into the current
-     * object. This method is called from the clone method.
-     * All ZSceneGraphObjects objects contained by the object being duplicated
-     * are duplicated, except parents which are set to null.  This results
-     * in the sub-tree rooted at this object being duplicated.
+     * Returns a clone of this object.
      *
-     * @param refNode The reference node to copy
+     * @see ZSceneGraphObject#duplicateObject
      */
-    public void duplicateObject(ZLayerGroup refNode) {
-	super.duplicateObject(refNode);
+    protected Object duplicateObject() {
+	ZLayerGroup newLayer = (ZLayerGroup)super.duplicateObject();
+
+	    // Shallow-Copy the cameras array.
+	    // Note that updateObjectReferences modifies this array. See below.
+	if (cameras != null) {
+	    newLayer.cameras = (ZCamera[])cameras.clone();
+	}
+	return newLayer;
     }
 
     /**
-     * Duplicates the current node by using the copy constructor.
-     * The portion of the reference node that is duplicated is that necessary to reuse the node
-     * in a new place within the scenegraph, but the new node is not inserted into any scenegraph.
-     * The node must be attached to a live scenegraph (a scenegraph that is currently visible)
-     * or be registered with a camera directly in order for it to be visible.
-     * <P>
-     * In particular, for a layer group, the cameras pointing at this node are not copied.
-     * Rather, the layer must be manually added to a specific camera.
+     * Called to update internal object references after a clone operation 
+     * by {@link ZSceneGraphObject#clone}.
      *
-     * @return A copy of this node.
-     * @see #updateObjectReferences
+     * @see ZSceneGraphObject#updateObjectReferences
      */
-    public Object clone() {
-	ZLayerGroup copy;
+     protected void updateObjectReferences(ZObjectReferenceTable objRefTable) {
+	super.updateObjectReferences(objRefTable);
 
-	objRefTable.reset();
-	copy = new ZLayerGroup();
-	copy.duplicateObject(this);
-	objRefTable.addObject(this, copy);
-	objRefTable.updateObjectReferences();
+	if (numCameras != 0) {
+	    int n = 0;
 
-	return copy;
+	    for (int i = 0; i < numCameras; i++) {
+		ZCamera newCamera = (ZCamera)objRefTable.getNewObjectReference(cameras[i]);
+		if (newCamera == null) {
+		    // Cloned a ZLayerGroup, but did not clone a camera looking at the layer.
+		    // Drop the camera from the list of cameras.
+		} else {
+		    // Cloned a ZLayerGroup and also the camera. Use the new camera.
+		    cameras[n++] = newCamera;
+		}
+	    }
+	    numCameras = n;
+	}
     }
+
 
     /**
      * Trims the capacity of the array that stores the cameras list points to
@@ -95,10 +110,17 @@ public class ZLayerGroup extends ZGroup implements ZSerializable, Serializable {
      * cameras list.
      */
     public void trimToSize() {
-	ZCamera[] newCameras = new ZCamera[numCameras];
-	for (int i=0; i<numCameras; i++) {
-	    newCameras[i] = cameras[i];
+	ZCamera[] newCameras;
+
+	if (numCameras == 0) {
+	    newCameras = new ZCamera[1];
+	} else {
+	    newCameras = new ZCamera[numCameras];
+	    for (int i=0; i<numCameras; i++) {
+		newCameras[i] = cameras[i];
+	    }
 	}
+
 	cameras = newCameras;
     }
 
@@ -147,6 +169,38 @@ public class ZLayerGroup extends ZGroup implements ZSerializable, Serializable {
 		break;
 	    }
 	}
+    }
+
+    /**
+     * Return a copy of the array of cameras looking onto this layer.
+     * This method always returns an array, even when there
+     * are no cameras.
+     * @return the cameras looking onto this layer
+     */
+    public ZCamera[] getCameras() {
+	ZCamera[] copyCameras = new ZCamera[numCameras];
+	System.arraycopy(cameras, 0, copyCameras, 0, numCameras);
+
+	return copyCameras;
+    }
+
+    /**
+     * Internal method to return a reference to the actual cameras looking onto this layer.
+     * It should not be modified by the caller.  Note that the actual number
+     * of cameras could be less than the size of the array.  Determine
+     * the actual number of cameras with @link{#getNumCameras}.
+     * @return the cameras looking onto this layer.
+     */
+    protected ZCamera[] getCamerasReference() {
+	return cameras;
+    }
+
+    /**
+     * Return the number of cameras of this group node.
+     * @return the number of cameras.
+     */
+    public int getNumCameras() {
+	return numCameras;
     }
 
     /**
@@ -199,8 +253,56 @@ public class ZLayerGroup extends ZGroup implements ZSerializable, Serializable {
 	}
     }
 
+    /**
+     * Method to pass repaint methods up the tree,
+     * and to any cameras looking here.  Repaints only the sub-portion of
+     * this object specified by the given ZBounds.
+     * Note that the transform and clipBounds parameters may be modified as a result of this call.
+     * @param obj The object to repaint
+     * @param at  The affine transform
+     * @param clipBounds The bounds to clip to when repainting
+     */
+    public void repaint(ZSceneGraphObject obj, AffineTransform at, ZBounds clipBounds) {
+	if (ZDebug.debug && ZDebug.debugRepaint) {
+	    System.out.println("ZLayerGroup.repaint(obj, at, bounds): this = " + this);
+	    System.out.println("ZLayerGroup.repaint(obj, at, bounds): obj = " + obj);
+	    System.out.println("ZLayerGroup.repaint(obj, at, bounds): at = " + at);
+	}
+
+	super.repaint(obj, at, clipBounds);
+
+				// The camera could modify the transform and clip bounds,
+				// so if there is more than one camera, make a copy of them,
+				// and use the copies for each other camera.
+	AffineTransform origAT = null;
+	ZBounds origClipBounds = null;
+
+	if (numCameras > 1) {
+	    origAT = (AffineTransform)at.clone();
+	    if (clipBounds != null) {
+		origClipBounds = (ZBounds)clipBounds.clone();
+	    }
+	}
+	for (int i=0; i<numCameras; i++) {
+	    if (i >= 1) {
+		at.setTransform(origAT);
+		if (origClipBounds != null) {
+		    clipBounds.setRect(origClipBounds);
+		}
+	    }
+	    cameras[i].repaint(obj, at, clipBounds);
+	}
+    }
+
     private void writeObject(ObjectOutputStream out) throws IOException {
 	trimToSize();   // Remove extra unused array elements
 	out.defaultWriteObject();
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+	in.defaultReadObject();
+	if (cameras == null) {
+	    cameras = new ZCamera[1];
+	}
     }
 }

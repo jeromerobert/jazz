@@ -68,8 +68,8 @@ public class SwingJazzTest {
 	leaf = new ZVisualLeaf(swing);
 	transform = new ZTransformGroup();
 	transform.translate(-450, -450);
-	transform.rotate((float)Math.PI/2);
-	transform.scale(0.5f);
+	transform.rotate(Math.PI/2);
+	transform.scale(0.5);
 	transform.addChild(leaf);
 	canvas.getLayer().addChild(transform);
 
@@ -194,7 +194,7 @@ public class SwingJazzTest {
 	transform = new ZTransformGroup();
 	transform.setHasOneChild(true);
 	transform.translate(-100, 0);
-	transform.rotate((float)Math.PI/2);
+	transform.rotate(Math.PI/2);
 	transform.addChild(leaf);
 	canvas.getLayer().addChild(transform);
 

@@ -104,6 +104,12 @@ public class CmdTable implements Serializable  {
 	    }
 	});
 
+	actionMap.put("insert file", new ActionListener() {
+	    public void actionPerformed(ActionEvent e) {
+		hinote.insertFile();
+	    }
+	});
+
 	actionMap.put("pan", new AbstractAction("Pan") {
 	    public void actionPerformed(ActionEvent e) {
 		hinote.setEventHandler(HiNoteCore.PAN_MODE);
@@ -131,6 +137,12 @@ public class CmdTable implements Serializable  {
 	actionMap.put("polygon", new AbstractAction("Polygon") {
 	    public void actionPerformed(ActionEvent e) {
 		hinote.setEventHandler(HiNoteCore.POLYGON_MODE);
+	    }
+	});
+
+	actionMap.put("ellipse", new AbstractAction("Ellipse") {
+	    public void actionPerformed(ActionEvent e) {
+		hinote.setEventHandler(HiNoteCore.ELLIPSE_MODE);
 	    }
 	});
 
@@ -337,6 +349,24 @@ public class CmdTable implements Serializable  {
 	    }
 	});
 
+	actionMap.put("rtree index", new ActionListener() {
+	    public void actionPerformed(ActionEvent e) {
+		hinote.indexGroup();
+	    }
+	});
+
+	actionMap.put("rtree unindex", new ActionListener() {
+	    public void actionPerformed(ActionEvent e) {
+		hinote.unIndexGroup();
+	    }
+	});
+
+	actionMap.put("dump rtree", new ActionListener() {
+	    public void actionPerformed(ActionEvent e) {
+		hinote.dumpRtree();
+	    }
+	});
+
 	actionMap.put("fontComponent", new PropertyChangeListener() {
 	    public void propertyChange(PropertyChangeEvent e) {
 		if (e.getPropertyName() == "fontComponentSelection") {
@@ -373,6 +403,20 @@ public class CmdTable implements Serializable  {
 	    }
 	});
 	    
+	actionMap.put("fileChooserSaveSelection", new PropertyChangeListener() {
+	    public void propertyChange(PropertyChangeEvent e) {
+		if (e.getPropertyName() == "fileFilterChanged") {
+		    hinote.enableEmbedCheckBox();
+		}
+	    }
+	});
+
+	actionMap.put("showTreeView", new ActionListener() {
+	    public void actionPerformed(ActionEvent e) {
+		hinote.showTreeView();
+	    }
+	});
+
     }
 
     public Action lookupAction(String key) {

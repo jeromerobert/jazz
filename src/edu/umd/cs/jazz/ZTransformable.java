@@ -1,12 +1,12 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz;
 
 /**
  * <b>ZTransformable</b> is an interface that represents an object
- * that has a transform that can be get and set.
+ * that has a transform that supports get and set.
  *
  * @author  Benjamin B. Bederson
  */
@@ -28,7 +28,7 @@ public interface ZTransformable {
     /**
      * Sets the affine transform.
      * @param m00,&nbsp;m01,&nbsp;m02,&nbsp;m10,&nbsp;m11,&nbsp;m12 the
-     * 6 floating point values that compose the 3x3 transformation matrix
+     * 6 values that compose the 3x3 transformation matrix
      */
     public void setTransform(double m00, double m10,
 			     double m01, double m11,

@@ -2,28 +2,17 @@
 <HEAD>
    <TITLE>3. Using Jazz</TITLE>
 </HEAD>
+
 <body text=black bgcolor=white alink=red>
-<TABLE BGCOLOR=BLACK BORDER=0 CELLSPACING=0 CELLPADDING=0 WIDTH=100%>
-<TR BGCOLOR=505050 HEIGHT=14>
-    <TD BGCOLOR=BLACK HEIGHT=38 WIDTH=70 ROWSPAN=2 BORDER=0 VALIGN=TOP>
-        <A HREF="http://www.cs.umd.edu/hcil/index.html">
-	<IMG ALT="HCIL Logo" SRC="banner-logo.gif"
-	HEIGHT=38 WIDTH=70 BORDER=0></A>
-    </TD>
-    <TD WIDTH=100% ALIGN=LEFT HEIGHT=14>
-        <A HREF="http://www.cs.umd.edu/hcil/index.html" BORDER=0>
-	<IMG SRC="banner-hcil-left.gif" WIDTH=223 HEIGHT=14
-	ALIGN=LEFT BORDER=0></A>
-	<A HREF="http://www.umd.edu/" BORDER=0>
-	<IMG SRC="banner-hcil-right.gif" WIDTH=145 HEIGHT=14 BORDER=0
-	ALIGN=LEFT></A> 
-    </TD>
-</TR>
-<TR BGCOLOR=BLACK>
-    <TD ALIGN=LEFT>&nbsp;</TD>
-</TR>
-</TABLE>
-<!------------- End of Header----------------->
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr>
+    <td width="48" rowspan="2"><img border="0" src="banner-logo.gif" width="48" height="38"></td>
+    <td bgcolor="#575757"><img border="0" src="banner-hcil-left.gif" width="223" height="14"><img border="0" src="banner-hcil-right.gif" width="145" height="14"></td>
+  </tr>
+  <tr>
+    <td bgcolor="#000000">&nbsp;</td>
+  </tr>
+</table>
 
 <A NAME="S3"><H1>3. Multiple Representations of Objects</H1>
 One of the basic things that Jazz supports is the ability to present
@@ -96,7 +85,7 @@ code snippet will call a different component to paint every time you zoom in
 by a factor of 4.
 <PRE>
     public void render(ZRenderContext renderContext) {
-	float mag = renderContext.getCompositeMagnification();
+	double mag = renderContext.getCompositeMagnification();
 	level = (int)(mag / 4);
 	try {
 	    ZVisualComponent vis = (ZVisualComponent)visualizers.get(level);

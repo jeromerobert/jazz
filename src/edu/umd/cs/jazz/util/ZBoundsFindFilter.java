@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 
@@ -16,6 +16,13 @@ import java.io.*;
  * Terminal nodes are leaf nodes and group
  * nodes that do not "childrenFindable".
  * 
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
+ *
  * @author Ben Bederson
  */
 public class ZBoundsFindFilter implements ZFindFilter, Serializable {
@@ -52,8 +59,7 @@ public class ZBoundsFindFilter implements ZFindFilter, Serializable {
     }
 
     /**
-     * This method determines if the children of the specified node should be
-     * searched.
+     * Determine if the children of the specified node should be searched.
      * @param node The node that is to be examined by this filter
      * @return True if this node's children should be searched, or false otherwise.
      */
@@ -64,5 +70,13 @@ public class ZBoundsFindFilter implements ZFindFilter, Serializable {
 	} else {
 	    return false;
 	}
+    }
+
+    /**
+     * Return the bounds of this filter's search region.
+     * @return The bounds.
+     */
+    public ZBounds getBounds() {
+	return(bounds);
     }
 }

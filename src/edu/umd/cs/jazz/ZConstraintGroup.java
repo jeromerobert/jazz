@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz;
@@ -14,13 +14,25 @@ import edu.umd.cs.jazz.util.*;
 import edu.umd.cs.jazz.event.*;
 
 /**
- * <b>ZConstraintGroup</b> is a transform group node that supports the application of a simple
- * constraint to its children.  Sub-classes must override the @link{#getTransform} 
- * and @link{#getTransformField} methods of @link{ZTransformGroup} to define the new transform.
+ * <b>ZConstraintGroup</b> is a transform group that changes its transform based on a 
+ * computation defined in a specified method. Every time the camera
+ * view is changed, the method is called, recomputing the transform. Thus, depending
+ * on the algorithm chosen, various dynamic behaviors can be created.
+ * <P>
+ * Sub-classes must override the {@link #getTransform} 
+ * method of {@link ZTransformGroup#getTransform} to define a new transform.
  * This class stores a reference
  * to a camera so, for example, a sub-class could define a constraint
  * dependent on the camera so that the children move whenever the camera view changes.  
  *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence. 
+ *
+ * @see ZStickyGroup
  * @author  Benjamin B. Bederson
  */
 public class ZConstraintGroup extends ZTransformGroup implements Serializable {
@@ -96,43 +108,32 @@ public class ZConstraintGroup extends ZTransformGroup implements Serializable {
 	setCamera(camera);
     }
     
-    /**
-     * Copies all object information from the reference object into the current
-     * object. This method is called from the clone method.
-     * All ZSceneGraphObjects objects contained by the object being duplicated
-     * are duplicated, except parents which are set to null.  This results
-     * in the sub-tree rooted at this object being duplicated.
-     *
-     * @param refNode The reference node to copy
-     */
-    public void duplicateObject(ZConstraintGroup refNode) {
-	super.duplicateObject(refNode);
-
-	setCamera(refNode.camera);
-    }
 
     /**
-     * Duplicates the current node by using the copy constructor.
-     * The portion of the reference node that is duplicated is that necessary to reuse the node
-     * in a new place within the scenegraph, but the new node is not inserted into any scenegraph.
-     * The node must be attached to a live scenegraph (a scenegraph that is currently visible)
-     * or be registered with a camera directly in order for it to be visible.
+     * Called to update internal object references after a clone operation 
+     * by {@link ZSceneGraphObject#clone}.
      *
-     * @return A copy of this node.
-     * @see #updateObjectReferences 
+     * @see ZSceneGraphObject#updateObjectReferences
      */
-    public Object clone() {
-	ZConstraintGroup copy;
+    protected void updateObjectReferences(ZObjectReferenceTable objRefTable) {
+	
+	cameraListener = null;
 
-	objRefTable.reset();
-	copy = new ZConstraintGroup();
-	copy.duplicateObject(this);
-	objRefTable.addObject(this, copy);
-	objRefTable.updateObjectReferences();
-
-	return copy;
+	if (camera != null) {
+	    ZCamera newCamera = (ZCamera)objRefTable.getNewObjectReference(camera);
+	    if (newCamera == null) {
+		// Cloned a ZConstraintGroup, but did not clone the camera it was using
+		// as a reference. Continue to use old camera.
+		setCamera(camera);
+	    } else {
+		// Cloned a ZConstraintGroup and also the camera it was using. Use the
+		// cloned camera.
+		setCamera(newCamera);
+	    }
+	}
     }
 
+   
     /**
      * Computes the constraint that defines the child to not move
      * even as the camera view changes.  This is called whenever

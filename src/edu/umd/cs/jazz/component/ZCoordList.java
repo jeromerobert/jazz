@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.component;
@@ -20,22 +20,90 @@ import edu.umd.cs.jazz.util.*;
  * of coordinates, and the corresponding general path.  This is intended to
  * be sub-classed for specific objects that use coordinate lists.
  *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
+ *
  * @author  Benjamin B. Bederson
  */
 public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, Serializable {
+    /**
+     * Default value specifying if these coordinates are closed
+     * (last point is always the same as the first point in the path).
+     */
     static public final boolean     DEFAULT_CLOSED = false;
-    static public final float       DEFAULT_PEN_WIDTH = 1.0f;
+
+    /**
+     * Default pen width.
+     */
+    static public final double      DEFAULT_PEN_WIDTH = 1.0;
+
+    /**
+     * Default absolute pen width.
+     */
+    static public final boolean     DEFAULT_ABS_PEN_WIDTH = false;
+
+    /**
+     * Default pen color.
+     */
     static public final Color       DEFAULT_PEN_COLOR = Color.black;
 
+    /**
+     * Current pen color.
+     */
     protected Color                 penColor  = DEFAULT_PEN_COLOR;
-    protected transient Stroke      stroke = new BasicStroke(DEFAULT_PEN_WIDTH, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
-    protected float                 penWidth  = DEFAULT_PEN_WIDTH;
+
+    /**
+     * Current stroke.
+     */
+    protected transient Stroke      stroke = new BasicStroke((float)DEFAULT_PEN_WIDTH, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
+
+    /**
+     * Current pen width.
+     */
+    protected double                penWidth  = DEFAULT_PEN_WIDTH;
+
+    /**
+     * Current absolute pen width.
+     */
+    protected boolean               absPenWidth = DEFAULT_ABS_PEN_WIDTH;
+
+    /**
+     * True if coordinates are closed.
+     */
     protected boolean               closed = DEFAULT_CLOSED;
+
+    /**
+     * True if coordinate list is empty.
+     */
     protected boolean               empty = true;
+
+    /**
+     * GeneralPath created from coordinate list.
+     */
     protected transient GeneralPath path = null;
-    protected float[]               xp = null;
-    protected float[]               yp = null;
-    protected int                   np = 0;   // Current number of points in array
+
+    /**
+     * An x point.
+     */
+    protected double[]              xp = null;
+
+    /**
+     * A y point.
+     */
+    protected double[]              yp = null;
+
+    /**
+     * Current number of points in array.
+     */
+    protected int                   np = 0;
+
+    /**
+     * Temporary ZBounds variable.
+     */
     protected ZBounds               tmpBounds = new ZBounds();
     
     /**
@@ -43,8 +111,8 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
      */
     public ZCoordList() {
 	path = new GeneralPath(GeneralPath.WIND_EVEN_ODD);
-	xp = new float[2];
-	yp = new float[2];
+	xp = new double[2];
+	yp = new double[2];
 	np = 0;
     }
 
@@ -53,7 +121,7 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
      * @param <code>pt</code> Initial point
      */
     public ZCoordList(Point2D pt) {
-	this((float)pt.getX(), (float)pt.getY());
+	this(pt.getX(), pt.getY());
     }
 
     /**
@@ -62,17 +130,17 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
      * @param <code>pt2</code> Second point
      */
     public ZCoordList(Point2D pt1, Point2D pt2) {
-	this((float)pt1.getX(), (float)pt1.getY(), (float)pt2.getX(), (float)pt2.getY());
+	this(pt1.getX(), pt1.getY(), pt2.getX(), pt2.getY());
     }
 
     /**
      * Constructs a new ZCoordList with a single point.
      * @param <code>x,y</code> Initial point
      */
-    public ZCoordList(float x, float y) {
+    public ZCoordList(double x, double y) {
 	path = new GeneralPath(GeneralPath.WIND_EVEN_ODD);
-	xp = new float[2];
-	yp = new float[2];
+	xp = new double[2];
+	yp = new double[2];
 	np = 0;
 
 	add(x, y);
@@ -83,10 +151,10 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
      * @param <code>x,y</code> First point
      * @param <code>x,y</code> Second point
      */
-    public ZCoordList(float x1, float y1, float x2, float y2) {
+    public ZCoordList(double x1, double y1, double x2, double y2) {
 	path = new GeneralPath(GeneralPath.WIND_EVEN_ODD);
-	xp = new float[2];
-	yp = new float[2];
+	xp = new double[2];
+	yp = new double[2];
 	np = 0;
 
 	add(x1, y1);
@@ -100,54 +168,26 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
      * @param <code>xp</code> Array of X points
      * @param <code>yp</code> Array of Y points
      */
-    public ZCoordList(float[] xp, float[] yp) {
+    public ZCoordList(double[] xp, double[] yp) {
 	path = new GeneralPath(GeneralPath.WIND_EVEN_ODD, xp.length);
 	setCoords(xp, yp);
     }
 
     /**
-     * Copies all object information from the reference object into the current
-     * object. This method is called from the clone method.
-     * All ZSceneGraphObjects objects contained by the object being duplicated
-     * are duplicated, except parents which are set to null.  This results
-     * in the sub-tree rooted at this object being duplicated.
+     * Returns a clone of this object.
      *
-     * @param refCoordList The reference visual component to copy
+     * @see ZSceneGraphObject#duplicateObject
      */
-    public void duplicateObject(ZCoordList refCoordList) {
-	super.duplicateObject(refCoordList);
+    protected Object duplicateObject() {
+	ZCoordList newCoordList = (ZCoordList)super.duplicateObject();
 
-	empty = refCoordList.empty;
-	path = (GeneralPath)refCoordList.path.clone();
-	xp = (float[])refCoordList.xp.clone();
-	yp = (float[])refCoordList.yp.clone();
-	np = refCoordList.np;
-	closed = refCoordList.closed;
-	penColor = refCoordList.penColor;
-	setPenWidth(refCoordList.penWidth);
+	newCoordList.path = (GeneralPath)path.clone();
+	newCoordList.xp = (double[])xp.clone();
+	newCoordList.yp = (double[])yp.clone();
+
+	return newCoordList;
     }
 
-    /**
-     * Duplicates the current object by using the copy constructor.
-     * The portion of the reference object that is duplicated is that necessary to reuse the object
-     * in a new place within the scenegraph, but the new object is not inserted into any scenegraph.
-     * The object must be attached to a live scenegraph (a scenegraph that is currently visible)
-     * or be registered with a camera directly in order for it to be visible.
-     *
-     * @return A copy of this visual component.
-     * @see #updateObjectReferences 
-     */
-    public Object clone() {
-	ZCoordList copy;
-
-	objRefTable.reset();
-	copy = new ZCoordList();
-	copy.duplicateObject(this);
-	objRefTable.addObject(this, copy);
-	objRefTable.updateObjectReferences();
-
-	return copy;
-    }
     
     //****************************************************************************
     //
@@ -159,7 +199,7 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
      * Determine if this coordinate list is closed.  A closed coordinate list means
      * that the last point is always the same as the first point in the path that
      * is used for painting.  The actual coordinates are not affected by this.
-     * @return the closed value.
+     * @return true if the coodinate list is closed, false otherwise.
      */
     public boolean isClosed() {
 	return closed;
@@ -169,7 +209,7 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
      * Specify that this coordinate list is closed.  A closed coordinate list means
      * that the last point is always the same as the first point in the path that
      * is used for painting.  The actual coordinates are not affected by this.
-     * @param the closed value.
+     * @param closed true if the coodinate list is closed, false otherwise.
      */
     public void setClosed(boolean closed) {
 	this.closed = closed;
@@ -182,11 +222,17 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
     /**
      * Get the width of the pen used to draw the line around the edge of this polyline.
      * The pen is drawn centered around the polyline vertices, so if the pen width
-     * is thick, the bounds of the polyline will grow.
+     * is thick, the bounds of the polyline will grow.  If the pen width is absolute
+     * (independent of magnification), then this returns 0.
      * @return the pen width.
+     * @see #getAbsPenWidth
      */
-    public float getPenWidth() {
-	return penWidth;
+    public double getPenWidth() {
+	if (absPenWidth) {
+	    return 0.0d;
+	} else {
+	    return penWidth;
+	}
     }
 
     /**
@@ -195,10 +241,41 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
      * is thick, the bounds of the polyline will grow.
      * @param width the pen width.
      */
-    public void setPenWidth(float width) {
+    public void setPenWidth(double width) {
 	penWidth = width;
-	stroke = new BasicStroke(penWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
+	absPenWidth = false;
+	setVolatileBounds(false);
+	stroke = new BasicStroke((float)penWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
 	reshape();
+    }
+
+    /**
+     * Set the absolute width of the pen used to draw the line around the edge of this polyline.
+     * The pen is drawn centered around the polyline vertices, so if the pen width
+     * is thick, the bounds of the polyline will grow.
+     * @param width the pen width.
+     */
+    public void setAbsPenWidth(double width) {
+	penWidth = width;
+	absPenWidth = true;
+	setVolatileBounds(true);
+	reshape();
+    }
+
+    /**
+     * Get the absolute width of the pen used to draw the line around the edge of this polyline.
+     * The pen is drawn centered around the polyline vertices, so if the pen width
+     * is thick, the bounds of the polyline will grow.  If the pen width is not absolute
+     * (dependent on magnification), then this returns 0.
+     * @return the pen width.
+     * @see #getPenWidth
+     */
+    public double getAbsPenWidth() {
+	if (absPenWidth) {
+	    return penWidth;
+	} else {
+	    return 0.0d;
+	}
     }
 
     /**
@@ -215,6 +292,7 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
      */
     public void setStroke(Stroke stroke) {
 	this.stroke = stroke;
+	reshape();
     }
 
     /**
@@ -257,14 +335,14 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
      * @param pt The new point
      */    
     public void add(Point2D pt) {
-	add((float)pt.getX(), (float)pt.getY());
+	add(pt.getX(), pt.getY());
     }
 
     /**
      * Add a point to the end of this coordinate list.
      * @param x,y The new point
      */    
-    public void add(float x, float y) {
+    public void add(double x, double y) {
 	ensureSpace(np + 1);    // Make sure there is enough room in the point array
 
 	xp[np] = x;
@@ -276,21 +354,21 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
 	    updatePath();
 	} else {
 	    if (empty) {
-		path.moveTo(x, y);
+		path.moveTo((float)x, (float)y);
 	    } else {
-		path.lineTo(x, y);
+		path.lineTo((float)x, (float)y);
 	    }
 	}
 	empty = false;
 
-	float p2 = 0.5f * penWidth;
+	double p2 = 0.5 * penWidth;
 	if (!bounds.contains(x, y)) {
 				// Need to expand bounds to accomodate point.
 				// Do it incrementally for efficiency instead of calling reshape()
 	    bounds.add(x - p2, y - p2);
 	    bounds.add(x + p2, y + p2);
 
-	    boundsUpdated();
+	    updateParentBounds();
 	}
 				// Only refresh the portion of the shape that has changed - which is just
 				// the area between the current and previous point
@@ -310,7 +388,7 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
      * @param index The index of the new point.
      */    
     public void add(Point2D pt, int index) {
-	add((float)pt.getX(), (float)pt.getY(), index);
+	add(pt.getX(), pt.getY(), index);
     }
 
     /**
@@ -321,7 +399,7 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
      * @param x,y The new point
      * @param index The index of the new point.
      */    
-    public void add(float x, float y, int index) {
+    public void add(double x, double y, int index) {
 	int i;
 
 	ensureSpace(np + 1);    // Make sure there is enough room in the point array
@@ -343,14 +421,14 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
 				// could have been added anywhere in the path
 	empty = false;
 
-	float p2 = 0.5f * penWidth;
+	double p2 = 0.5 * penWidth;
 	if (!bounds.contains(x, y)) {
 				// Need to expand bounds to accomodate point.
 				// Do it incrementally for efficiency instead of calling reshape()
 	    bounds.add(x - p2, y - p2);
 	    bounds.add(x + p2, y + p2);
 
-	    boundsUpdated();
+	    updateParentBounds();
 	}
 				// Only refresh the portion of the shape that has changed - which is just
 				// the area between the current and previous point
@@ -370,8 +448,8 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
 	if (n > xp.length) {
 	    int i;
 	    int newLen = Math.max(n, (xp.length == 0) ? 1 : (2 * xp.length));
-	    float nxp[] = new float[newLen];
-	    float nyp[] = new float[newLen];
+	    double nxp[] = new double[newLen];
+	    double nyp[] = new double[newLen];
 	    for (i=0; i<np; i++) {
 		nxp[i] = xp[i];
 		nyp[i] = yp[i];
@@ -387,7 +465,7 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
      * @param xp An array of the X coordinates of the new points.
      * @param yp An array of the Y coordinates of the new points.
      */
-    public void setCoords(float[] xp, float[] yp) {
+    public void setCoords(double[] xp, double[] yp) {
         int i;
 	int np = xp.length;
 
@@ -412,9 +490,9 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
     protected void updatePath() {
 	path.reset();
 	if (np > 0) {
-	    path.moveTo(xp[0], yp[0]);
+	    path.moveTo((float)xp[0], (float)yp[0]);
 	    for (int i=1; i<np; i++) {
-		path.lineTo(xp[i], yp[i]);
+		path.lineTo((float)xp[i], (float)yp[i]);
 	    }
 	    
 	    if (closed) {
@@ -429,7 +507,7 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
      * modified by the caller.
      * @return Array of X coordinates of points.
      */
-    public float[] getXCoords() {
+    public double[] getXCoords() {
 	trimToSize();
 	return xp;
     }
@@ -440,7 +518,7 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
      * modified by the caller.
      * @return Array of Y coordinates of points.
      */
-    public float[] getYCoords() {
+    public double[] getYCoords() {
 	trimToSize();
 	return yp;
     }
@@ -474,8 +552,8 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
      * @see #getNumberPoints
      */
     public void trimToSize() {
-	float[] newXP = new float[np];
-	float[] newYP = new float[np];
+	double[] newXP = new double[np];
+	double[] newYP = new double[np];
 	for (int i=0; i<np; i++) {
 	    newXP[i] = xp[i];
 	    newYP[i] = yp[i];
@@ -491,8 +569,8 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
      */
     protected void computeBounds() {
 	int i;
-	float[] coords = new float[6];
-	float xmin, ymin, xmax, ymax;
+	double[] coords = new double[6];
+	double xmin, ymin, xmax, ymax;
 
 	bounds.reset();
 	if (np == 0) {
@@ -512,8 +590,14 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
 
 				// Expand the bounds to accomodate the pen width
 	if (penColor != null) {
-	    float p2;
-	    p2 = 0.5f * penWidth;
+	    double p2;
+	    if (absPenWidth) {
+		ZRenderContext rc = getRoot().getCurrentRenderContext();
+		double mag = (rc == null) ? 1.0f : rc.getCameraMagnification();
+		p2 = 0.5 * penWidth / mag;
+	    } else {
+		p2 = 0.5 * penWidth;
+	    }
 	    xmin -= p2;
 	    ymin -= p2;
 	    xmax += p2;
@@ -539,8 +623,11 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
 	if (isClosed() != DEFAULT_CLOSED) {
 	    out.writeState("boolean", "closed", isClosed());
 	}
+	if (absPenWidth != DEFAULT_ABS_PEN_WIDTH) {
+	    out.writeState("boolean", "absPenWidth", absPenWidth);
+	}
 	if (getPenWidth() != DEFAULT_PEN_WIDTH) {
-	    out.writeState("float", "penWidth", getPenWidth());
+	    out.writeState("double", "penWidth", getPenWidth());
 	}
 	if ((penColor != null) && (penColor != DEFAULT_PEN_COLOR)) {
 	    out.writeState("java.awt.Color", "penColor", penColor);
@@ -552,8 +639,8 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
 
 	for (; !i.isDone(); i.next()) {
 	    i.currentSegment(pathcoords);
-	    coords.add(new Float(pathcoords[0]));
-	    coords.add(new Float(pathcoords[1]));
+	    coords.add(new Double(pathcoords[0]));
+	    coords.add(new Double(pathcoords[1]));
 	}
 	out.writeState("Vector", "coords", coords);
     }
@@ -574,23 +661,27 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
 	if (fieldName.compareTo("closed") == 0) {
 	    setClosed(((Boolean)fieldValue).booleanValue());
 	} else if (fieldName.compareTo("penWidth") == 0) {
-	    setPenWidth(((Float)fieldValue).floatValue());
+	    if (absPenWidth) {
+		setAbsPenWidth(((Double)fieldValue).doubleValue());
+	    } else {
+		setPenWidth(((Double)fieldValue).doubleValue());
+	    }
 	} else if (fieldName.compareTo("penColor") == 0) {
 	    setPenColor((Color)fieldValue);
 	} else if (fieldName.compareTo("coords") == 0) {
-	    float element;
-	    float[] xp;
-	    float[] yp;
+	    double element;
+	    double[] xp;
+	    double[] yp;
 	    int np;
 	    int index = 0;
 
 	    np = ((Vector)fieldValue).size() / 2;
-	    xp = new float[np];
-	    yp = new float[np];
+	    xp = new double[np];
+	    yp = new double[np];
 	    for (Iterator i=((Vector)fieldValue).iterator(); i.hasNext();) {
-		element = ((Float)i.next()).floatValue();
+		element = ((Double)i.next()).doubleValue();
 		xp[index] = element;
-		element = ((Float)i.next()).floatValue();
+		element = ((Double)i.next()).doubleValue();
 		yp[index] = element;
 		index++;
 	    }
@@ -614,7 +705,7 @@ public class ZCoordList extends ZVisualComponent implements ZStroke, ZPenColor, 
 	int cap, join;
 	cap = in.readInt();
 	join = in.readInt();
-	stroke = new BasicStroke(penWidth, cap, join);
+	stroke = new BasicStroke((float)penWidth, cap, join);
 	path = new GeneralPath(GeneralPath.WIND_EVEN_ODD, xp.length);
 	updatePath();
     }

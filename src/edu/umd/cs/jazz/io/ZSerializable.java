@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 
@@ -25,7 +25,13 @@ import java.util.Arrays;
  * If readResolve() is specified, and returns null, then this object
  * is not read in at all - and any references to this object will be replaced
  * with null references.
- * 
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
+ *
  * @author Ben Bederson
  * @author Britt McAlister
  */

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.util;
@@ -12,6 +12,13 @@ import edu.umd.cs.jazz.io.*;
 /**
  * <b>ZProperty</b> represents a ZNode client property.
  * It just encapsulates a (key, value) pair, and supports ZSerialization.
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
+ *
  */
 public class ZProperty implements ZSerializable, Serializable {
     /**
@@ -97,6 +104,38 @@ public class ZProperty implements ZSerializable, Serializable {
      */
     public void setValue(Object value) {
 	this.value = value;
+    }
+
+    /**
+     * Update object references after a clone.
+     *
+     * @see edu.umd.cs.jazz.ZSceneGraphObject#updateObjectReferences
+     */
+    public void updateObjectReferences(ZObjectReferenceTable objRefTable) {
+	
+	if (key instanceof ZSceneGraphObject) {
+	    Object newKey = objRefTable.getNewObjectReference((ZSceneGraphObject)key);
+	    if (newKey == null) {
+	        // Cloned the client property, but did not clone the key. Leave the 
+		// key pointing to the uncloned object.
+	    } else {
+		// Cloned a client property and also the key it was using. Update the
+		// key to point to the newly cloned object.
+		key = newKey;
+	    }
+	}
+
+	if (value instanceof ZSceneGraphObject) {
+	    Object newVal = objRefTable.getNewObjectReference((ZSceneGraphObject)value);
+	    if (newVal == null) {
+	        // Cloned the client property, but did not clone the value. Leave the 
+		// value pointing to the uncloned object.
+	    } else {
+		// Cloned a client property and also the value it was using. Update the
+		// value to point to the newly cloned object.
+		value = newVal;
+	    }
+	}
     }
 
     /**

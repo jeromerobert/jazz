@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.event;
@@ -26,13 +26,36 @@ import edu.umd.cs.jazz.*;
  * (<code>ZGroupAdapter</code> objects implement the 
  * <code>ZGroupListener</code> interface.) Each such listener object 
  * gets this <code>ZGroupEvent</code> when the event occurs.
+ * <P>
+ * ZGroupEvents now contains a method <code>isModificationEvent()</code> to
+ * distinguish a modification event from a <bold>true</bold> node addition or
+ * removal.  A modification event is one in which a node changes position
+ * in a single scenegraph or between two different scenegraphs.  A true
+ * addition or removal event is one in which a node is first added to or
+ * removed from a scenegraph.  For example, the following bit of code checks
+ * to see if a given node has been deleted from its parent by checking to
+ * see if the event is a modification event.
+ * <pre>
+ *     public void nodeRemoved(ZGroupEvent e) {
+ *         if (e.getChild() == myNode &&
+ *             !e.isModificationEvent()) {
+ *             // myNode was *truly* deleted from the scenegraph
+ *         }
+ *     }
+ * </pre>
+ *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
  * @see ZGroupAdapter
  * @see ZGroupListener
- *
  * @author Ben Bederson
  */
-public class ZGroupEvent extends AWTEvent {
+public class ZGroupEvent extends AWTEvent implements Serializable {
 
     /**
      * The first number in the range of ids used for group events.
@@ -63,21 +86,34 @@ public class ZGroupEvent extends AWTEvent {
     ZNode child;
 
     /**
+     * True if this event is a modification.
+     */
+    private boolean modification;
+        
+    /**
+     * True if this event has been consumed.
+     */
+    private boolean consumed;
+
+    /**
      * Constructs a ZGroupEvent object.
      * 
-     * @param source    the ZGroup object that originated the event
-     * @param id        an integer indicating the type of event
-     * @param child     the node that was added or removed
+     * @param source        the ZGroup object that originated the event
+     * @param id            an integer indicating the type of event
+     * @param child         the node that was added or removed
+     * @param modification  is this event a modification?
      */
-    public ZGroupEvent(ZGroup source, int id, ZNode child) {
+    public ZGroupEvent(ZGroup source, int id, ZNode child, boolean modification) {
         super(source, id);
 	this.child = child;
+	this.modification = modification;
+	consumed = false;
     }
 
     /**
      * Returns the originator of the event.
      *
-     * @return the ZGroup object that originated the event
+     * @return the ZGroup object that originated the event.
      */
     public ZGroup getGroup() {
         return (ZGroup)source;   // Cast is ok, checked in constructor
@@ -90,5 +126,31 @@ public class ZGroupEvent extends AWTEvent {
      */
     public ZNode getChild() {
         return child;
+    }
+
+    /**
+     * True if this event is a modification. A modification event is one
+     * in which a node changes position in a single scenegraph or between
+     * two different scenegraphs.  A non-modification event is one in
+     * which a node is first added to, or removed from, a scenegraph.
+     *
+     * @return Does this event represent a modification?
+     */
+    public boolean isModificationEvent() {
+	return modification;
+    }
+    
+    /**
+     * True if this event has been consumed.
+     */
+    public boolean isConsumed() {
+	return consumed;
+    }
+
+    /**
+     * Consume this event.
+     */
+    public void consume() {
+	consumed = true;
     }
 }

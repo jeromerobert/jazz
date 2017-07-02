@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz;
@@ -15,11 +15,11 @@ import edu.umd.cs.jazz.util.*;
 import edu.umd.cs.jazz.event.*;
 
 /**
- * <b>ZTransformGroup</b> is a group node with an affine transform.
+ * <b>ZTransformGroup</b> is a group node that specifies an arbitrary affine transform. 
  * The transform applies to all the children of this node.
  * In addition, it provides some extra manipulators
  * on the transform.  This provides the ability to relatively or absolutely change
- * the translation, scale, and rotation of the transform - either immediately,
+ * the translation, scale, rotation and shear of the transform - either immediately,
  * or animated over time.
  * <p>
  * In order to use transforms effectively, it is important to have a solid understanding
@@ -49,7 +49,7 @@ import edu.umd.cs.jazz.event.*;
  *    ZTransformGroup t = new ZTransformGroup();
  *    t.scale(ds);
  *    t.translate(dx, dy);
- *    t.rotate(Math.PI * 0.5f);
+ *    t.rotate(Math.PI * 0.5);
  * </pre>
  * is equivalent to generating a node with  transform of these four matrices concatenated together with standard
  * matrix multiplication [I][S][T][R]
@@ -105,10 +105,20 @@ import edu.umd.cs.jazz.event.*;
  * the utility method ZCamera.cameraToLocal to convert it to the local coordinate
  * system of the specified node, and finally translates the node by the resulting amount.
  * <pre>
- *    Point2D pt = new Point2D.Float(x, y);
+ *    Point2D pt = new Point2D.Double(x, y);
  *    camera.cameraToLocal(pt, node);
- *    node.translate((float)pt.getX(), (float)pt.getY());
+ *    node.translate(pt.getX(), pt.getY());
  * </pre>
+ *
+ * <P>
+ * {@link edu.umd.cs.jazz.util.ZSceneGraphEditor} provides a convenience mechanism to locate, create 
+ * and manage nodes of this type.
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
  * @see java.awt.geom.AffineTransform
  * @author  Benjamin B. Bederson
@@ -126,7 +136,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
     private transient AffineTransform tmpTransform;
     private transient ZBounds   paintBounds;
     private transient Rectangle2D tmpRect;
-    static private float[] pts = new float[8];
+    static private double[] pts = new double[8];
 
     //****************************************************************************
     //
@@ -141,7 +151,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
 	tmpTransform = new AffineTransform();
 	transform = new AffineTransform();
 	paintBounds = new ZBounds();
-	tmpRect = new Rectangle2D.Float();
+	tmpRect = new Rectangle2D.Double();
     }
 
     /**
@@ -157,47 +167,26 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
 	tmpTransform = new AffineTransform();
 	transform = new AffineTransform();
 	paintBounds = new ZBounds();
-	tmpRect = new Rectangle2D.Float();
+	tmpRect = new Rectangle2D.Double();
 	insertAbove(child);
     }
 
     /**
-     * Copies all object information from the reference object into the current
-     * object. This method is called from the clone method.
-     * All ZSceneGraphObjects objects contained by the object being duplicated
-     * are duplicated, except parents which are set to null.  This results
-     * in the sub-tree rooted at this object being duplicated.
+     * Returns a clone of this object.
      *
-     * @param refNode The reference node to copy
+     * @see ZSceneGraphObject#duplicateObject
      */
-    public void duplicateObject(ZTransformGroup refNode) {
-	super.duplicateObject(refNode);
+    protected Object duplicateObject() {
+	ZTransformGroup newTransform = (ZTransformGroup)super.duplicateObject();
 
-	transform = refNode.getTransform();
-	paintBounds = new ZBounds();
-	tmpRect = new Rectangle2D.Float();
-    }
+	newTransform.transform = getTransform(); // Get a copy
+        newTransform.tmpTransform = new AffineTransform();
+        newTransform.inverseTransform = new AffineTransform();
+        newTransform.inverseTransformDirty = true;
+	newTransform.paintBounds = new ZBounds();
+	newTransform.tmpRect = new Rectangle2D.Double();
 
-    /**
-     * Duplicates the current node by using the copy constructor.
-     * The portion of the reference node that is duplicated is that necessary to reuse the node
-     * in a new place within the scenegraph, but the new node is not inserted into any scenegraph.
-     * The node must be attached to a live scenegraph (a scenegraph that is currently visible)
-     * or be registered with a camera directly in order for it to be visible.
-     *
-     * @return A copy of this node.
-     * @see #updateObjectReferences
-     */
-    public Object clone() {
-	ZTransformGroup copy;
-
-	objRefTable.reset();
-	copy = new ZTransformGroup();
-	copy.duplicateObject(this);
-	objRefTable.addObject(this, copy);
-	objRefTable.updateObjectReferences();
-
-	return copy;
+	return newTransform;
     }
 
     //****************************************************************************
@@ -250,8 +239,41 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
     protected void computeBounds() {
 	super.computeBounds();
 	transform(bounds, transform);
+	fireGlobalBoundsEventForSubTree(this);
     }
 
+    /**
+     * Recursively descends the subtree rooted at <code>node</code> to fire
+     * global bounds change events.  This uses a depth first search.
+     * @param node The top node whose subtree is to be examined
+     */
+    private void fireGlobalBoundsEventForSubTree(ZNode node) {		
+	// For the transform group that originated this event, the
+	// ZNode.updateBounds method will fire the event for this node
+	// so just send it on to the children
+	if (node == this) {
+	    for(int i=0; i<((ZGroup)node).numChildren; i++) {
+		if (((ZGroup)node).children[i].hasNodeListener()) {
+		    fireGlobalBoundsEventForSubTree(((ZGroup)node).children[i]);
+		}
+	    }	    
+	}
+	// This is any other group so we need to fire the event for this node
+	// and its children
+	else if (node instanceof ZGroup) {
+	    fireEvent(new ZNodeEvent(node,ZNodeEvent.GLOBAL_BOUNDS_CHANGED),ZNodeEvent.GLOBAL_BOUNDS_CHANGED,node);
+	    for(int i=0; i<((ZGroup)node).numChildren; i++) {
+		if (((ZGroup)node).children[i].hasNodeListener()) {
+		    fireGlobalBoundsEventForSubTree(((ZGroup)node).children[i]);
+		}
+	    }
+	}
+	// Any other non-group nodes - just fire the event for the node
+	else {
+	    fireEvent(new ZNodeEvent(node,ZNodeEvent.GLOBAL_BOUNDS_CHANGED),ZNodeEvent.GLOBAL_BOUNDS_CHANGED, node);
+	}
+    }
+    
     /**
      * Method to pass repaint methods up the tree.  Repaints only the sub-
      * portion of this object specified by the given ZBounds.
@@ -270,6 +292,30 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
 	}
     }
 
+    /**
+     * Method to pass repaint methods up the tree.  Repaints only the sub-
+     * portion of this object specified by the given ZBounds.
+     * Note that the transform and clipBounds parameters may be modified as a result of this call.
+     * @param obj The object to repaint
+     * @param at  The affine transform
+     * @param clipBounds The bounds to clip to when repainting
+     */
+    public void repaint(ZSceneGraphObject obj, AffineTransform at, ZBounds clipBounds) {
+	if (ZDebug.debug && ZDebug.debugRepaint) {
+	    System.out.println("ZTransformGroup.repaint(obj, at, bounds): this = " + this);
+	    System.out.println("ZTransformGroup.repaint(obj, at, bounds): obj = " + obj);
+	    System.out.println("ZTransformGroup.repaint(obj, at, bounds): at = " + at);
+	}
+
+	if (parent != null) {
+	    at.preConcatenate(transform);
+	    if (clipBounds != null) {
+		transform(clipBounds, transform);
+	    }
+	    parent.repaint(obj, at, clipBounds);
+	}
+    }
+
     //****************************************************************************
     //
     //			Other Methods
@@ -282,13 +328,14 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * This performs a depth-first search, first picking children.
      * Only returns a node if this is "pickable".
      * @param rect Coordinates of pick rectangle in local coordinates
-     * @param mag The magnification of the camera being picked within.
+     * @param path The path through the scenegraph to the picked node. Modified by this call.
      * @return The picked node, or null if none
      * @see ZDrawingSurface#pick(int, int)
      */
     public boolean pick(Rectangle2D rect, ZSceneGraphPath path) {
-
 	if (isPickable()) {
+	    path.pushTransformer(this);
+
 		// Concatenate this object's transform with the one stored in the path
 	    AffineTransform origTm = path.getTransform();
 	    AffineTransform tm = new AffineTransform(origTm);
@@ -312,7 +359,10 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
 	    }
 
 	    	// Restore transform
-	    path.setTransform(origTm);
+	    if (!path.getCameraFound()) {
+		path.setTransform(origTm);
+		path.popTransformer(this);
+	    }
 	}
 
 	return false;
@@ -431,7 +481,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * Sets the transform associated with this node.
      * This transform applies to the sub-tree rooted at this node.
      * @param m00,&nbsp;m01,&nbsp;m02,&nbsp;m10,&nbsp;m11,&nbsp;m12 the
-     * 6 floating point values that compose the 3x3 transformation matrix
+     * 6 values that compose the 3x3 transformation matrix
      */
     public void setTransform(double m00, double m10,
 			     double m01, double m11,
@@ -514,7 +564,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * @return the translation
      */
     public Point2D getTranslation() {
-	Point2D pt = new Point2D.Float((float)transform.getTranslateX(), (float)transform.getTranslateY());
+	Point2D pt = new Point2D.Double(transform.getTranslateX(), transform.getTranslateY());
 	return pt;
     }
 
@@ -522,26 +572,26 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * Returns the current X translation of this node
      * @return the translation
      */
-    public float getTranslateX() {
-        return (float)transform.getTranslateX();
+    public double getTranslateX() {
+        return transform.getTranslateX();
     }
     /**
      * Sets the current X translation of this node
      */
-    public void setTranslateX(float x) {
+    public void setTranslateX(double x) {
         setTranslation(x, getTranslateY());
     }
     /**
      * Returns the current Y translation of this node
      * @return the translation
      */
-    public float getTranslateY() {
-        return (float)transform.getTranslateY();
+    public double getTranslateY() {
+        return transform.getTranslateY();
     }
     /**
      * Sets the current Y translation of this node
      */
-    public void setTranslateY(float y) {
+    public void setTranslateY(double y) {
         setTranslation(getTranslateX(), y);
     }
 
@@ -550,7 +600,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * @param dx X-coord of translation
      * @param dy Y-coord of translation
      */
-    public void translate(float dx, float dy) {
+    public void translate(double dx, double dy) {
 	tmpTransform.setTransform(transform);
 	tmpTransform.translate(dx, dy);
 	setTransform(tmpTransform);
@@ -563,7 +613,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * @param millis Number of milliseconds over which to perform the animation
      * @param surface The surface to updated during animation.
      */
-    public void translate(float dx, float dy, int millis, ZDrawingSurface surface) {
+    public void translate(double dx, double dy, int millis, ZDrawingSurface surface) {
 	tmpTransform.setTransform(transform);
         tmpTransform.translate(dx, dy);
 	animate(this, tmpTransform, millis, surface);
@@ -574,7 +624,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * @param x X-coord of translation
      * @param y Y-coord of translation
      */
-    public void setTranslation(float x, float y) {
+    public void setTranslation(double x, double y) {
 	double[] mat = new double[6];
 	transform.getMatrix(mat);
 	mat[4] = x;
@@ -590,7 +640,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * @param millis Number of milliseconds over which to perform the animation
      * @param surface The surface to updated during animation.
      */
-    public void setTranslation(float x, float y, int millis, ZDrawingSurface surface) {
+    public void setTranslation(double x, double y, int millis, ZDrawingSurface surface) {
 	tmpTransform.setTransform(transform);
 	double[] mat = new double[6];
 
@@ -610,8 +660,8 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * this method will be ill-defined.
      * @return the scale
      */
-    public float getScale() {
-	return (float)computeScale(transform);
+    public double getScale() {
+	return computeScale(transform);
     }
 
     /**
@@ -619,7 +669,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * by muliplying the current scale and dz.
      * @param dz scale factor
      */
-    public void scale(float dz) {
+    public void scale(double dz) {
 	tmpTransform.setTransform(transform);
 	tmpTransform.scale(dz, dz);
 	setTransform(tmpTransform);
@@ -633,7 +683,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * @param x X coordinate of the point to scale around
      * @param y Y coordinate of the point to scale around
      */
-    public void scale(float dz, float x, float y) {
+    public void scale(double dz, double x, double y) {
 	tmpTransform.setTransform(transform);
 	tmpTransform.translate(x, y);
 	tmpTransform.scale(dz, dz);
@@ -648,7 +698,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * @param millis Number of milliseconds over which to perform the animation
      * @param surface The surface to updated during animation.
      */
-    public void scale(float dz, int millis, ZDrawingSurface surface) {
+    public void scale(double dz, int millis, ZDrawingSurface surface) {
 	tmpTransform.setTransform(transform);
 	tmpTransform.scale(dz, dz);
 	animate(this, tmpTransform, millis, surface);
@@ -664,7 +714,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * @param millis Number of milliseconds over which to perform the animation
      * @param surface The surface to updated during animation.
      */
-    public void scale(float dz, float x, float y, int millis, ZDrawingSurface surface) {
+    public void scale(double dz, double x, double y, int millis, ZDrawingSurface surface) {
 	tmpTransform.setTransform(transform);
 	tmpTransform.translate(x, y);
 	tmpTransform.scale(dz, dz);
@@ -676,8 +726,8 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * Sets the scale of the transform
      * @param the new scale
      */
-    public void setScale(float finalz) {
-	float dz = finalz / getScale();
+    public void setScale(double finalz) {
+	double dz = finalz / getScale();
 	scale(dz);
     }
 
@@ -688,8 +738,8 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * @param x X coordinate of the point to scale around
      * @param y Y coordinate of the point to scale around
      */
-    public void setScale(float finalz, float x, float y) {
-	float dz = finalz / getScale();
+    public void setScale(double finalz, double x, double y) {
+	double dz = finalz / getScale();
 	scale(dz, x, y);
     }
 
@@ -699,8 +749,8 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * @param millis Number of milliseconds over which to perform the animation
      * @param surface The surface to updated during animation.
      */
-    public void setScale(float finalz, int millis, ZDrawingSurface surface) {
-	float dz = finalz / getScale();
+    public void setScale(double finalz, int millis, ZDrawingSurface surface) {
+	double dz = finalz / getScale();
 	scale(dz, millis, surface);
     }
 
@@ -713,8 +763,8 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * @param millis Number of milliseconds over which to perform the animation
      * @param surface The surface to updated during animation.
      */
-    public void setScale(float finalz, float x, float y, int millis, ZDrawingSurface surface) {
-	float dz = finalz / getScale();
+    public void setScale(double finalz, double x, double y, int millis, ZDrawingSurface surface) {
+	double dz = finalz / getScale();
 	scale(dz, x, y, millis, surface);
     }
 
@@ -722,16 +772,16 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * Returns the current rotation of this node
      * @return the rotation angle in radians.
      */
-    public float getRotation() {
-	Point2D p1 = new Point2D.Float(0.0f, 0.0f);
-	Point2D p2 = new Point2D.Float(1.0f, 0.0f);
+    public double getRotation() {
+	Point2D p1 = new Point2D.Double(0.0, 0.0);
+	Point2D p2 = new Point2D.Double(1.0, 0.0);
 	transform.transform(p1, p1);
 	transform.transform(p2, p2);
 
-	float dy = (float)(p2.getY() - p1.getY());
-	float l = (float)(p1.distance(p2));
+	double dy = (p2.getY() - p1.getY());
+	double l = (p1.distance(p2));
 
-	float rotation = (float)Math.asin(dy / l);
+	double rotation = Math.asin(dy / l);
 
 	return rotation;
     }
@@ -740,7 +790,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * Set the absolute rotation of this node.
      * @param theta angle to rotate (in radians)
      */
-    public void setRotation(float theta) {
+    public void setRotation(double theta) {
 	rotate(theta - getRotation());
     }
 
@@ -750,7 +800,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * @param millis Time to animate scale in milliseconds
      * @param surface The surface to updated during animation.
      */
-    public void setRotation(float theta, int millis, ZDrawingSurface surface) {
+    public void setRotation(double theta, int millis, ZDrawingSurface surface) {
 	tmpTransform.setTransform(transform);
 	tmpTransform.rotate(theta - getRotation());
 	animate(this, tmpTransform, millis, surface);
@@ -762,7 +812,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * @param xctr X-coord of anchor point
      * @param yctr Y-coord of anchor point
      */
-    public void setRotation(float theta, float xctr, float yctr) {
+    public void setRotation(double theta, double xctr, double yctr) {
 	rotate(theta - getRotation(), xctr, yctr);
     }
 
@@ -774,7 +824,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * @param millis Number of milliseconds over which to perform the animation
      * @param surface The surface to updated during animation.
      */
-     public void setRotation(float theta, float xctr, float yctr, int millis, ZDrawingSurface surface) {
+     public void setRotation(double theta, double xctr, double yctr, int millis, ZDrawingSurface surface) {
 	tmpTransform.setTransform(transform);
 	tmpTransform.rotate(theta - getRotation(), xctr, yctr);
 	animate(this, tmpTransform, millis, surface);
@@ -784,7 +834,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * Rotate the node by the specified amount
      * @param theta angle to rotate (in radians)
      */
-    public void rotate(float theta) {
+    public void rotate(double theta) {
 	tmpTransform.setTransform(transform);
 	tmpTransform.rotate(theta);
 	setTransform(tmpTransform);
@@ -796,7 +846,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * @param xctr X-coord of anchor point
      * @param yctr Y-coord of anchor point
      */
-    public void rotate(float theta, float xctr, float yctr) {
+    public void rotate(double theta, double xctr, double yctr) {
 	tmpTransform.setTransform(transform);
 	tmpTransform.rotate(theta, xctr, yctr);
 	setTransform(tmpTransform);
@@ -808,7 +858,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * @param millis Time to animate scale in milliseconds
      * @param surface The surface to updated during animation.
      */
-    public void rotate(float theta, int millis, ZDrawingSurface surface) {
+    public void rotate(double theta, int millis, ZDrawingSurface surface) {
 	tmpTransform.setTransform(transform);
 	tmpTransform.rotate(theta);
 	animate(this, tmpTransform, millis, surface);
@@ -822,7 +872,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * @param millis Number of milliseconds over which to perform the animation
      * @param surface The surface to updated during animation.
      */
-     public void rotate(float theta, float xctr, float yctr, int millis, ZDrawingSurface surface) {
+     public void rotate(double theta, double xctr, double yctr, int millis, ZDrawingSurface surface) {
 	tmpTransform.setTransform(transform);
 	tmpTransform.rotate(theta, xctr, yctr);
 	animate(this, tmpTransform, millis, surface);
@@ -842,8 +892,8 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * <p>
      * For example, If you have two nodes, A and B, and you call
      * <PRE>
-     *     Point2D srcPt = new Point2D.Float(1.0f, 0.0f);
-     *     Point2D destPt = new Point2D.Float(0.0f, 0.0f);
+     *     Point2D srcPt = new Point2D.Double(1.0, 0.0);
+     *     Point2D destPt = new Point2D.Double(0.0, 0.0);
      *     A.position(srcPt, destPt, B, 750, null);
      * </PRE>
      * The result is that A will move so that its upper-right corner is at
@@ -874,8 +924,8 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * <p>
      * For example, If you have two nodes, A and B, and you call
      * <PRE>
-     *     Point2D srcPt = new Point2D.Float(1.0f, 0.0f);
-     *     Point2D destPt = new Point2D.Float(0.0f, 0.0f);
+     *     Point2D srcPt = new Point2D.Double(1.0, 0.0);
+     *     Point2D destPt = new Point2D.Double(0.0, 0.0);
      *     A.position(srcPt, destPt, B.getGlobalBounds(), 750, null);
      * </PRE>
      * The result is that A will move so that its upper-right corner is at
@@ -888,26 +938,26 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * @param surface The surface to updated during animation.
      */
     public void position(Point2D srcPt, Point2D destPt, Rectangle2D destBounds, int millis, ZDrawingSurface surface) {
-	float srcx, srcy;
-	float destx, desty;
-	float dx, dy;
+	double srcx, srcy;
+	double destx, desty;
+	double dx, dy;
 	Point2D pt1, pt2;
 
 	if (parent != null) {
 				// First compute translation amount in global coordinates
 	    Rectangle2D srcBounds = getGlobalBounds();
-	    srcx  = (float)lerp(srcPt.getX(),  srcBounds.getX(),  srcBounds.getX() +  srcBounds.getWidth());
-	    srcy  = (float)lerp(srcPt.getY(),  srcBounds.getY(),  srcBounds.getY() +  srcBounds.getHeight());
-	    destx = (float)lerp(destPt.getX(), destBounds.getX(), destBounds.getX() + destBounds.getWidth());
-	    desty = (float)lerp(destPt.getY(), destBounds.getY(), destBounds.getY() + destBounds.getHeight());
+	    srcx  = lerp(srcPt.getX(),  srcBounds.getX(),  srcBounds.getX() +  srcBounds.getWidth());
+	    srcy  = lerp(srcPt.getY(),  srcBounds.getY(),  srcBounds.getY() +  srcBounds.getHeight());
+	    destx = lerp(destPt.getX(), destBounds.getX(), destBounds.getX() + destBounds.getWidth());
+	    desty = lerp(destPt.getY(), destBounds.getY(), destBounds.getY() + destBounds.getHeight());
 
 				// Convert vector to local coordinates
-	    pt1 = new Point2D.Float(srcx, srcy);
+	    pt1 = new Point2D.Double(srcx, srcy);
 	    globalToLocal(pt1);
-	    pt2 = new Point2D.Float(destx, desty);
+	    pt2 = new Point2D.Double(destx, desty);
 	    globalToLocal(pt2);
-	    dx = (float)(pt2.getX() - pt1.getX());
-	    dy = (float)(pt2.getY() - pt1.getY());
+	    dx = (pt2.getX() - pt1.getX());
+	    dy = (pt2.getY() - pt1.getY());
 
 				// Finally, animate change
 	    tmpTransform.setTransform(transform);
@@ -928,26 +978,13 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      * is computed by transforming a vector and seeing how its length changes.
      */
     static public double computeScale(AffineTransform at) {
-        Point2D pt1 = new Point2D.Float(0.0f, 0.0f);
-        Point2D pt2 = new Point2D.Float(1.0f, 1.0f);
-        float origDist = (float)pt1.distance(pt2);
+        Point2D pt1 = new Point2D.Double(0.0, 0.0);
+        Point2D pt2 = new Point2D.Double(1.0, 1.0);
+        double origDist = pt1.distance(pt2);
         at.transform(pt1, pt1);
         at.transform(pt2, pt2);
-        float mag = (float)(pt1.distance(pt2) / origDist);
+        double mag = (pt1.distance(pt2) / origDist);
         return mag;
-    }
-
-    /**
-     * Linearly interpolates between a and b, based on t.
-     * Specifically, it computes lerp(a, b, t) = a + t*(b - a).
-     * This produces a result that changes from a (when t = 0) to b (when t = 1).
-     *
-     * @param a from point
-     * @param b to Point
-     * @param t variable 'time' parameter
-     */
-    static public float lerp(float t, float a, float b) {
-	return (a + t * (b - a));
     }
 
     /**
@@ -981,21 +1018,21 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      */
     static public void transform(Rectangle2D rect, AffineTransform at) {
 				// First, transform all 4 corners of the rectangle
-	pts[0] = (float)rect.getX();          // top left corner
-	pts[1] = (float)rect.getY();
-	pts[2] = (float)rect.getX() + (float)rect.getWidth();  // top right corner
-	pts[3] = (float)rect.getY();
-	pts[4] = (float)rect.getX() + (float)rect.getWidth();  // bottom right corner
-	pts[5] = (float)rect.getY() + (float)rect.getHeight();
-	pts[6] = (float)rect.getX();          // bottom left corner
-	pts[7] = (float)rect.getY() + (float)rect.getHeight();
+	pts[0] = rect.getX();          // top left corner
+	pts[1] = rect.getY();
+	pts[2] = rect.getX() + rect.getWidth();  // top right corner
+	pts[3] = rect.getY();
+	pts[4] = rect.getX() + rect.getWidth();  // bottom right corner
+	pts[5] = rect.getY() + rect.getHeight();
+	pts[6] = rect.getX();          // bottom left corner
+	pts[7] = rect.getY() + rect.getHeight();
 	at.transform(pts, 0, pts, 0, 4);
 
 				// Then, find the bounds of those 4 transformed points.
-	float minX = pts[0];
-	float minY = pts[1];
-	float maxX = pts[0];
-	float maxY = pts[1];
+	double minX = pts[0];
+	double minY = pts[1];
+	double maxX = pts[0];
+	double maxY = pts[1];
 	int i;
 	for (i=1; i<4; i++) {
 	    if (pts[2*i] < minX) {
@@ -1117,10 +1154,10 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      *     nodes[1] = node2;
      *     AffineTransform[] txs = new AffineTransform[2];
      *     txs[0] = new AffineTransform();
-     *     txs[0].scale(2.0f, 2.0f);
+     *     txs[0].scale(2.0, 2.0);
      *     txs[1] = new AffineTransform();
-     *     txs[1].translate(100.0f, 25.0f);
-     *     txs[1].scale(0.5f, 0.5f);
+     *     txs[1].translate(100.0, 25.0);
+     *     txs[1].scale(0.5, 0.5);
      *
      *     ZTransform.animate(nodes, txs, 1000, surface);
      * </pre>
@@ -1192,10 +1229,10 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
      *     nodes[1] = node2;
      *     AffineTransform[] txs = new AffineTransform[2];
      *     txs[0] = new AffineTransform();
-     *     txs[0].scale(2.0f, 2.0f);
+     *     txs[0].scale(2.0, 2.0);
      *     txs[1] = new AffineTransform();
-     *     txs[1].translate(100.0f, 25.0f);
-     *     txs[1].scale(0.5f, 0.5f);
+     *     txs[1].translate(100.0, 25.0);
+     *     txs[1].scale(0.5, 0.5);
      *
      *     ZTransform.animate(nodes, txs, 1000, surface);
      * </pre>
@@ -1213,6 +1250,8 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
 	double[][] currTx = new double[len][6];
 	double[][] destTx = new double[len][6];
 
+	surface.setAnimating(true);
+
 				// Extract initial transforms
 	for (i=0; i<len; i++) {
 	    nodes[i].getMatrix(srcTx[i]);
@@ -1220,12 +1259,12 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
 	}
 
 	if (millis > 0) {
-	    float lerp = millis / (1000.0f * 30.0f);   // Estimate first transition at 30 frames per second
-	    float straightLerp;
-	    float sisoLerp;
+	    double lerp = millis / (1000.0 * 30.0);   // Estimate first transition at 30 frames per second
+	    double straightLerp;
+	    double sisoLerp;
 	    long startTime;
 	    long elapsedTime;
-	    startTime = new Date().getTime();
+	    startTime = System.currentTimeMillis();
 
 				// Loop until animation time has completed
 	    do {
@@ -1247,10 +1286,10 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
 		surface.paintImmediately();
 
 				// Calculate total elapsed time
-		elapsedTime = new Date().getTime() - startTime;
+		elapsedTime = System.currentTimeMillis() - startTime;
 
 				// Calculate next step
-		straightLerp = (float)elapsedTime / millis;
+		straightLerp = (double)elapsedTime / millis;
 		if (lerpTimeFunction == null) {
 		    sisoLerp = straightLerp;
 		} else {
@@ -1269,6 +1308,8 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
 	if (millis > 0) {
 	    surface.paintImmediately();
 	}
+
+	surface.setAnimating(false);
     }
 
     /**
@@ -1330,7 +1371,7 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
 	in.defaultReadObject();
 	tmpTransform = new AffineTransform();
 	paintBounds = new ZBounds();
-	tmpRect = new Rectangle2D.Float();
+	tmpRect = new Rectangle2D.Double();
 	inverseTransformDirty = true;
     }
 }
@@ -1341,8 +1382,8 @@ public class ZTransformGroup extends ZGroup implements ZSerializable, ZTransform
  * speeds up in the middle, and slows down at the end.
  */
 class ZSISOLerp implements ZLerp, Serializable {
-    public float lerpTime(float t) {
-	float siso, t1, t2, l;
+    public double lerpTime(double t) {
+	double siso, t1, t2, l;
 
 	t1 = t * t;
 	t2 = 1 - (1 - t) * (1 - t);

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.component;
@@ -9,6 +9,7 @@ import javax.swing.plaf.basic.*;
 import java.awt.geom.*;
 import java.awt.event.*;
 import java.awt.*;
+import java.io.*;
 
 import edu.umd.cs.jazz.util.*;
 import edu.umd.cs.jazz.event.*;
@@ -31,9 +32,16 @@ import edu.umd.cs.jazz.*;
  * via keyboard shortcuts without an actual mouse press on the Menu, there
  * may be unexpected results.
  *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
+ *
  * @author Lance Good
  */
-public class ZMenu extends JMenu {
+public class ZMenu extends JMenu implements Serializable {
 
     ZMouseEvent currentEvent = null;
 
@@ -137,10 +145,10 @@ public class ZMenu extends JMenu {
 	Dimension s = getSize();
 
 	// Transform the bounds for the Jazz transformation
-	Rectangle2D bounds = new Rectangle2D.Float(0.0f, 0.0f, (float)s.width, (float)s.height);
+	Rectangle2D bounds = new Rectangle2D.Double(0.0, 0.0, (double)s.width, (double)s.height);
 	currentEvent.getPath().getCamera().localToCamera(bounds, currentEvent.getNode());
-	s.width = (int)(bounds.getWidth()+0.5f);
-	s.height = (int)(bounds.getHeight()+0.5f);
+	s.width = (int)(bounds.getWidth()+0.5);
+	s.height = (int)(bounds.getHeight()+0.5);
 
 	Dimension pmSize = pm.getSize();
 	// For the first time the menu is popped up, 
@@ -213,7 +221,7 @@ public class ZMenu extends JMenu {
 	Point position = null;
 
 	if (isShowing()) {
-	    Point2D pt = new Point2D.Float(0.0f, 0.0f);
+	    Point2D pt = new Point2D.Double(0.0, 0.0);
 	    Component c;
 
 	    // We don't want to get the offset of the Swing Component
@@ -221,12 +229,12 @@ public class ZMenu extends JMenu {
 	    // to the top Swing component below the SwingWrapper
 	    for (c = this; !(c.getParent().getParent() instanceof ZCanvas); c = c.getParent()) {
 		Point location = c.getLocation();
-		pt.setLocation(pt.getX()+(float)location.getX(), pt.getY()+(float)location.getY());
+		pt.setLocation(pt.getX()+(double)location.getX(), pt.getY()+(double)location.getY());
 		
 	    }
 	    ZCamera camera = currentEvent.getPath().getTopCamera();
 	    camera.localToCamera(pt,currentEvent.getNode());	    
-	    position = new Point((int)(pt.getX()+0.5f),(int)(pt.getY()+0.5f));
+	    position = new Point((int)(pt.getX()+0.5),(int)(pt.getY()+0.5));
 
 	    Point canvasOffset = c.getParent().getParent().getLocationOnScreen();
 

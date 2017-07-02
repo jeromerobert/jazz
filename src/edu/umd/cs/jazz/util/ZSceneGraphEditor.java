@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.util;
@@ -16,6 +16,7 @@ import edu.umd.cs.jazz.*;
  * <p>
  * <ul>
  * <li>Custom (i.e., any other group that has hasOneChild set)
+ * <li>ZNameGroup
  * <li>ZInvisibleGroup
  * <li>ZLayoutGroup
  * <li>ZAnchorGroup
@@ -23,6 +24,7 @@ import edu.umd.cs.jazz.*;
  * <li>ZStickyGroup
  * <li>ZSelectionGroup
  * <li>ZFadeGroup
+ * <li>ZSpatialIndexGroup
  * </ul>
  *
  * ZSceneGraphEditor uses lazy evaluation to automatically create these
@@ -44,7 +46,7 @@ import edu.umd.cs.jazz.*;
  *
  * If multiple group types are created for a given node in the scene graph,
  * they are ordered as shown in the list above - so custom groups
- * will be inserted at the top (closest to the root), whereas fade groups will be
+ * will be inserted at the top (closest to the root), whereas spatialIndex groups will be
  * inserted at the bottom (closest to the node being edited.)<p>
  *
  * Group nodes inserted into the scene graph by ZSceneGraphEditor have
@@ -57,8 +59,14 @@ import edu.umd.cs.jazz.*;
  * groups that it has created in the scene graph, to avoid creating the
  * same group nodes twice.<p>
  *
- * @see edu.umd.cs.jazz.ZNode#editor
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
+ * @see edu.umd.cs.jazz.ZNode#editor
  * @author Jonathan Meyer, 25 Aug 99
  * @author Ben Bederson
  */
@@ -70,49 +78,61 @@ public class ZSceneGraphEditor implements Serializable {
      * A bit representing an application-defined custom node type and order.  Bigger numbers appear
      * higher in the editor chain.  This is the value returned by #editGroupType.
      */
-    static protected final int CUSTOM = 128;
+    static protected final int CUSTOM = 512;
+
+    /**
+     * A bit representing an name node type (ZNameGroup) and order.  Bigger numbers appear
+     * higher in the editor chain.  This is the value returned by #editGroupType.
+     */
+    static protected final int NAME = 256;
 
     /**
      * A bit representing an invisible node type (ZInvisibleGroup) and order.  Bigger numbers appear
      * higher in the editor chain.  This is the value returned by #editGroupType.
      */
-    static protected final int INVISIBLE = 64;
+    static protected final int INVISIBLE = 128;
 
     /**
      * A bit representing a layout node type (ZLayoutGroup) and order.  Bigger numbers appear
      * higher in the editor chain.  This is the value returned by #editGroupType.
      */
-    static protected final int LAYOUT = 32;
+    static protected final int LAYOUT = 64;
 
     /**
      * A bit representing an anchor node type (ZAnchorGroup) and order.  Bigger numbers appear
      * higher in the editor chain.  This is the value returned by #editGroupType.
      */
-    static protected final int ANCHOR = 16;
+    static protected final int ANCHOR = 32;
 
     /**
      * A bit representing a transform node type (ZTransformGroup) and order.  Bigger numbers appear
      * higher in the editor chain.  This is the value returned by #editGroupType.
      */
-    static protected final int TRANSFORM = 8;
+    static protected final int TRANSFORM = 16;
 
     /**
      * A bit representing a sticky node type (ZStickyGroup) and order.  Bigger numbers appear
      * higher in the editor chain.  This is the value returned by #editGroupType.
      */
-    static protected final int STICKY = 4;
+    static protected final int STICKY = 8;
 
     /**
      * A bit representing a selection node type (ZSelectionGroup) and order.  Bigger numbers appear
      * higher in the editor chain.  This is the value returned by #editGroupType.
      */
-    static protected final int SELECTION = 2;
+    static protected final int SELECTION = 4;
 
     /**
      * A bit representing a fade node type (ZFadeGroup) and order.  Bigger numbers appear
      * higher in the editor chain.  This is the value returned by #editGroupType.
      */
-    static protected final int FADE = 1;
+    static protected final int FADE = 2;
+
+    /**
+     * A bit representing an index node type (ZSpatialIndexGroup) and order.  Bigger numbers appear
+     * higher in the editor chain.  This is the value returned by #editGroupType.
+     */
+    static protected final int INDEX = 1;
 
     /**
      * A value representing an unknown node type.
@@ -120,9 +140,9 @@ public class ZSceneGraphEditor implements Serializable {
      */
     static protected final int UNKNOWN = -1;
 
-    private ArrayList   editGroups;     // List of edit groups above node (in bottom-top order)
-    private ZNode       editNode;       // Node being edited
-    private int         groupTypes;     // What types of edit groups this node has
+    protected ArrayList   editGroups;     // List of edit groups above node (in bottom-top order)
+    protected ZNode       editNode;       // Node being edited
+    protected int         groupTypes;     // What types of edit groups this node has
 
     /**
      * Returns the type number for a given instance.
@@ -135,12 +155,18 @@ public class ZSceneGraphEditor implements Serializable {
         else if (node instanceof ZStickyGroup) return STICKY; // Check sticky before transform since sticky *is* a transform
         else if (node instanceof ZAnchorGroup) return ANCHOR;
         else if (node instanceof ZLayoutGroup) return LAYOUT;
+        else if (node instanceof ZSpatialIndexGroup) return INDEX;
+        else if (node instanceof ZNameGroup) return NAME;
         else if (node instanceof ZInvisibleGroup) return INVISIBLE;
         else if (node instanceof ZTransformGroup) return TRANSFORM;
         else if (node instanceof ZGroup && ((ZGroup)node).hasOneChild()) return CUSTOM;
         return UNKNOWN;
     }
 
+    /**
+     * Determines if node is an edit group node.
+     * @return true if node is an edit group node, false otherwise.
+     */
     static protected boolean isEditGroup(ZNode node) {
         return ((node != null) && (editGroupType(node) > 0) && ((ZGroup)node).hasOneChild());
     }
@@ -218,7 +244,7 @@ public class ZSceneGraphEditor implements Serializable {
                 g = (ZGroup)i.next();
                 if (editGroupType(g) == type) {
                     i.remove();
-                    g.remove();
+                    g.extract();
                     groupTypes &= ~type;
                     return true;
                 }
@@ -296,11 +322,22 @@ public class ZSceneGraphEditor implements Serializable {
 
     /**
      * Returns a ZTransformGroup to use for a node,
-     * insertsing one above the edited node if none exists.
+     * inserting one above the edited node if none exists.
      */
     public ZTransformGroup getTransformGroup() {
         ZTransformGroup tg = (ZTransformGroup)getEditGroup(TRANSFORM);
-        if (tg == null) setEditGroup(TRANSFORM, tg = new ZTransformGroup());
+        if (tg == null) {
+	    setEditGroup(TRANSFORM, tg = new ZTransformGroup());
+
+				// If the node getting this transformGroup is spatial-indexed,
+				// add a node listener so it will be re-indexed when it's
+				// bounds change.
+	    ZNode top = tg.editor().getTop().getParent();
+	    if ((top != null) && (top.editor().hasSpatialIndexGroup())) {
+		ZSpatialIndexGroup indexGroup = top.editor().getSpatialIndexGroup();
+		indexGroup.addListener(tg);
+	    }
+	}
         return tg;
     }
 
@@ -420,6 +457,27 @@ public class ZSceneGraphEditor implements Serializable {
     public boolean removeLayoutGroup() { return removeEditGroup(LAYOUT); }
 
     /**
+     * Returns a ZNameGroup to use for a node, or
+     * inserts one above the node if none exists.
+     */
+    public ZNameGroup getNameGroup() {
+        ZNameGroup g = (ZNameGroup)getEditGroup(NAME);
+        if (g == null) { setEditGroup(NAME, g = new ZNameGroup()); }
+        return g;
+    }
+    /**
+     * Returns true if this node has a ZNameGroup above it as an edit group,
+     * false otherwise.
+     */
+    public boolean hasNameGroup() { return hasEditGroup(NAME); }
+
+    /**
+     * Removes a ZNameGroup edit group for above a node. Returns true
+     * if the ZNameGroup could be removed, false otherwise.
+     */
+    public boolean removeNameGroup() { return removeEditGroup(NAME); }
+
+    /**
      * Returns a ZInvisibleGroup to use for a node, or
      * inserts one above the node if none exists.
      */
@@ -438,6 +496,41 @@ public class ZSceneGraphEditor implements Serializable {
      * if the ZInvisibleGroup could be removed, false otherwise.
      */
     public boolean removeInvisibleGroup() { return removeEditGroup(INVISIBLE); }
+
+    /**
+     * Returns a ZSpatialIndexGroup to use for a node, or
+     * inserts one above the node if none exists.
+     */
+    public ZSpatialIndexGroup getSpatialIndexGroup() {
+        ZSpatialIndexGroup g = (ZSpatialIndexGroup)getEditGroup(INDEX);
+        if (g == null) { setEditGroup(INDEX, g = new ZSpatialIndexGroup()); }
+        return g;
+    }
+
+    /**
+     * Returns true if this node has a ZSpatialIndexGroup above it as an edit group,
+     * false otherwise.
+     */
+    public boolean hasSpatialIndexGroup() { return hasEditGroup(INDEX); }
+
+    /**
+     * Removes a ZSpatialIndexGroup edit group for above a node. Returns true
+     * if the ZSpatialIndexGroup could be removed, false otherwise. Removes all
+     * nodeListers registered on the indexed nodes.
+     */
+    public boolean removeSpatialIndexGroup() { 
+	if (hasEditGroup(INDEX)) {
+	    ZGroup g = null;
+            for (Iterator i = editGroups.iterator(); i.hasNext(); ) {
+                g = (ZGroup)i.next();
+                if (editGroupType(g) == INDEX) {
+		    ZSpatialIndexGroup spatialIndexGroup = (ZSpatialIndexGroup)g;
+		    spatialIndexGroup.unregisterAllListeners();
+		}
+	    }
+ 	}
+	return removeEditGroup(INDEX);
+    }
 
     /**
      * Generate a string that represents this object for debugging.

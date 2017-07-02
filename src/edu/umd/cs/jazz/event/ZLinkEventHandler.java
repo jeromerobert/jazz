@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.event;
@@ -14,11 +14,20 @@ import edu.umd.cs.jazz.*;
 import edu.umd.cs.jazz.util.*;
 
 /**
- * <b>ZLinkEventHandler</b> is a simple event handler for interactively creating hyperlinks
+ * <b>ZLinkEventHandler</b> is a simple event handler for interactively creating hyperlinks.
+ * This supports clicking on an object to define a link from that object, and
+ * then click on another object to define a link to that second object as a destination.
+ * This inserts a ZAnchorGroup which can then be used to follow the link. 
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
  *
  * @author  Benjamin B. Bederson
  */
-public class ZLinkEventHandler implements ZEventHandler, ZMouseListener, ZMouseMotionListener, KeyListener {
+public class ZLinkEventHandler implements ZEventHandler, ZMouseListener, ZMouseMotionListener, KeyListener, Serializable {
     private boolean        active = false;          // True when event handlers are attached to a node
     private ZNode          node = null;             // The node the event handlers are attached to
     private ZCanvas        canvas = null;           // The canvas this event handler is associated with
@@ -27,6 +36,15 @@ public class ZLinkEventHandler implements ZEventHandler, ZMouseListener, ZMouseM
     private ZAnchorGroup   currentLink = null;      // The link currently being defined
     private ZAnchorGroup   hiliteLink = null;       // The link currently being hilited because of a mouse-over
     private Vector         links = null;            // The list of currently visible links
+				                    // Mask out mouse and mouse/key chords
+    private int            all_button_mask   = (MouseEvent.BUTTON1_MASK | 
+						MouseEvent.BUTTON2_MASK | 
+						MouseEvent.BUTTON3_MASK | 
+						MouseEvent.ALT_GRAPH_MASK | 
+						MouseEvent.CTRL_MASK | 
+						MouseEvent.META_MASK | 
+						MouseEvent.SHIFT_MASK | 
+						MouseEvent.ALT_MASK);
 
     /**
      * Create a new link event handler.
@@ -69,6 +87,14 @@ public class ZLinkEventHandler implements ZEventHandler, ZMouseListener, ZMouseM
 				// Initialize links
 	    links = new Vector();
 	}
+    }
+
+    /**
+     * Determines if this event handler is active.
+     * @return True if active
+     */
+    public boolean isActive() {
+	return active;
     }
 
     /**
@@ -144,7 +170,7 @@ public class ZLinkEventHandler implements ZEventHandler, ZMouseListener, ZMouseM
 	if (currentLink != null) {
 				// Currently defining a link, so update it
 	    ZSceneGraphPath path = e.getPath();
-	    Point2D pt = new Point2D.Float(e.getX(), e.getY());
+	    Point2D pt = new Point2D.Double(e.getX(), e.getY());
 	    path.screenToGlobal(pt);
 	    currentLink.setDestPt(pt);
 	    currentLink.updateLinkComponent(path.getCamera());
@@ -152,7 +178,7 @@ public class ZLinkEventHandler implements ZEventHandler, ZMouseListener, ZMouseM
     }
 
     public void mousePressed(ZMouseEvent e) {
-	if ((e.getModifiers() & MouseEvent.BUTTON1_MASK) == MouseEvent.BUTTON1_MASK) {   // Left button only
+	if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
 	    ZSceneGraphPath path = e.getPath();
 	    ZCamera camera = path.getCamera();
 
@@ -162,7 +188,7 @@ public class ZLinkEventHandler implements ZEventHandler, ZMouseListener, ZMouseM
 		    ZSelectionGroup.unselect(currentNode);
 		    currentLink = currentNode.editor().getAnchorGroup();
 
-		    Point2D pt = new Point2D.Float(e.getX(), e.getY());
+		    Point2D pt = new Point2D.Double(e.getX(), e.getY());
 		    path.screenToGlobal(pt);
 		    currentLink.setSrcPt(pt);
 		    currentLink.setDestPt(pt);
@@ -175,7 +201,7 @@ public class ZLinkEventHandler implements ZEventHandler, ZMouseListener, ZMouseM
 				// Currently defining a link, so conclude this one's definition
 		if (currentNode == null) {
 		    currentLink.setVisible(false, null);
-		    currentLink.remove();
+		    currentLink.extract();
 		} else {
 		    ZSelectionGroup.unselect(currentNode);
 		    currentLink.setDestNode(currentNode, camera);
@@ -187,12 +213,12 @@ public class ZLinkEventHandler implements ZEventHandler, ZMouseListener, ZMouseM
     }
 
     public void mouseDragged(ZMouseEvent e) {
-	if ((e.getModifiers() & MouseEvent.BUTTON1_MASK) == MouseEvent.BUTTON1_MASK) {   // Left button only
+	if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
 	    if (currentLink != null) {
 		updateHilite(e);
 
 		ZSceneGraphPath path = e.getPath();
-		Point2D pt = new Point2D.Float(e.getX(), e.getY());
+		Point2D pt = new Point2D.Double(e.getX(), e.getY());
 		path.screenToGlobal(pt);
 		currentLink.setDestPt(pt);
 	    }

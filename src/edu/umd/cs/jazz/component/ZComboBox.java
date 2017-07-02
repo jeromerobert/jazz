@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.component;
@@ -8,6 +8,7 @@ import java.awt.*;
 import java.awt.geom.*;
 import java.awt.event.*;
 import java.util.*;
+import java.io.*;
 import javax.swing.*;
 import javax.swing.plaf.basic.*;
 
@@ -31,13 +32,21 @@ import edu.umd.cs.jazz.*;
  * focus through 'tab' focus traversal and the keyboard is used to interact
  * with the ComboBox, there may be unexpected results.
  *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
+ *
  * @author Lance Good
  */
-public class ZComboBox extends JComboBox {
+public class ZComboBox extends JComboBox implements Serializable {
 
     ZMouseEvent currentEvent;
 
     /**
+     * Creates a ZComboBox that takes its items from an existing ComboBoxModel.
      * @param model The ComboBoxModel from which the list will be created
      */
     public ZComboBox(ComboBoxModel model) {
@@ -46,6 +55,7 @@ public class ZComboBox extends JComboBox {
     }
 
     /**
+     * Creates a ZComboBox that contains the elements in the specified array.
      * @param items The items to populate the ZComboBox list
      */
     public ZComboBox(final Object items[]) {
@@ -54,6 +64,7 @@ public class ZComboBox extends JComboBox {
     }
 
     /**
+     * Creates a ZComboBox that contains the elements in the specified Vector.
      * @param items The items to populate the ZComboBox list
      */
     public ZComboBox(Vector items) {
@@ -155,9 +166,9 @@ public class ZComboBox extends JComboBox {
 
 		// We need to modify the y position to reflect the true
 		// height of the ComboBox given the Jazz transformation
-		Rectangle2D bounds = new Rectangle2D.Float(0.0f, 0.0f, (float)comboBox.getBounds().width, (float)comboBox.getBounds().height);
+		Rectangle2D bounds = new Rectangle2D.Double(0.0, 0.0, (double)comboBox.getBounds().width, (double)comboBox.getBounds().height);
 		currentEvent.getPath().getCamera().localToCamera(bounds, currentEvent.getNode());
-		py = (int)(bounds.getHeight()+0.5f);
+		py = (int)(bounds.getHeight()+0.5);
 		
 		Rectangle absBounds;
 		Rectangle r = new Rectangle(px,py,pw,ph);
@@ -260,7 +271,7 @@ public class ZComboBox extends JComboBox {
 	    Point position = null;
 	    
 	    if (comboBox.isShowing()) {
-		Point2D pt = new Point2D.Float(0.0f, 0.0f);
+		Point2D pt = new Point2D.Double(0.0, 0.0);
 		Component c;
 
 		// We don't want to get the offset of the Swing Component
@@ -268,12 +279,12 @@ public class ZComboBox extends JComboBox {
 		// to the top Swing component below the SwingWrapper	
 		for (c = comboBox; !(c.getParent().getParent() instanceof ZCanvas); c = c.getParent()) {
 		    Point location = c.getLocation();
-		    pt.setLocation(pt.getX()+(float)location.getX(), pt.getY()+(float)location.getY());
+		    pt.setLocation(pt.getX()+location.getX(), pt.getY()+location.getY());
 		    
 		}
 		ZCamera camera = currentEvent.getPath().getTopCamera();
 		camera.localToCamera(pt,currentEvent.getNode());	    
-		position = new Point((int)(pt.getX()+0.5f),(int)(pt.getY()+0.5f));
+		position = new Point((int)(pt.getX()+0.5),(int)(pt.getY()+0.5));
 		
 		Point canvasOffset = c.getParent().getLocationOnScreen();
 		

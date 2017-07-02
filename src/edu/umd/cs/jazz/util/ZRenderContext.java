@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.util;
@@ -18,21 +18,23 @@ import edu.umd.cs.jazz.*;
  * they are rendered, and the objects can use this information to
  * change the way they render themselves.
  *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
+ *
  * @author Benjamin B. Bederson
  * @see ZCamera
  */
-public class ZRenderContext {
+public class ZRenderContext implements Serializable {
     private static final int DEFAULT_NUM_VISIBLE_BOUNDS = 10;
 
     /**
      * List of (recursive) cameras currently rendering the scenegraph
      */
     private Stack     cameras;
-
-    /**
-     * List of (recursive) magnifications of each camera
-     */
-    private Stack      cameraMags;
 
     /**
      * List of (recursive) transforms that are the transform that the
@@ -63,11 +65,6 @@ public class ZRenderContext {
     private transient Graphics2D g2;
 
     /**
-     * The current magnification of the rendering camera.
-     */
-    private float      cameraMagnification = 1.0f;
-
-    /**
      * accurateSpacing causes strings to be rendered one character at a time:
      * slower, but characters are positioned more accurately in a line.
      */
@@ -85,6 +82,23 @@ public class ZRenderContext {
     //***************************************************************************
 
     /**
+     * Constructs a simple ZRenderContext.  This is intended to be used only by 
+     * context-sensitive objects to compute bounds.  This constructor should
+     * not be used for render contexts to be used for an actual render.
+     * @param camera The camera
+     */
+    public ZRenderContext(ZCamera camera) {
+	surface = null;
+	cameras = new Stack();
+	transforms = new Stack();
+	this.visibleBounds = new ZBounds[DEFAULT_NUM_VISIBLE_BOUNDS];
+	this.visibleBounds[0] = camera.getViewBounds();
+	numVisibleBounds = 1;
+
+	cameras.push(camera);
+    }
+
+    /**
      * Constructs a new ZRenderContext.
      * @param aG2 The graphics for this render
      * @param visibleBounds The bounds being rendered in screen coordinates
@@ -98,7 +112,6 @@ public class ZRenderContext {
 	this.visibleBounds = new ZBounds[DEFAULT_NUM_VISIBLE_BOUNDS];
 	this.visibleBounds[0] = visibleBounds;
 	numVisibleBounds = 1;
-	cameraMags = new Stack();
 	g2 = aG2;
 	surface = aSurface;
 	setRenderingHints(g2, qualityRequested);
@@ -150,7 +163,7 @@ public class ZRenderContext {
     }
 
     /**
-     * Get the drawing surface being rendered ont.
+     * Get the drawing surface being rendered onto.
      * @return the surface
      */
     public ZDrawingSurface getDrawingSurface() {
@@ -266,9 +279,6 @@ public class ZRenderContext {
     public void pushCamera(ZCamera camera) {
 	cameras.push(camera);
 	transforms.push(g2.getTransform());
-	cameraMags.push(new Float(cameraMagnification));
-
-	cameraMagnification *= camera.getMagnification();
     }
 
     /**
@@ -277,7 +287,6 @@ public class ZRenderContext {
     public void popCamera() {
 	cameras.pop();
 	transforms.pop();
-	cameraMagnification = ((Float)cameraMags.pop()).floatValue();
     }
 
     /**
@@ -287,8 +296,13 @@ public class ZRenderContext {
      * include the transformations of the current or any other object being rendered.
      * @see #getCompositeMagnification
      */
-    public float getCameraMagnification() {
-	return cameraMagnification;
+    public double getCameraMagnification() {
+	ZCamera camera = getRenderingCamera();
+	if (camera == null) {
+	    return 1.0d;
+	} else {
+	    return camera.getMagnification();
+	}
     }
 
     /**
@@ -297,7 +311,7 @@ public class ZRenderContext {
      * of the current any parent objects.
      * @see #getCameraMagnification
      */
-    public float getCompositeMagnification() {
-	return (float)ZTransformGroup.computeScale(g2.getTransform());
+    public double getCompositeMagnification() {
+	return ZTransformGroup.computeScale(g2.getTransform());
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.util;
@@ -46,11 +46,11 @@ import edu.umd.cs.jazz.*;
  *    				// Make a new layout group with a path layout manager
  *    		layoutGroup = new ZLayoutGroup();
  *    		ZPathLayoutManager layout = new ZPathLayoutManager();
- *    		layout.setShape(new Ellipse2D.Float(0, 0, 200, 200));
+ *    		layout.setShape(new Ellipse2D.Double(0, 0, 200, 200));
  *    		
  *    				// Move all the scene's nodes under the layout group and lay them out
  *    		ZNode[] children = layer.getChildren();
- *    		for (int i=0; i<children.length; i++) {
+ *    		for (int i=0; i<LT>children.length; i++) {
  *    		    children[i].reparent(layoutGroup);
  *    		}
  *    		layer.addChild(layoutGroup);
@@ -87,8 +87,23 @@ import edu.umd.cs.jazz.*;
  * @author Ben Bederson
  */
 public interface ZLoadable {
+    /**
+     * Set the primary menubar for the application.
+     */
     public void setMenubar(JMenuBar menubar);
+
+    /**
+     * Set the camera of the scenegraph.
+     */
     public void setCamera(ZCamera camera);
+
+    /**
+     * Set the drawing surface of the scenegraph.
+     */
     public void setDrawingSurface(ZDrawingSurface surface);
+
+    /**
+     * Set the layer of the scenegraph.
+     */
     public void setLayer(ZLayerGroup layer);
 }

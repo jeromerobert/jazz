@@ -29,6 +29,15 @@ public class TextEventHandler implements ZEventHandler, ZMouseListener, KeyListe
 
     private HiNoteCore hinote;
     private ZVisualLeaf textNode;
+				                    // Mask out mouse and mouse/key chords
+    private int            all_button_mask   = (MouseEvent.BUTTON1_MASK | 
+						MouseEvent.BUTTON2_MASK | 
+						MouseEvent.BUTTON3_MASK | 
+						MouseEvent.ALT_GRAPH_MASK | 
+						MouseEvent.CTRL_MASK | 
+						MouseEvent.META_MASK | 
+						MouseEvent.SHIFT_MASK | 
+						MouseEvent.ALT_MASK);
 
     public TextEventHandler(HiNoteCore hinote, ZNode node, ZCanvas canvas) {
 	this.hinote = hinote;
@@ -57,11 +66,19 @@ public class TextEventHandler implements ZEventHandler, ZMouseListener, KeyListe
 	}
     }
 
+    /**
+     * Determines if this event handler is active.
+     * @return True if active
+     */
+    public boolean isActive() {
+	return active;
+    }
+
     public void stopEditingText() {
 	if (textNode != null) {
 	    ZGroup layer = hinote.getDrawingLayer();
-	    ZText textComp = (ZText)textNode.getVisualComponent();
-	    ZSelectionGroup.unselect(textNode);
+	    ZText textComp = (ZText)textNode.getFirstVisualComponent();
+	    hinote.unselect(textNode);
 	    textComp.setEditable(false);
 	    if (textComp.getText().length() == 0) {
 		ZNode handle = textNode.editor().getTop();
@@ -72,7 +89,7 @@ public class TextEventHandler implements ZEventHandler, ZMouseListener, KeyListe
     }
     
     public void mousePressed(ZMouseEvent e) {
-	if ((e.getModifiers() & MouseEvent.BUTTON1_MASK) == MouseEvent.BUTTON1_MASK) {   // Left button only
+	if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON1_MASK) {   // Left button only
 	    ZSceneGraphPath path = e.getPath();
 	    canvas.requestFocus();
 	    
@@ -80,12 +97,12 @@ public class TextEventHandler implements ZEventHandler, ZMouseListener, KeyListe
 	    ZDrawingSurface surface = canvas.getDrawingSurface();
 	    ZCamera camera = hinote.getCamera();
 	    ZGroup layer = hinote.getDrawingLayer();
-	    Point2D pt = new Point2D.Float();
+	    Point2D pt = new Point2D.Double();
 	    ZText textComp = null;
 
 				// Get current text component if one
 	    if (textNode != null) {
-		textComp = (ZText)textNode.getVisualComponent();
+		textComp = (ZText)textNode.getFirstVisualComponent();
 	    }
 	    
 				// Pick object under cursor, and convert cursor point to local coords
@@ -107,7 +124,7 @@ public class TextEventHandler implements ZEventHandler, ZMouseListener, KeyListe
 	    
 				// If clicked on some other text, make that active
 	    if ((node != null) && (node instanceof ZVisualLeaf)) {
-		ZVisualComponent vc = ((ZVisualLeaf)node).getVisualComponent();
+		ZVisualComponent vc = ((ZVisualLeaf)node).getFirstVisualComponent();
 		if (vc instanceof ZText) {
 		    textNode = (ZVisualLeaf)node;
 		    textComp = (ZText)vc;
@@ -117,8 +134,8 @@ public class TextEventHandler implements ZEventHandler, ZMouseListener, KeyListe
 				// Else, create a new text object
 	    if (textNode == null) {
 				// Set default font to Arial if it exists
-		float mag = camera.getMagnification();
-		float fontHeight = 40.0f / mag;
+		double mag = camera.getMagnification();
+		double fontHeight = 40.0 / mag;
 		textComp = new ZText("");
 		textComp.setFont(hinote.font);
 		textComp.setPenColor(hinote.penColor);
@@ -127,11 +144,11 @@ public class TextEventHandler implements ZEventHandler, ZMouseListener, KeyListe
 		ZTransformGroup transform = new ZTransformGroup();
 		transform.setHasOneChild(true);
 		transform.addChild(textNode);
-		transform.scale(1.0f / mag);
-		transform.setTranslation((float)pt.getX(), (float)(pt.getY() - 0.5*fontHeight));
+		transform.scale(1.0 / mag);
+		transform.setTranslation(pt.getX(), (pt.getY() - 0.5*fontHeight));
 		layer.addChild(transform);
 	    }
-	    ZSelectionGroup.select(textNode);	// Select the newly active text
+	    hinote.select(textNode);	// Select the newly active text
 	    textComp.setEditable(true);
 	}
     }
@@ -164,7 +181,7 @@ public class TextEventHandler implements ZEventHandler, ZMouseListener, KeyListe
 	ZDrawingSurface surface = hinote.getDrawingSurface();
 
 	if (textNode != null) {
-	    ZText textComp = (ZText)textNode.getVisualComponent();
+	    ZText textComp = (ZText)textNode.getFirstVisualComponent();
 	    textComp.keyPressed(e);
 	}
     }

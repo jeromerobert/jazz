@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.event;
@@ -7,6 +7,7 @@ package edu.umd.cs.jazz.event;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
+import java.io.*;
 import javax.swing.*;
 
 import edu.umd.cs.jazz.*;
@@ -21,20 +22,36 @@ import edu.umd.cs.jazz.util.*;
  * Similarly, if the mouse is moved to the left, the the camera is
  * zoomed out.
  *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
+ *
  * @author  Benjamin B. Bederson
  */
 
-public class ZoomEventHandler implements ZEventHandler, ZMouseListener, ZMouseMotionListener {
+public class ZoomEventHandler implements ZEventHandler, ZMouseListener, ZMouseMotionListener, Serializable {
     private boolean   active = false;     // True when event handlers are attached to a node
     private ZNode     node = null;        // The node the event handlers are attached to
 
     private ZCamera camera = null;        // The camera we are zooming within
-    private float   scaleDelta = 1.0f;    // Amount to zoom by
-    private float   pressScreenX;         // Event x-coord of mouse press (in screen space)
+    private double   scaleDelta = 1.0;    // Amount to zoom by
+    private double   pressScreenX;         // Event x-coord of mouse press (in screen space)
     private Point2D pressObjPt;           // Event coords of mouse press (in object space)
     private boolean zooming = false;      // True while zooming 
-    private float   minMag = 0.0f;        // The minimum allowed magnification
-    private float   maxMag = -1.0f;       // The maximum allowed magnification (or disabled if less than 0)
+    private double   minMag = 0.0;        // The minimum allowed magnification
+    private double   maxMag = -1.0;       // The maximum allowed magnification (or disabled if less than 0)
+				                                  // Mask out mouse and mouse/key chords
+    private int     all_button_mask   = (MouseEvent.BUTTON1_MASK | 
+					 MouseEvent.BUTTON2_MASK | 
+					 MouseEvent.BUTTON3_MASK | 
+					 MouseEvent.ALT_GRAPH_MASK | 
+					 MouseEvent.CTRL_MASK | 
+					 MouseEvent.META_MASK | 
+					 MouseEvent.SHIFT_MASK | 
+					 MouseEvent.ALT_MASK);
 
     /**
      * Constructs a new ZoomEventHandler.
@@ -42,7 +59,7 @@ public class ZoomEventHandler implements ZEventHandler, ZMouseListener, ZMouseMo
      */
     public ZoomEventHandler(ZNode node) {
 	this.node = node;
-	pressObjPt = new Point2D.Float();
+	pressObjPt = new Point2D.Double();
     }
     
     /**
@@ -64,11 +81,19 @@ public class ZoomEventHandler implements ZEventHandler, ZMouseListener, ZMouseMo
     }
 
     /**
+     * Determines if this event handler is active.
+     * @return True if active
+     */
+    public boolean isActive() {
+	return active;
+    }
+
+    /**
      * Mouse press event handler
      * @param <code>e</code> The event.
      */
     public void mousePressed(ZMouseEvent e) {
-	if ((e.getModifiers() & MouseEvent.BUTTON3_MASK) == MouseEvent.BUTTON3_MASK) {   // Right button only
+	if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON3_MASK) {   // Right button only
 	    ZSceneGraphPath path = e.getPath();
 	    camera = path.getTopCamera();
 	    camera.getDrawingSurface().setInteracting(true);
@@ -77,7 +102,7 @@ public class ZoomEventHandler implements ZEventHandler, ZMouseListener, ZMouseMo
 	    pressObjPt.setLocation(e.getX(), e.getY());
 	    path.screenToGlobal(pressObjPt);
 
-	    scaleDelta = 1.0f;	               // No zooming until the mouse is moved
+	    scaleDelta = 1.0;	               // No zooming until the mouse is moved
 	    startZooming();
 	}
     }
@@ -87,9 +112,9 @@ public class ZoomEventHandler implements ZEventHandler, ZMouseListener, ZMouseMo
      * @param <code>e</code> The event.
      */
     public void mouseDragged(ZMouseEvent e) {
-	if ((e.getModifiers() & MouseEvent.BUTTON3_MASK) == MouseEvent.BUTTON3_MASK) {   // Right button only
-	    float dx = (float)(e.getX() - pressScreenX);
-	    scaleDelta = (float)(1.0f + (0.001f * dx));
+	if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON3_MASK) {   // Right button only
+	    double dx = (double)(e.getX() - pressScreenX);
+	    scaleDelta = (1.0 + (0.001 * dx));
 	}
     }
 
@@ -98,10 +123,14 @@ public class ZoomEventHandler implements ZEventHandler, ZMouseListener, ZMouseMo
      * @param <code>e</code> The event.
      */
     public void mouseReleased(ZMouseEvent e) {
-	if ((e.getModifiers() & MouseEvent.BUTTON3_MASK) == MouseEvent.BUTTON3_MASK) {   // Right button only
+	if ((e.getModifiers() & all_button_mask) == MouseEvent.BUTTON3_MASK) {   // Right button only
 	    stopZooming();
 	    camera = null;
-	    e.getPath().getTopCamera().getDrawingSurface().setInteracting(false);
+	    ZCamera topCamera = e.getPath().getTopCamera();
+	    topCamera.getDrawingSurface().setInteracting(false);
+
+				// do this to generate side effect camera event
+	    topCamera.setViewTransform(topCamera.getViewTransform());
 	}
     }
 
@@ -146,7 +175,7 @@ public class ZoomEventHandler implements ZEventHandler, ZMouseListener, ZMouseMo
      * at its current magnification.
      * @param newMinMag the new minimum magnification
      */
-    public void setMinMagnification(float newMinMag) {
+    public void setMinMagnification(double newMinMag) {
 	minMag = newMinMag;
     }
 
@@ -158,7 +187,7 @@ public class ZoomEventHandler implements ZEventHandler, ZMouseListener, ZMouseMo
      * at its current magnification.
      * @param newMaxMag the new maximum magnification
      */
-    public void setMaxMagnification(float newMaxMag) {
+    public void setMaxMagnification(double newMaxMag) {
 	maxMag = newMaxMag;
     }
 
@@ -177,8 +206,8 @@ public class ZoomEventHandler implements ZEventHandler, ZMouseListener, ZMouseMo
     public void zoomOneStep() {
 	if (zooming) {
 				// Check for magnification bounds
-	    float currentMag = camera.getMagnification();
-	    float newMag = currentMag * scaleDelta;
+	    double currentMag = camera.getMagnification();
+	    double newMag = currentMag * scaleDelta;
 	    if (newMag < minMag) {
 		scaleDelta = minMag / currentMag;
 	    }
@@ -187,7 +216,7 @@ public class ZoomEventHandler implements ZEventHandler, ZMouseListener, ZMouseMo
 	    }
 
 				// Now, go ahead and zoom one step
-	    camera.scale(scaleDelta, (float)pressObjPt.getX(), (float)pressObjPt.getY());
+	    camera.scale(scaleDelta, pressObjPt.getX(), pressObjPt.getY());
 	    
 	    try {
 				// The sleep here is necessary.  Otherwise, there won't be
@@ -206,5 +235,23 @@ public class ZoomEventHandler implements ZEventHandler, ZMouseListener, ZMouseMo
 		zooming = false;
 	    }
 	}
+    }
+    private void writeObject(ObjectOutputStream out) throws IOException {
+	out.defaultWriteObject();
+
+				// write Point2D.double pressObjPt
+	out.writeDouble(pressObjPt.getX());
+	out.writeDouble(pressObjPt.getY());
+    }	
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+	in.defaultReadObject();
+
+	double x, y;
+
+				// read pressObjPt
+	x = in.readDouble();
+	y = in.readDouble();
+	pressObjPt = new Point2D.Double(x, y);
     }
 }

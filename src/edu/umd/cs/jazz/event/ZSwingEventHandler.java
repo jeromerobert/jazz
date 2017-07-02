@@ -1,5 +1,5 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.event;
@@ -29,10 +29,14 @@ import javax.swing.*;
  */
 public class ZSwingEventHandler implements ZEventHandler, ZMouseListener, ZMouseMotionListener {
 
-    // The node to listen to for events
+    /**
+     * The node to listen to for events.
+     */
     protected ZNode listenNode = null;
 
-    // True when event handlers are set active
+    /**
+     * True when event handlers are set active.
+     */
     protected boolean active = false;    
     
     // The previous component - used to generate mouseEntered and
@@ -47,6 +51,9 @@ public class ZSwingEventHandler implements ZEventHandler, ZMouseListener, ZMouse
     Point2D prevPoint = null;
     Point2D prevOff = null;
     
+    // The focused ZSwing for the left button
+    ZSwing focusZSwingLeft = null;
+
     // The focused node for the left button
     ZNode focusNodeLeft = null;
     
@@ -56,6 +63,9 @@ public class ZSwingEventHandler implements ZEventHandler, ZMouseListener, ZMouse
     // Offsets for the focused node for the left button
     int focusOffXLeft = 0;
     int focusOffYLeft = 0;
+
+    // The focused ZSwing for the middle button
+    ZSwing focusZSwingMiddle = null;
 
     // The focused node for the middle button
     ZNode focusNodeMiddle = null;
@@ -67,6 +77,9 @@ public class ZSwingEventHandler implements ZEventHandler, ZMouseListener, ZMouse
     int focusOffXMiddle = 0;
     int focusOffYMiddle = 0;
     
+    // The focused ZSwing for the right button
+    ZSwing focusZSwingRight = null;
+
     // The focused node for the right button
     ZNode focusNodeRight = null;
     
@@ -81,12 +94,20 @@ public class ZSwingEventHandler implements ZEventHandler, ZMouseListener, ZMouse
     ZCanvas canvas;
         
     // Constructor that adds the mouse listeners to a
+    /**
+     * Constructs a new ZSwingEventHandler for the given canvas,
+     * and a node that will recieve the mouse events.
+     * @param canvas the canvas associated with this ZSwingEventHandler.
+     * @param node the node the mouse listeners will be attached to.
+     */
     public ZSwingEventHandler(ZCanvas canvas, ZNode node) {
 	this.canvas = canvas;
 	listenNode = node;
     }
 
-    
+    /**
+     * Constructs a new ZSwingEventHandler for the given canvas.
+     */
     public ZSwingEventHandler(ZCanvas canvas) {
 	this.canvas = canvas;	
     }
@@ -109,10 +130,14 @@ public class ZSwingEventHandler implements ZEventHandler, ZMouseListener, ZMouse
 	}
     }
 
+    /**
+     * Determines if this event handler is active.
+     * @return True if active
+     */
     public boolean isActive() {
 	return active;
     }
-    
+
     // Forwards mousePressed events to Swing components used in Jazz,
     // if any should receive the event
     public void mousePressed(ZMouseEvent e1) {
@@ -208,8 +233,8 @@ public class ZSwingEventHandler implements ZEventHandler, ZMouseListener, ZMouse
 	    ZNode visualNode = currentNode;
 	    if (visualNode instanceof ZVisualLeaf) {
 		    
-	      if (e1.getPath().getObject() == ((ZVisualLeaf)visualNode).getVisualComponent()) {
-	        vc = ((ZVisualLeaf)visualNode).getVisualComponent();
+	      if (e1.getPath().getObject() == ((ZVisualLeaf)visualNode).getFirstVisualComponent()) {
+	        vc = ((ZVisualLeaf)visualNode).getFirstVisualComponent();
 	      }
 	    
 	    }
@@ -228,46 +253,51 @@ public class ZSwingEventHandler implements ZEventHandler, ZMouseListener, ZMouse
 		ZSwing swing = (ZSwing)vc;
 		grabNode = visualNode;
 		
-		pt = new Point2D.Float(e1.getX(), e1.getY());
-		e1.getPath().getTopCamera().cameraToLocal(pt, grabNode);
-		prevPoint = (Point2D)pt.clone();
-		
-		// This is only partially fixed to find the deepest
-		// component at pt.  It needs to do something like
-		// package private method:
-		// Container.getMouseEventTarget(int,int,boolean)
-		comp = findComponentAt(swing.getComponent(),(int)pt.getX(),(int)pt.getY());
-		
-		// We found the right component - but we need to
-		// get the offset to put the event in the component's
-		// coordinates
-		if (comp != null && comp != swing.getComponent()) {
-		    for(Component c = comp; c != swing.getComponent(); c = c.getParent()) {
-			offX += c.getLocation().getX();
-			offY += c.getLocation().getY();
+		if (grabNode.isDescendentOf(canvas.getRoot())) {
+		    pt = new Point2D.Double(e1.getX(), e1.getY());
+		    e1.getPath().getTopCamera().cameraToLocal(pt, grabNode);
+		    prevPoint = (Point2D)pt.clone();
+		    
+		    // This is only partially fixed to find the deepest
+		    // component at pt.  It needs to do something like
+		    // package private method:
+		    // Container.getMouseEventTarget(int,int,boolean)
+		    comp = findComponentAt(swing.getComponent(),(int)pt.getX(),(int)pt.getY());
+		    
+		    // We found the right component - but we need to
+		    // get the offset to put the event in the component's
+		    // coordinates
+		    if (comp != null && comp != swing.getComponent()) {
+			for(Component c = comp; c != swing.getComponent(); c = c.getParent()) {
+			    offX += c.getLocation().getX();
+			    offY += c.getLocation().getY();
+			}
 		    }
-		}
-		
-		// Mouse Pressed gives focus - effects Mouse Drags and
-		// Mouse Releases
-		if (comp != null && e1.getID() == MouseEvent.MOUSE_PRESSED) {
-		    if (SwingUtilities.isLeftMouseButton(e1)) {
-			focusComponentLeft = comp;
-			focusNodeLeft = visualNode;
-			focusOffXLeft = offX;
-			focusOffYLeft = offY;
-		    }
-		    else if (SwingUtilities.isMiddleMouseButton(e1)) {
-			focusComponentMiddle = comp;
-			focusNodeMiddle = visualNode;
-			focusOffXMiddle = offX;
-			focusOffYMiddle = offY;
-		    }
-		    else if (SwingUtilities.isLeftMouseButton(e1)) {
-			focusComponentRight = comp;
-			focusNodeRight = visualNode;
-			focusOffXRight = offX;
-			focusOffYRight = offY;
+		    
+		    // Mouse Pressed gives focus - effects Mouse Drags and
+		    // Mouse Releases
+		    if (comp != null && e1.getID() == MouseEvent.MOUSE_PRESSED) {
+			if (SwingUtilities.isLeftMouseButton(e1)) {
+			    focusZSwingLeft = swing;
+			    focusComponentLeft = comp;
+			    focusNodeLeft = visualNode;
+			    focusOffXLeft = offX;
+			    focusOffYLeft = offY;
+			}
+			else if (SwingUtilities.isMiddleMouseButton(e1)) {
+			    focusZSwingMiddle = swing;
+			    focusComponentMiddle = comp;
+			    focusNodeMiddle = visualNode;
+			    focusOffXMiddle = offX;
+			    focusOffYMiddle = offY;
+			}
+			else if (SwingUtilities.isLeftMouseButton(e1)) {
+			    focusZSwingRight = swing;
+			    focusComponentRight = comp;
+			    focusNodeRight = visualNode;
+			    focusOffXRight = offX;
+			    focusOffYRight = offY;
+			}
 		    }
 		}
 	    }
@@ -283,32 +313,27 @@ public class ZSwingEventHandler implements ZEventHandler, ZMouseListener, ZMouse
 	    if (SwingUtilities.isLeftMouseButton(e1) &&
 		focusComponentLeft != null) {
 		
-		pt = new Point2D.Float(e1.getX(), e1.getY());
-	        e1.getPath().getTopCamera().cameraToLocal(pt, focusNodeLeft);
-		MouseEvent e_temp = new MouseEvent(focusComponentLeft,
-						   e1.getID(),
-						   e1.getWhen(),
-						   e1.getModifiers(),
-						   (int)pt.getX() - focusOffXLeft,
-						   (int)pt.getY() - focusOffYLeft,
-						   e1.getClickCount(),
-						   e1.isPopupTrigger());
-
-		ZMouseEvent e2 = new ZMouseEvent(e_temp.getID(),currentNode,e_temp,e1.getPath());
-		
-		focusComponentLeft.dispatchEvent(e2);
-
-		if (focusNodeLeft instanceof ZVisualLeaf) {
-		    ((ZVisualLeaf)focusNodeLeft).getVisualComponent().repaint();
+		if (focusNodeLeft.isDescendentOf(canvas.getRoot())) {
+		    pt = new Point2D.Double(e1.getX(), e1.getY());
+		    e1.getPath().getTopCamera().cameraToLocal(pt, focusNodeLeft);
+		    MouseEvent e_temp = new MouseEvent(focusComponentLeft,
+						       e1.getID(),
+						       e1.getWhen(),
+						       e1.getModifiers(),
+						       (int)pt.getX() - focusOffXLeft,
+						       (int)pt.getY() - focusOffYLeft,
+						       e1.getClickCount(),
+						       e1.isPopupTrigger());
+		    
+		    ZMouseEvent e2 = new ZMouseEvent(e_temp.getID(),currentNode,e_temp,e1.getPath());
+		    
+		    focusComponentLeft.dispatchEvent(e2);
 		}
-		else if (focusNodeLeft instanceof ZVisualGroup) {
-		    if (((ZVisualGroup)focusNodeLeft).getFrontVisualComponent() instanceof ZSwing) {
-			((ZVisualGroup)focusNodeLeft).getFrontVisualComponent().repaint();
-		    }
-		    else if (((ZVisualGroup)focusNodeLeft).getBackVisualComponent() instanceof ZSwing) {
-			((ZVisualGroup)focusNodeLeft).getBackVisualComponent().repaint();
-		    }
+		else {
+		    focusComponentLeft.dispatchEvent(e1);
 		}
+
+		focusZSwingLeft.repaint();
 				
 		e1.consume();
 		
@@ -322,34 +347,29 @@ public class ZSwingEventHandler implements ZEventHandler, ZMouseListener, ZMouse
 	    // MIDDLE MOUSE BUTTON
 	    if (SwingUtilities.isLeftMouseButton(e1) &&
 		focusComponentMiddle != null) {
-		
-		pt = new Point2D.Float(e1.getX(), e1.getY());
-		e1.getPath().getTopCamera().cameraToLocal(pt, focusNodeMiddle);
-		MouseEvent e_temp = new MouseEvent(focusComponentMiddle,
-						   e1.getID(),
-						   e1.getWhen(),
-						   e1.getModifiers(),
-						   (int)pt.getX() - focusOffXMiddle,
-						   (int)pt.getY() - focusOffYMiddle,
-						   e1.getClickCount(),
-						   e1.isPopupTrigger());
-		
-		ZMouseEvent e2 = new ZMouseEvent(e_temp.getID(),currentNode,e_temp,e1.getPath());
-		
-		focusComponentMiddle.dispatchEvent(e2);
 
-		if (focusNodeMiddle instanceof ZVisualLeaf) {
-		    ((ZVisualLeaf)focusNodeMiddle).getVisualComponent().repaint();
+		if (focusNodeMiddle.isDescendentOf(canvas.getRoot())) {	
+		    pt = new Point2D.Double(e1.getX(), e1.getY());
+		    e1.getPath().getTopCamera().cameraToLocal(pt, focusNodeMiddle);
+		    MouseEvent e_temp = new MouseEvent(focusComponentMiddle,
+						       e1.getID(),
+						       e1.getWhen(),
+						       e1.getModifiers(),
+						       (int)pt.getX() - focusOffXMiddle,
+						       (int)pt.getY() - focusOffYMiddle,
+						       e1.getClickCount(),
+						       e1.isPopupTrigger());
+		    
+		    ZMouseEvent e2 = new ZMouseEvent(e_temp.getID(),currentNode,e_temp,e1.getPath());
+		    
+		    focusComponentMiddle.dispatchEvent(e2);
 		}
-		else if (focusNodeMiddle instanceof ZVisualGroup) {
-		    if (((ZVisualGroup)focusNodeMiddle).getFrontVisualComponent() instanceof ZSwing) {
-			((ZVisualGroup)focusNodeMiddle).getFrontVisualComponent().repaint();
-		    }
-		    else if (((ZVisualGroup)focusNodeMiddle).getBackVisualComponent() instanceof ZSwing) {
-			((ZVisualGroup)focusNodeMiddle).getBackVisualComponent().repaint();
-		    }
+		else {
+		    focusComponentMiddle.dispatchEvent(e1);
 		}
-		
+
+		focusZSwingMiddle.repaint();
+
 		e1.consume();
 		
 		if (e1.getID() == MouseEvent.MOUSE_RELEASED) {
@@ -363,33 +383,28 @@ public class ZSwingEventHandler implements ZEventHandler, ZMouseListener, ZMouse
 	    if (SwingUtilities.isLeftMouseButton(e1) &&
 		focusComponentRight != null) {
 		
-		pt = new Point2D.Float(e1.getX(), e1.getY());
-		e1.getPath().getTopCamera().cameraToLocal(pt, focusNodeRight);
-		MouseEvent e_temp = new MouseEvent(focusComponentRight,
-						   e1.getID(),
-						   e1.getWhen(),
-						   e1.getModifiers(),
-						   (int)pt.getX() - focusOffXRight,
-						   (int)pt.getY() - focusOffYRight,
-						   e1.getClickCount(),
-						   e1.isPopupTrigger());
-
-		ZMouseEvent e2 = new ZMouseEvent(e_temp.getID(),currentNode,e_temp,e1.getPath());
+		if (focusNodeRight.isDescendentOf(canvas.getRoot())) {
+		    pt = new Point2D.Double(e1.getX(), e1.getY());
+		    e1.getPath().getTopCamera().cameraToLocal(pt, focusNodeRight);
+		    MouseEvent e_temp = new MouseEvent(focusComponentRight,
+						       e1.getID(),
+						       e1.getWhen(),
+						       e1.getModifiers(),
+						       (int)pt.getX() - focusOffXRight,
+						       (int)pt.getY() - focusOffYRight,
+						       e1.getClickCount(),
+						       e1.isPopupTrigger());
+		    
+		    ZMouseEvent e2 = new ZMouseEvent(e_temp.getID(),currentNode,e_temp,e1.getPath());
 		
-		focusComponentRight.dispatchEvent(e2);
+		    focusComponentRight.dispatchEvent(e2);
+		}
+		else {
+		    focusComponentRight.dispatchEvent(e1);
+		}
 
-		if (focusNodeRight instanceof ZVisualLeaf) {
-		    ((ZVisualLeaf)focusNodeRight).getVisualComponent().repaint();
-		}
-		else if (focusNodeRight instanceof ZVisualGroup) {
-		    if (((ZVisualGroup)focusNodeRight).getFrontVisualComponent() instanceof ZSwing) {
-			((ZVisualGroup)focusNodeRight).getFrontVisualComponent().repaint();
-		    }
-		    else if (((ZVisualGroup)focusNodeRight).getBackVisualComponent() instanceof ZSwing) {
-			((ZVisualGroup)focusNodeRight).getBackVisualComponent().repaint();
-		    }
-		}
-		
+		focusZSwingRight.repaint();
+
 		e1.consume();
 		
 		if (e1.getID() == MouseEvent.MOUSE_RELEASED) {
@@ -507,7 +522,7 @@ public class ZSwingEventHandler implements ZEventHandler, ZMouseListener, ZMouse
 		canvas.setCursor(comp.getCursor(),false);
 	    }
 	    else {
-		cursorComponent = canvas;
+		cursorComponent = null;
 		canvas.resetCursor();
 	    }
 	}
@@ -516,7 +531,7 @@ public class ZSwingEventHandler implements ZEventHandler, ZMouseListener, ZMouse
 	prevComponent = comp;
 
 	if (comp != null) {
-	    prevOff = new Point2D.Float(offX,offY);
+	    prevOff = new Point2D.Double(offX,offY);
 	}
 	
     }

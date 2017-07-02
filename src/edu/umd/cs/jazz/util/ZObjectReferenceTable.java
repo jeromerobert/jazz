@@ -1,11 +1,11 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.util;
 
-import java.util.Hashtable;
-import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.io.*;
 
 import edu.umd.cs.jazz.*;
@@ -28,19 +28,25 @@ import edu.umd.cs.jazz.*;
  * one instance of it in the entire run-time system.  Rather than call the
  * constructor, use the getInstance() method to access the single instance.
  *
+ * <P>
+ * <b>Warning:</b> Serialized and ZSerialized objects of this class will not be
+ * compatible with future Jazz releases. The current serialization support is
+ * appropriate for short term storage or RMI between applications running the
+ * same version of Jazz. A future release of Jazz will provide support for long
+ * term persistence.
+ *
  * @author Ben Bederson 
  */
 public class ZObjectReferenceTable implements Serializable {
+
+    private HashMap table;
+
     /**
      * The single instance of this table.
      */
     static private ZObjectReferenceTable instance = null;
 
-    /**
-     * The internal table that keeps the mapping between original and cloned objects.
-     */
-    private Hashtable table = null;
-
+    
     /**
        Implements singleton for this class.  Always returns the same instance of ZObjectReferenceTable.
      */
@@ -55,9 +61,7 @@ public class ZObjectReferenceTable implements Serializable {
     /**
      * Constructor for new empty table.
      */
-    protected ZObjectReferenceTable() {
-	table = new Hashtable();
-    }
+    protected ZObjectReferenceTable() { table = new HashMap(); }
 
     /**
      * Adds an original/cloned object pair to the table.
@@ -76,36 +80,23 @@ public class ZObjectReferenceTable implements Serializable {
     }
 
     /**
-     * Goes through all the original objects in the table, and
-     * notifies them to update their internal references, passing in a reference
-     * to this table so it can be queried for original/new object mappings.
+     * Return an iterator for this table.
      */
-    public void updateObjectReferences() {
-	ZSceneGraphObject obj;
-	for (Enumeration e = table.elements() ; e.hasMoreElements() ;) {
-	    obj = (ZSceneGraphObject)e.nextElement();
-	    obj.updateObjectReferences(this);
-	}
+    public Iterator iterator() {
+        return table.values().iterator();
     }
 
     /**
-     * This method is used in conjunction with the clone() method. It can
-     * be used by the updateNodeReferences() method to see if a node that is
-     * being referenced has been duplicated in the new cloned sub-graph.
-     * An object's updateObjectReferences() method would use this method by
-     * calling it with the reference to the old (existed before the clone
-     * operation) object. If the object has been duplicated in the clone
-     * sub-graph, the corresponding object in the cloned sub-graph is
-     * returned. If no corresponding reference is found, a
-     * ZDanglingReferenceException is thrown.
+     * This method is called to test if a node that is referenced by the object 
+     * has been duplicated in the new cloned sub-graph. 
+     * updateObjectReferences() calls this method with a reference to an old 
+     * scene graph object (i.e. one that existed before the clone operation). If the 
+     * object was cloned during the clone operation, the cloned version of the object
+     * is returned. Otherwise, null is returned.
      * @param origObj The reference to the object in the original sub-graph.
+     * @return The cloned version of the Object, or null if it was not cloned.
      */
-    public ZSceneGraphObject getNewObjectReference(ZSceneGraphObject origObj) throws ZDanglingReferenceException {
-	ZSceneGraphObject newObj = (ZSceneGraphObject)table.get(origObj);
-	if (newObj == null) {
-	    throw new ZDanglingReferenceException(origObj);
-	}
-
-	return newObj;
+    public ZSceneGraphObject getNewObjectReference(ZSceneGraphObject origObj) {
+	return (ZSceneGraphObject)table.get(origObj);
     }
 }

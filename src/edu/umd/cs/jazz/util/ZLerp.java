@@ -1,18 +1,18 @@
 /**
- * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * Copyright (C) 1998-2000 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
 package edu.umd.cs.jazz.util;
 
 /** 
- * <b>ZLerp</b> is an interface for specifying how to interpolate a float over an interval.
+ * <b>ZLerp</b> is an interface for specifying how to interpolate a double over an interval.
  * 
  * @author Ben Bederson
  * @see edu.umd.cs.jazz.ZDrawingSurface#findNodes
  */
 public interface ZLerp {
     /**
-     * This method specifies how to interpolate a float over the interval [0, 1].
+     * This method specifies how to interpolate a double over the interval [0, 1].
      * Traditionally, a lerp (linear interpolation) smoothly varies a variable
      * from one point to another over time.  The standard lerp function follows
      * as t varies from 0 to 1.
@@ -32,5 +32,5 @@ public interface ZLerp {
      * suitable for use by a lerp function.
      * @see edu.umd.cs.jazz.ZTransformGroup#animate
      */
-    public float lerpTime(float t);
+    public double lerpTime(double t);
 }

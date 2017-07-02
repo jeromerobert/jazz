@@ -4,14 +4,14 @@
  */
 package edu.umd.cs.jazz.util;
 
-import edu.umd.cs.jazz.scenegraph.ZNode;
+import edu.umd.cs.jazz.ZNode;
 
 /** 
- * A general filter interface that is used to determine if a specified
+ * <b>ZFindFilter</b> provides a general interface that is used to determine if a specified
  * node should be accepted.
  * 
  * @author Ben Bederson
- * @see ZNode#findNodes
+ * @see edu.umd.cs.jazz.ZDrawingSurface#findNodes
  */
 public interface ZFindFilter {
     /**
@@ -21,7 +21,7 @@ public interface ZFindFilter {
      * its children are still examined.
      * @param node The node that is to be examined by this filter
      * @return True if the node is accepted by the filter
-     * @see ZNode#findNodes
+     * @see edu.umd.cs.jazz.ZDrawingSurface#findNodes
      */
     public boolean accept(ZNode node);
 
@@ -31,5 +31,5 @@ public interface ZFindFilter {
      * @param node The node that is to be examined by this filter
      * @return True if this node's children should be searched, or false otherwise.
      */
-    public boolean findChildren(ZNode node);
+    public boolean childrenFindable(ZNode node);
 }

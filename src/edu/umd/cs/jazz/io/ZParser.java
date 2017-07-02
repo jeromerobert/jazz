@@ -1,11 +1,20 @@
-
+/**
+ * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * All rights reserved.
+ */
 package edu.umd.cs.jazz.io;
 
 import java.lang.*;
 import java.io.*;
 import java.lang.reflect.Array;
 
-public class ZParser {
+/** 
+ * <b>ZParser</b> is the top-level api to the Jazz io code.
+ *
+ * @author Ben Bederson
+ * @author Britt McAlister
+ */
+public class ZParser implements Serializable {
 
     protected static ZInternalParser internalParser = null;
     private static final String[][] stringTranslations = {{"\\\\", "\\"},

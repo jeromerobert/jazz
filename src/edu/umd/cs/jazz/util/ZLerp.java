@@ -5,10 +5,10 @@
 package edu.umd.cs.jazz.util;
 
 /** 
- * An interface for specifying how to interpolate a float over an interval.
+ * <b>ZLerp</b> is an interface for specifying how to interpolate a float over an interval.
  * 
  * @author Ben Bederson
- * @see ZNode#findNodes
+ * @see edu.umd.cs.jazz.ZDrawingSurface#findNodes
  */
 public interface ZLerp {
     /**
@@ -30,7 +30,7 @@ public interface ZLerp {
      * <p>
      * This function is meant to define a function that modifies t in a way
      * suitable for use by a lerp function.
-     * @see ZTransform#animate
+     * @see edu.umd.cs.jazz.ZTransformGroup#animate
      */
     public float lerpTime(float t);
 }

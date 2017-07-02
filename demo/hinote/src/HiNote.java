@@ -9,9 +9,14 @@ import java.awt.print.*;
 import java.util.*;
 import java.io.*;
 import java.net.URL;
+import java.util.jar.Attributes;
 import javax.swing.*;
 
-import edu.umd.cs.jazz.scenegraph.*;
+import javax.swing.KeyStroke;
+import javax.swing.JComponent;
+import javax.swing.JMenuBar;
+
+import edu.umd.cs.jazz.*;
 import edu.umd.cs.jazz.component.*;
 import edu.umd.cs.jazz.event.*;
 import edu.umd.cs.jazz.util.*;
@@ -23,94 +28,44 @@ import edu.umd.cs.jazz.io.*;
  *
  * @author  Benjamin B. Bederson
  */
-public class HiNote extends ZBasicFrame {
+public class HiNote extends JFrame implements Serializable {
+    protected int                 width = 500;
+    protected int                 height = 500;
     protected ApplicationMenuBar  menubar;
     protected ApplicationCmdTable cmdTable;
     protected HiNoteCore          hinote;
     protected String              title = "HiNote";
+    protected ZCanvas             canvas; 
 
     public HiNote() {
-	setLookAndFeel(METAL_LAF);
-	cmdTable = new ApplicationCmdTable(this);
-	hinote = new HiNoteCore(getContentPane(), getComponent());
-	setTitle(title);
+				// Support exiting application
+	addWindowListener(new WindowAdapter() {
+	    public void windowClosing(WindowEvent e) {
+		System.exit(0);
+	    }
+	});
 
-				// Create menu bar
+				// Set up basic frame
+	setBounds(100, 100, width, height);
+	setResizable(true);
+	setBackground(null);
+	canvas = new ZCanvas();
+	getContentPane().add(canvas);
+
+				// Set up core of Hinote
+	cmdTable = new ApplicationCmdTable(this);
+	hinote = new HiNoteCore(getContentPane(), canvas);
+	hinote.setLookAndFeel(HiNoteCore.METAL_LAF, this);
+	setTitle(title);
 	menubar = new ApplicationMenuBar(hinote.getCmdTable(), cmdTable);
 	setJMenuBar(menubar);
-
-				// Deactivate ZBasicFrame event handlers since HiNote makes its own
-	deactivateEventHandlers();
+				// Deactivate ZCanvas event handlers since HiNote makes its own
+	canvas.setNavEventHandlersActive(false);
 
                                 // Load toolbar images and cursors
-	hinote.loadToolbarImages();
+	hinote.loadToolbarImageCursors();
 
-	/*
-				// Some temporary event testing code
-	getLayer().addNodeContainerListener(new ZNodeContainerListener() {
-	    public void nodeAdded(ZNodeContainerEvent e) {
-		System.out.println("Node added: source = " + e.getNode() + ", child = " + e.getChild());
-	    }
-
-	    public void nodeRemoved(ZNodeContainerEvent e) {
-		System.out.println("Node remove: source = " + e.getNode() + ", child = " + e.getChild());
-	    }	    
-	});
-	*/
-
-	/*
-				// Some temporary sticky object testing code
-	ZNode node, node1, node2;
-	ZRectangle rect1, rect2;
-	ZPolyline poly;
-	ZStickyDecorator sticky;
-
-	poly = new ZPolyline(-100, 0, 100, 0);
-	node = new ZNode(poly);
-	getLayer().addChild(node);
-	poly = new ZPolyline(0, -100, 0, 100);
-	node = new ZNode(poly);
-	getLayer().addChild(node);
-
-	rect1 = new ZRectangle(0, 0, 100, 100);
-	rect1.setFillColor(Color.red);
-	node1 = new ZNode(rect1);
-	node1.setAlpha(0.5f);
-	getLayer().addChild(node1);
-
-	rect2 = new ZRectangle(0, 0, 100, 100);
-	rect2.setFillColor(Color.orange);
-	sticky = new ZStickyDecorator(getCamera(), rect2);
-	node2 = new ZNode(sticky);
-	node2.setAlpha(0.5f);
-	getLayer().addChild(node2);
-
-	getCamera().getViewTransform().scale(2.0f);
-
-	node1.getTransform().translateTo(100, 0);
-	node2.getTransform().translateTo(100, 0);
-
-	getSurface().restore();
-	*/
-
-	/*
-				// Simple Test code for layout
-	ZPathLayoutManager layout = new ZPathLayoutManager();
-	layout.setShape(new Ellipse2D.Float(0, 0, 200, 200));
-	getLayer().setLayoutManager(layout);
-
-	JMenu layoutMenu = new JMenu("Layout");
-	JMenuItem menuItem = new JMenuItem("doLayout");
-	menuItem.addActionListener(new ActionListener() {
-	    public void actionPerformed(ActionEvent e) {
-		HiNote.this.getLayer().doLayout();
-		HiNote.this.getSurface().restore();
-	    }
-	});
-	layoutMenu.add(menuItem);
-	menubar.add(layoutMenu);
-	menubar.revalidate();
-	*/
+	setVisible(true);
     }
 
     public void loadModule() {
@@ -129,9 +84,9 @@ public class HiNote extends ZBasicFrame {
 		if (instance instanceof ZLoadable) {
 		    ZLoadable loadable = (ZLoadable)instance;
 		    loadable.setMenubar(menubar);
-		    loadable.setCamera(getCamera());
-		    loadable.setSurface(getSurface());
-		    loadable.setLayer(getLayer());
+		    loadable.setCamera(canvas.getCamera());
+		    loadable.setDrawingSurface(canvas.getDrawingSurface());
+		    loadable.setLayer(canvas.getLayer());
 		}
 		if (instance instanceof Runnable) {
 		    Runnable runnable = (Runnable)instance;
@@ -148,6 +103,10 @@ public class HiNote extends ZBasicFrame {
 		System.out.println("Security exception while loading class: " + e);
 	    }
 	}
+    }
+
+    public Map getHelpMap() {
+	return hinote.getHelpMap();
     }
 
     static public void main(String s[]) {
@@ -167,14 +126,12 @@ class ApplicationMenuBar extends JMenuBar {
 	JMenu insert = createInsertMenu(cmdTable, applicationCmdTable);
 	JMenu view = createViewMenu(cmdTable, applicationCmdTable);
 	JMenu help = createHelpMenu(cmdTable, applicationCmdTable);
-	//JLabel logo = createLogoLabel();
 
 	this.add(file);
 	this.add(edit);
 	this.add(view);
 	this.add(insert);
 	this.add(help); 
-	//this.add(logo, BorderLayout.EAST);
     }
     
     /**
@@ -247,6 +204,13 @@ class ApplicationMenuBar extends JMenuBar {
 	edit.setMnemonic('E');
 	JMenuItem menuItem;
 	
+	menuItem = new JMenuItem("Font Chooser");
+	menuItem.addActionListener(cmdTable.lookupActionListener("font"));
+	menuItem.addPropertyChangeListener(cmdTable.lookupPropertyListener("fontComponent"));
+	edit.add(menuItem);
+
+	edit.addSeparator();
+
 	menuItem = new JMenuItem("Cut");
 	menuItem.setMnemonic('T');
 	menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, KeyEvent.CTRL_MASK));
@@ -366,6 +330,19 @@ class ApplicationMenuBar extends JMenuBar {
 	return edit;
     }
     
+    protected JMenu createInsertMenu(CmdTable cmdTable, ApplicationCmdTable applicationCmdTable) {
+	JMenu insert = new JMenu("Insert");
+	insert.setMnemonic('I');
+	JMenuItem menuItem;
+
+	menuItem = new JMenuItem("Image ...");
+	menuItem.setMnemonic('m');
+	menuItem.addActionListener(cmdTable.lookupActionListener("insert image"));
+	insert.add(menuItem);
+
+	return insert;
+    }
+
     protected JMenu createViewMenu(CmdTable cmdTable, ApplicationCmdTable applicationCmdTable) {
 	JMenu view = new JMenu("View");
 	view.setMnemonic('V');
@@ -400,18 +377,6 @@ class ApplicationMenuBar extends JMenuBar {
 	return view;
     }
 
-    protected JMenu createInsertMenu(CmdTable cmdTable, ApplicationCmdTable applicationCmdTable) {
-	JMenu insert = new JMenu("Insert");
-	insert.setMnemonic('I');
-	JMenuItem menuItem;
-
-	menuItem = new JMenuItem("Image ...");
-	menuItem.setMnemonic('m');
-	menuItem.addActionListener(cmdTable.lookupActionListener("insert image"));
-	insert.add(menuItem);
-
-	return insert;
-    }
 
     protected JMenu createLAFMenu(CmdTable cmdTable, ApplicationCmdTable applicationCmdTable) {
 	JMenu laf = new JMenu("Look & Feel");
@@ -468,15 +433,15 @@ class ApplicationMenuBar extends JMenuBar {
 
 	debug.addSeparator();
 
-        checkBox = new JCheckBoxMenuItem("Debug Painting");
+        checkBox = new JCheckBoxMenuItem("Debug Rendering");
 	checkBox.setMnemonic('P');
-        checkBox.addItemListener(cmdTable.lookupItemListener("debug paint"));
+        checkBox.addItemListener(cmdTable.lookupItemListener("debug render"));
 	checkBox.setSelected(false);
         debug.add(checkBox);
 
-        checkBox = new JCheckBoxMenuItem("Debug Damage");
+        checkBox = new JCheckBoxMenuItem("Debug Repainting");
 	checkBox.setMnemonic('M');
-        checkBox.addItemListener(cmdTable.lookupItemListener("debug damage"));
+        checkBox.addItemListener(cmdTable.lookupItemListener("debug repaint"));
 	checkBox.setSelected(false);
         debug.add(checkBox);
 
@@ -516,20 +481,32 @@ class ApplicationMenuBar extends JMenuBar {
 	help.setMnemonic('H');
 	JMenuItem menuItem;
 	
-	menuItem = new JMenuItem("Using HiNote");
-	menuItem.setMnemonic('U');
-	menuItem.addActionListener(cmdTable.lookupActionListener("using hinote"));
-	help.add(menuItem);
+	Map helpMap = applicationCmdTable.getHelpMap();
+	if (helpMap != null) {
+	    Set set = helpMap.entrySet();
+	    Iterator i = set.iterator();
+	    while (i.hasNext()) {
+		Map.Entry me = (Map.Entry)i.next();
+		Attributes attr = (Attributes)me.getValue();
 
-	menuItem = new JMenuItem("About Jazz");
-	menuItem.setMnemonic('A');
-	menuItem.addActionListener(cmdTable.lookupActionListener("about jazz"));
-	help.add(menuItem);
+		String aMenuItem = attr.getValue("MenuItem");
+		menuItem = new JMenuItem(aMenuItem);
 
-	help.addSeparator();
+		String mnemonic = attr.getValue("Mnemonic");
+		menuItem.setMnemonic(mnemonic.charAt(0));
 
-	JMenu debug = createDebugMenu(cmdTable, applicationCmdTable);
-	help.add(debug);
+		String actionListener = attr.getValue("ActionListener");
+		menuItem.addActionListener(cmdTable.lookupActionListener(actionListener));
+
+		help.add(menuItem);
+	    }
+	}
+
+	if (ZDebug.debug) {
+	    help.addSeparator();
+	    JMenu debug = createDebugMenu(cmdTable, applicationCmdTable);
+	    help.add(debug);
+	}
 
 	return help;
     }
@@ -545,19 +522,19 @@ class ApplicationCmdTable  {
 
 	actionMap.put("cross platform", new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		hinote.setLookAndFeel(ZBasicFrame.METAL_LAF);
+		HiNoteCore.setLookAndFeel(HiNoteCore.METAL_LAF, hinote);
 	    }
 	});
 
 	actionMap.put("motif", new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		hinote.setLookAndFeel(ZBasicFrame.MOTIF_LAF);
+		HiNoteCore.setLookAndFeel(HiNoteCore.MOTIF_LAF, hinote);
 	    }
 	});
 
 	actionMap.put("ms windows", new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		hinote.setLookAndFeel(ZBasicFrame.WINDOWS_LAF);
+		HiNoteCore.setLookAndFeel(HiNoteCore.WINDOWS_LAF, hinote);
 	    }
 	});
 
@@ -579,5 +556,9 @@ class ApplicationCmdTable  {
 
     public ItemListener lookupItemListener(String key) {
 	return (ItemListener)actionMap.get(key);
+    }
+
+    public Map getHelpMap() {
+	return hinote.getHelpMap();
     }
 }

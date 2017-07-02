@@ -5,12 +5,13 @@
 package edu.umd.cs.jazz.component;
 
 import java.awt.*;
+import java.io.*;
 import java.awt.geom.*;
 import java.io.IOException;
 import java.util.Vector;
 import java.util.Iterator;
 
-import edu.umd.cs.jazz.scenegraph.*;
+import edu.umd.cs.jazz.*;
 import edu.umd.cs.jazz.io.*;
 import edu.umd.cs.jazz.util.*;
 
@@ -20,17 +21,11 @@ import edu.umd.cs.jazz.util.*;
  *
  * @author  Benjamin B. Bederson
  */
-public class ZPolygon extends ZCoordList {
-    static public final Color  DEFAULT_PEN_COLOR  = Color.black;
+public class ZPolygon extends ZCoordList implements ZFillColor, Serializable {
     static public final Color  DEFAULT_FILL_COLOR = Color.white;
-    static public final float  DEFAULT_PEN_WIDTH  = 1.0f;
 
-    protected Color       penColor   = DEFAULT_PEN_COLOR;
     protected Color       fillColor  = DEFAULT_FILL_COLOR;
-    protected float       penWidth   = DEFAULT_PEN_WIDTH;
-    protected int         join       = BasicStroke.JOIN_BEVEL;
-    protected BasicStroke stroke = new BasicStroke(DEFAULT_PEN_WIDTH, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
-    
+
     /**
      * Constructs a new ZPolygon with no points.
      */
@@ -90,80 +85,47 @@ public class ZPolygon extends ZCoordList {
     }
 
     /**
-     * Constructs a new ZPolygon that is a duplicate of the reference polygon, i.e., a "copy constructor"
-     * @param <code>poly</code> Reference polygon
+     * Copies all object information from the reference object into the current
+     * object. This method is called from the clone method.
+     * All ZSceneGraphObjects objects contained by the object being duplicated
+     * are duplicated, except parents which are set to null.  This results
+     * in the sub-tree rooted at this object being duplicated.
+     *
+     * @param refPoly The reference visual component to copy
      */
-    public ZPolygon(ZPolygon poly) {
-	super(poly);
+    public void duplicateObject(ZPolygon refPoly) {
+	super.duplicateObject(refPoly);
 
-	penColor = poly.penColor;
-	fillColor = poly.fillColor;
-	penWidth = poly.penWidth;
-	join = poly.join;
-	stroke = new BasicStroke(penWidth, BasicStroke.CAP_BUTT, join);
+	fillColor = refPoly.fillColor;
     }
 
     /**
-     * Duplicates the current ZPolygon by using the copy constructor.
-     * See the copy constructor comments for complete information about what is duplicated.
-     * @see #ZPolygon(ZPolygon)
+     * Duplicates the current object by using the copy constructor.
+     * The portion of the reference object that is duplicated is that necessary to reuse the object
+     * in a new place within the scenegraph, but the new object is not inserted into any scenegraph.
+     * The object must be attached to a live scenegraph (a scenegraph that is currently visible)
+     * or be registered with a camera directly in order for it to be visible.
+     *
+     * @return A copy of this visual component.
+     * @see #updateObjectReferences
      */
     public Object clone() {
-	return new ZPolygon(this);
+	ZPolygon copy;
+
+	objRefTable.reset();
+	copy = new ZPolygon();
+	copy.duplicateObject(this);
+	objRefTable.addObject(this, copy);
+	objRefTable.updateObjectReferences();
+
+	return copy;
     }
-    
+
     //****************************************************************************
     //
     //			Get/Set and pairs
     //
     //***************************************************************************
-    
-    /**
-     * Get the width of the pen used to draw the line around the edge of this polygon.
-     * The pen is drawn centered around the polygon vertices, so if the pen width
-     * is thick, the bounds of the polygon will grow.
-     * @return the pen width.
-     */
-    public float getPenWidth() {
-	return penWidth;
-    }
-
-    /**
-     * Set the width of the pen used to draw the line around the edge of this polygon.
-     * The pen is drawn centered around the polygon vertices, so if the pen width
-     * is thick, the bounds of the polyline will grow.
-     * @param width the pen width.
-     */
-    public void setPenWidth(float width) {
-	penWidth = width;
-	stroke = new BasicStroke(penWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
-	damage(true);
-    }
-
-    /**
-     * Get the pen color of this polygon.
-     * @return the pen color.
-     */
-    public Color getPenColor() {
-	return penColor;
-    }
-
-    /**
-     * Set the pen color of this polygon.
-     * @param color the pen color, or null if none.
-     */
-    public void setPenColor(Color color) {
-	boolean boundsChanged = false;
-
-				// If turned pen color on or off, then need to recompute bounds
-	if (((penColor == null) && (color != null)) ||
-	    ((penColor != null) && (color == null))) {
-	    boundsChanged = true;
-	}
-
-	penColor = color;
-	damage(boundsChanged);
-    }   
 
     /**
      * Get the fill color of this polygon.
@@ -179,7 +141,9 @@ public class ZPolygon extends ZCoordList {
      */
     public void setFillColor(Color color) {
 	fillColor = color;
-    }   
+
+	repaint();
+    }
 
     //****************************************************************************
     //
@@ -189,8 +153,16 @@ public class ZPolygon extends ZCoordList {
 
     /**
      * Paints this object.
-     * @param <code>g2</code> The graphics context to paint into.  */
-    public void paint(ZRenderContext renderContext) {
+     * <p>
+     * The transform, clip, and composite will be set appropriately when this object
+     * is rendered.  It is up to this object to restore the transform, clip, and composite of
+     * the Graphics2D if this node changes any of them. However, the color, font, and stroke are
+     * unspecified by Jazz.  This object should set those things if they are used, but
+     * they do not need to be restored.
+     *
+     * @param <code>renderContext</code> The graphics context to paint into.
+     */
+    public void render(ZRenderContext renderContext) {
 	Graphics2D g2 = renderContext.getGraphics2D();
 
 				// First fill in polygon
@@ -208,36 +180,51 @@ public class ZPolygon extends ZCoordList {
     }
 
     /**
-     * Notifies this object that it has changed and that it should update 
+     * Notifies this object that it has changed and that it should update
      * its notion of its bounding box.  Note that this should not be called
      * directly.  Instead, it is called by <code>updateBounds</code> when needed.
-     *
-     * @see ZNode#getGlobalBounds()
      */
-    protected void computeLocalBounds() {
+    protected void computeBounds() {
 	int i;
 	float[] coords = new float[6];
+	float xmin, ymin, xmax, ymax;
 
-	localBounds.reset();
-	for (i=0; i<np; i++) {
-	    localBounds.add(xp[i], yp[i]);
+	bounds.reset();
+	if (np == 0) {
+	    return;
+	}
+
+	xmin = xp[0];
+	ymin = yp[0];
+	xmax = xp[0];
+	ymax = yp[0];
+	for (i=1; i<np; i++) {
+	    if (xp[i] < xmin) xmin = xp[i];
+	    if (yp[i] < ymin) ymin = yp[i];
+	    if (xp[i] > xmax) xmax = xp[i];
+	    if (yp[i] > ymax) ymax = yp[i];
 	}
 
 				// Expand the bounds to accomodate the pen width
 	if (penColor != null) {
-	    float p, p2;
-	    p = penWidth;
-	    p2 = 0.5f * p;
-	    localBounds.setRect(localBounds.x - p2, localBounds.y - p2, localBounds.width + p, localBounds.height + p);
+	    float p2;
+	    p2 = 0.5f * penWidth;
+	    xmin -= p2;
+	    ymin -= p2;
+	    xmax += p2;
+	    ymax += p2;
 	}
+
+	bounds.setRect(xmin, ymin, xmax - xmin, ymax - ymin);
     }
 
     /**
      * Returns true if the specified rectangle is on the polygon.
      * @param <code>rect</code> Pick rectangle of object coordinates.
      * @return True if rectangle overlaps object.
+     * @see ZDrawingSurface#pick(int, int)
      */
-    public boolean pick(Rectangle2D rect) {
+    public boolean pick(Rectangle2D rect, ZSceneGraphPath path) {
 	boolean picked = false;
 
 	if (pickBounds(rect)) {
@@ -259,7 +246,7 @@ public class ZPolygon extends ZCoordList {
      */
     protected boolean intersectsPolygon(Rectangle2D rect) {
 	boolean inside = false;
-	
+
 	// we check each vertix of the rectangle to see if it's inside the polygon
 
 	// check upper left corner
@@ -281,7 +268,7 @@ public class ZPolygon extends ZCoordList {
 			int i = 0;
 			while (!inside && (i < (np - 1))) {
 			    // for each edge
-			    inside = rect.intersectsLine(new Line2D.Double(xp[i], yp[i], 
+			    inside = rect.intersectsLine(new Line2D.Double(xp[i], yp[i],
 									  xp[i + 1], yp[i + 1]));
 
 			    i++;
@@ -307,16 +294,16 @@ public class ZPolygon extends ZCoordList {
 	boolean inside = false;
 	Point2D p1 = new Point2D.Float();
 	Point2D p2 = new Point2D.Float();
-	
+
 	for (i = 0; i < (np - 1); i++) {
 	    p1.setLocation(xp[i], yp[i]);
 	    p2.setLocation(xp[i + 1], yp[i + 1]);
-	    angle += ZUtil.angleBetweenPoints(pt, p1, p2); 
+	    angle += ZUtil.angleBetweenPoints(pt, p1, p2);
 	}
 	p1.setLocation(xp[np - 1], yp[np - 1]);
 	p2.setLocation(xp[0], yp[0]);
 	angle += ZUtil.angleBetweenPoints(pt, p1, p2);
-	
+
 				// Allow for a bit of rounding
 				// Ideally, angle should be 2*pi.
 	if (java.lang.Math.abs(angle) > 6.2) {
@@ -324,7 +311,7 @@ public class ZPolygon extends ZCoordList {
 	} else {
 	    inside = false;
 	}
-	
+
 	return inside;
     }
 
@@ -341,9 +328,6 @@ public class ZPolygon extends ZCoordList {
     public void writeObject(ZObjectOutputStream out) throws IOException {
 	super.writeObject(out);
 
-	if ((penColor != null) && (penColor != DEFAULT_PEN_COLOR)) {
-	    out.writeState("java.awt.Color", "penColor", penColor);
-	}
 	if ((fillColor != null) && (fillColor != DEFAULT_FILL_COLOR)) {
 	    out.writeState("java.awt.Color", "fillColor", fillColor);
 	}
@@ -365,9 +349,7 @@ public class ZPolygon extends ZCoordList {
     public void setState(String fieldType, String fieldName, Object fieldValue) {
 	super.setState(fieldType, fieldName, fieldValue);
 
-	if (fieldName.compareTo("penColor") == 0) {
-	    setPenColor((Color)fieldValue);
-	} else if (fieldName.compareTo("fillColor") == 0) {
+	if (fieldName.compareTo("fillColor") == 0) {
 	    setFillColor((Color)fieldValue);
 	} else if (fieldName.compareTo("penWidth") == 0) {
 	    setPenWidth(((Float)fieldValue).floatValue());

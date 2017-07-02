@@ -1,4 +1,4 @@
-This is the Jazz README file for Jazz Version 0.5
+This is the Jazz README file for Jazz Version 0.6
 
 INSTALLATION NOTES
 
@@ -9,20 +9,25 @@ INSTALLATION NOTES
   If some of these are not available on your system, you will get those
   warnings.  You can either ignore the warnings, or edit the font.properties
   file to remove the fonts that your system does not have.
+
+* The standard 'unzip' utility on Solaris does not respect filename case,
+  and leaves files in MS-DOS file format.  If you use unzip on Solaris
+  (and possibly other Unix systems), you must specify the -U and -a options.
+  I.e: unzip -U -a jazz-0.6.zip
  
 INTELLECTUAL PROPERTY NOTES
 
-In this directory tree, we are pre-releasing Jazz to the interested
+In this directory tree, we are releasing Jazz to the interested
 development community as Open Source code.
 
-We are intending to follow an Open Source model to make sure that the
+We are following an Open Source model to make sure that the
 widest possible community has access to and builds on the Jazz
 platform. In addition to downloading the Jazz source code, you can
-request to be added to the Jazz Mailing Lists. You do not need to
-register in order to download Jazz, but we appreciate it if you do. In
-addition to putting yourself on mailing lists (if you choose), we can
-make a stronger case for the success of Jazz if we know who is using
-it.
+request to be added to the Jazz mailing lists. You do not need to
+register in order to download Jazz, but we appreciate it if you do. 
+We can make a stronger case for the success of Jazz if we know 
+who is using it.  Register at:
+http://www.cs.umd.edu/hcil/jazz/download/register
 
 Jazz is copyrighted by the University of Maryland, and is available
 for all users, in accordance with the Open Source model. It is
@@ -53,7 +58,7 @@ Notes about Jazz and Open Source:
   proprietary and legacy applications.
 
 * We have not done all the checking that needs to be completed to
- satisfy section 3.4a (third party intellectual property
+  satisfy section 3.4a (third party intellectual property
   claims). Anyone using the code does so at their own risk.
 
 If you re-distribute this code, with or without modifications, then
@@ -78,7 +83,7 @@ The Initial Developer of the Original Code is Ben Bederson. Portions
 created by Ben Bederson are Copyright (C) University of Maryland. All
 Rights Reserved.
 
-Contributor(s): Ben Bederson; Britt McAlister" 
+Contributor(s): Ben Bederson; Britt McAlister; Jim Mokwa; Lance Good" 
 
 --------------------------------------------------------------------------------
 

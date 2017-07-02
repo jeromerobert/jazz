@@ -6,31 +6,44 @@ import java.io.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Hashtable;
+import java.util.*;
 import javax.swing.*;
+import javax.swing.event.*;
+import java.beans.*;
+import java.util.jar.Attributes;
 
-import edu.umd.cs.jazz.component.*;
-import edu.umd.cs.jazz.scenegraph.*;
+import edu.umd.cs.jazz.*;
 import edu.umd.cs.jazz.util.*;
+import edu.umd.cs.jazz.component.*;
 
-public class CmdTable  {
+public class CmdTable implements Serializable  {
     protected Hashtable actionMap;
     protected HiNoteCore hinote;
-    
+    protected String entryName;
+
     public CmdTable(HiNoteCore hn) {
 	hinote = hn;
 	actionMap = new Hashtable();
 
-	actionMap.put("using hinote", new ActionListener() {
-	    public void actionPerformed(ActionEvent e) {
-		hinote.helpUsing();
-	    }
-	});
+				// add action listeners from help.jar manifest entries
+	Map helpMap = hn.getHelpMap();
+	if (helpMap != null) {
+	    Set set = helpMap.entrySet();
+	    Iterator i = set.iterator();
+	    while (i.hasNext()) {
+		Map.Entry me = (Map.Entry)i.next();
+		entryName = me.getKey().toString();
+		Attributes attr = (Attributes)me.getValue();
+		String actionListener = attr.getValue("ActionListener");
 
-	actionMap.put("about jazz", new ActionListener() {
-	    public void actionPerformed(ActionEvent e) {
-		hinote.helpAbout();
+		actionMap.put(actionListener, new ActionListener() {
+		    final public String entry = entryName;
+		    public void actionPerformed(ActionEvent e) {
+			hinote.loadJazzFile(entry, "help.jar");
+		    }
+		});
 	    }
-	});
+	}
 
 	actionMap.put("open", new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
@@ -115,6 +128,12 @@ public class CmdTable  {
 	    }
 	});
 
+	actionMap.put("polygon", new AbstractAction("Polygon") {
+	    public void actionPerformed(ActionEvent e) {
+		hinote.setEventHandler(HiNoteCore.POLYGON_MODE);
+	    }
+	});
+
 	actionMap.put("rectangle", new AbstractAction("Rectangle") {
 	    public void actionPerformed(ActionEvent e) {
 		hinote.setEventHandler(HiNoteCore.RECTANGLE_MODE);
@@ -124,6 +143,12 @@ public class CmdTable  {
 	actionMap.put("text", new AbstractAction("Text") {
 	    public void actionPerformed(ActionEvent e) {
 		hinote.setEventHandler(HiNoteCore.TEXT_MODE);
+	    }
+	});
+
+	actionMap.put("font", new ActionListener() {
+	    public void actionPerformed(ActionEvent e) {
+		hinote.fontChooser();
 	    }
 	});
 
@@ -177,13 +202,13 @@ public class CmdTable  {
 
 	actionMap.put("sticky", new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		hinote.makeSticky();
+		hinote.makeSticky(ZStickyGroup.STICKY);
 	    }
 	});
 
 	actionMap.put("stickyz", new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		hinote.makeStickyZ();
+		hinote.makeSticky(ZStickyGroup.STICKYZ);
 	    }
 	});
 
@@ -195,26 +220,25 @@ public class CmdTable  {
 
 	actionMap.put("delete", new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		hinote.deleteSelected();
+		hinote.delete();
 	    }
 	});
 
 	actionMap.put("group", new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		hinote.groupSelected();
+		hinote.group();
 	    }
 	});
 
 	actionMap.put("ungroup", new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		hinote.ungroupSelected();
+		hinote.ungroup();
 	    }
 	});
 
 	actionMap.put("select all", new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		hinote.getDrawingLayer().selectAll(hinote.getCamera());
-		hinote.getSurface().restore();
+		hinote.selectAll();
 	    }
 	});
 
@@ -227,19 +251,19 @@ public class CmdTable  {
 
 	actionMap.put("low-quality", new ItemListener() {
 	    public void itemStateChanged(ItemEvent e) {
-		hinote.setRenderQuality(ZSurface.RENDER_QUALITY_LOW);
+		hinote.setRenderQuality(ZDrawingSurface.RENDER_QUALITY_LOW);
 	    }
 	});
 
 	actionMap.put("med-quality", new ItemListener() {
 	    public void itemStateChanged(ItemEvent e) {
-		hinote.setRenderQuality(ZSurface.RENDER_QUALITY_MEDIUM);
+		hinote.setRenderQuality(ZDrawingSurface.RENDER_QUALITY_MEDIUM);
 	    }
 	});
 
 	actionMap.put("high-quality", new ItemListener() {
 	    public void itemStateChanged(ItemEvent e) {
-		hinote.setRenderQuality(ZSurface.RENDER_QUALITY_HIGH);
+		hinote.setRenderQuality(ZDrawingSurface.RENDER_QUALITY_HIGH);
 	    }
 	});
 
@@ -251,22 +275,22 @@ public class CmdTable  {
 	    }
 	});
 
-	actionMap.put("debug paint", new ItemListener() {
+	actionMap.put("debug render", new ItemListener() {
 	    public void itemStateChanged(ItemEvent e) {
 		if (e.getStateChange() == ItemEvent.SELECTED) {
-		    ZDebug.setDebug(ZDebug.DEBUG_PAINT);
+		    ZDebug.debugRender = true;
 		} else {
-		    ZDebug.setDebug(ZDebug.DEBUG_NONE);
+		    ZDebug.debugRender = false;
 		}
 	    }
 	});
 
-	actionMap.put("debug damage", new ItemListener() {
+	actionMap.put("debug repaint", new ItemListener() {
 	    public void itemStateChanged(ItemEvent e) {
 		if (e.getStateChange() == ItemEvent.SELECTED) {
-		    ZDebug.setDebug(ZDebug.DEBUG_DAMAGE);
+		    ZDebug.debugRepaint = true;
 		} else {
-		    ZDebug.setDebug(ZDebug.DEBUG_NONE);
+		    ZDebug.debugRepaint = false;
 		}
 	    }
 	});
@@ -274,9 +298,9 @@ public class CmdTable  {
 	actionMap.put("debug time", new ItemListener() {
 	    public void itemStateChanged(ItemEvent e) {
 		if (e.getStateChange() == ItemEvent.SELECTED) {
-		    ZDebug.setDebug(ZDebug.DEBUG_TIME);
+		    ZDebug.debugTiming = true;
 		} else {
-		    ZDebug.setDebug(ZDebug.DEBUG_NONE);
+		    ZDebug.debugTiming = false;
 		}
 	    }
 	});
@@ -289,26 +313,22 @@ public class CmdTable  {
 		else {
 		    ZDebug.setShowBounds(false, null);
 		}
-		ZSurface surface = hinote.getSurface();
-		if (surface != null) {
-		    surface.repaint();
-		}
 	    }
 	});
 
 	actionMap.put("show rgn mgmt", new ItemListener() {
 	    public void itemStateChanged(ItemEvent e) {
 		if (e.getStateChange() == ItemEvent.SELECTED) {
-		    ZDebug.setDebugRegionMgmt(true);
+		    ZDebug.debugRegionMgmt = true;
 		} else {
-		    ZDebug.setDebugRegionMgmt(false);
+		    ZDebug.debugRegionMgmt = false;
 		}
 	    }
 	});
 
 	actionMap.put("double buffer", new ItemListener() {
 	    public void itemStateChanged(ItemEvent e) {
-		ZBasicComponent component = hinote.getComponent();
+		ZCanvas component = hinote.getCanvas();
 		if (e.getStateChange() == ItemEvent.SELECTED) {
 		    RepaintManager.currentManager(component).setDoubleBufferingEnabled(true);
 		} else {
@@ -316,6 +336,43 @@ public class CmdTable  {
 		}
 	    }
 	});
+
+	actionMap.put("fontComponent", new PropertyChangeListener() {
+	    public void propertyChange(PropertyChangeEvent e) {
+		if (e.getPropertyName() == "fontComponentSelection") {
+		    hinote.chooseFonts();
+		}
+	    }
+	});
+
+	actionMap.put("colorComponent", new PropertyChangeListener() {
+	    public void propertyChange(PropertyChangeEvent e) {
+		if (e.getPropertyName() == "colorComponentSelection") {
+		    hinote.chooseColors();
+		}
+	    }
+	});
+
+	actionMap.put("penComponent", new PropertyChangeListener() {
+	    public void propertyChange(PropertyChangeEvent e) {
+		if (e.getPropertyName() == "penComponentSelection") {
+		    hinote.updatePenWidth();
+		}
+	    }
+	});
+
+	actionMap.put("penColorChange", new ChangeListener() {
+	    public void stateChanged(ChangeEvent e) {
+		hinote.updatePenColor();
+	    }
+	});
+	    
+	actionMap.put("fillColorChange", new ChangeListener() {
+	    public void stateChanged(ChangeEvent e) {
+		hinote.updateFillColor();
+	    }
+	});
+	    
     }
 
     public Action lookupAction(String key) {
@@ -328,5 +385,13 @@ public class CmdTable  {
 
     public ItemListener lookupItemListener(String key) {
 	return (ItemListener)actionMap.get(key);
+    }
+
+    public PropertyChangeListener lookupPropertyListener(String key) {
+	return (PropertyChangeListener)actionMap.get(key);
+    }
+
+    public ChangeListener lookupChangeListener(String key) {
+	return (ChangeListener)actionMap.get(key);
     }
 }

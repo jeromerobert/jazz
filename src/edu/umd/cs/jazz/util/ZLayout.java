@@ -7,47 +7,48 @@ package edu.umd.cs.jazz.util;
 
 import java.util.*;
 import java.awt.geom.*;
+import java.io.*;
 
-import edu.umd.cs.jazz.scenegraph.*;
+import edu.umd.cs.jazz.*;
 
 /**
- * ZLayout is a utility class that provides general-purpose layout mechanisms
+ * <b>ZLayout</b> is a utility class that provides general-purpose layout mechanisms
  * to position nodes.
  * 
  * @author Lance Good
  * @author Ben Bederson
  */
-public class ZLayout {
+public class ZLayout implements Serializable {
 
     /**
-     * Distributes a set of <code>objects</codes> (those being ZNodes)
+     * Distributes a set of <code>nodes</codes> (those being ZNodes)
      * along the path specified by <code>coordinates</code>.  Assumes
      * exact spacing on a non-closed path with default tolerance.
-     * @param objects The objects to be distributed.
+     * @param nodes The nodes to be distributed.
      * @param coordinates The coordinates of the path.
-     * @see #distribute(Vector, Vector, float, boolean)
+     * @see #distribute(ZNode[], ArrayList, float, boolean)
      */
-    static public void distribute(Vector objects, Vector coordinates) {
-	distribute(objects,coordinates,-1.0f,false);
+    static public void distribute(ZNode[] nodes, ArrayList coordinates) {
+	distribute(nodes, coordinates, -1.0f, false);
     }
 
     /**
-     * Distributes a set of <code>objects</code> (those being ZNodes) along
+     * Distributes a set of <code>nodes</code> (those being ZNodes) along
      * the (optionally closed) path specified by <code>coordinates</code>.
      * <code>exact</code> specifies, if false, that the algorithm should
      * run once using a first guess at spacing or, if true, that the
-     * algorithm should attempt to evenly space the objects using the entire
+     * algorithm should attempt to evenly space the nodes using the entire
      * path.
-     * @param objects The objects to be distributed.
+     * @param nodes The nodes to be distributed.
      * @param coordinates The coordinates of the path.
      * @param exact Should the algorithm run once and stop or iterate to 
      *              get exact spacing.
      * @param closedPath Does the path represent a closed path?
-     * @see #distribute(Vector, Vector, float, float, boolean, boolean)
+     * @see #distribute(ZNode[], ArrayList, float, float, boolean, boolean)
      */
-    static public void distribute(Vector objects, Vector coordinates, boolean exact, boolean closedPath) {
-	// The number of objects
-	int numObjs;
+    static public void distribute(ZNode[] nodes, ArrayList coordinates, boolean exact, boolean closedPath) {
+	// The number of nodes
+	int numNodes;
 
 	// The amount of space to start the algorithm
 	float space;
@@ -55,58 +56,57 @@ public class ZLayout {
 	// The length of the path 
 	float pathLength;
 
-	// The total dimension of all the objects
+	// The total dimension of all the nodes
 	float totalDim;
 
 	// The current ZNode
-	ZNode obj;
+	ZNode node;
 
 	// The bounds for the current ZNode
 	Rectangle2D bounds;
 	
-	if (objects.isEmpty() || coordinates.isEmpty()) {
+	if ((nodes.length == 0) || coordinates.isEmpty()) {
 	    return;
 	}
 
 	pathLength = pathLength(coordinates);
 	totalDim = 0.0f;
-	numObjs = 0;
-	for(int i=0; i<objects.size(); i++) {
-	    obj = (ZNode)objects.elementAt(i);
-	    bounds = obj.getGlobalBounds();
+	numNodes = 0;
+	for(int i=0; i<nodes.length; i++) {
+	    node = (ZNode)nodes[i].editor().getNode();
+	    bounds = node.getGlobalBounds();
 	    totalDim = totalDim + ((float)(bounds.getWidth()+bounds.getHeight())/(float)2.0);
-	    numObjs++;
+	    numNodes++;
 	}
 
 	if (pathLength == 0.0f) {
-	    distribute(objects,coordinates,0.0f,-1.0f,false,closedPath);
-	}
-	else {
+	    distribute(nodes, coordinates, 0.0f, -1.0f, false, closedPath);
+	} else {
 	    if (closedPath) {
-		space = (pathLength - totalDim) / (numObjs);
+		space = (pathLength - totalDim) / (numNodes);
 	    }
 	    else {
-		space = (pathLength - totalDim) / (numObjs-1);
+		space = (pathLength - totalDim) / (numNodes-1);
 	    }
-	    distribute(objects,coordinates,space,-1.0f,exact,closedPath);
+	    distribute(nodes, coordinates, space, -1.0f, exact, closedPath);
 	}
     }
 
     
     /**
-     * Distributes a set of <code>objects</code> (those being ZNodes) along
+     * Distributes a set of <code>nodes</code> (those being ZNodes) along
      * the (optionally closed) path specified by <code>coordinates</code>.
-     * The algorithm will iterate until the objects are placed along the
+     * The algorithm will iterate until the nodes are placed along the
      * path within <code>tolerance</code> of the given path.
-     * @param objects The objects to be distributed.
+     * @param nodes The nodes to be distributed.
      * @param coordinates The coordinates of the path.
-     * @param tolerance The error allowed in placing the objects
+     * @param tolerance The error allowed in placing the nodes
      * @param closedPath Does the path represent a closed path?
-     * @see #distribute(Vector, Vector, float, float, boolean, boolean)
+     * @see #distribute(ZNode[], ArrayList, float, float, boolean, boolean)
      */
-    static public void distribute(Vector objects, Vector coordinates, float tolerance, boolean closedPath) {
-	// The number of objects
-	int numObjs;
+    static public void distribute(ZNode[] nodes, ArrayList coordinates, float tolerance, boolean closedPath) {
+	// The number of nodes
+	int numNodes;
 
 	// The amount of space to start the algorithm
 	float space;
@@ -114,66 +114,66 @@ public class ZLayout {
 	// The length of the path 
 	float pathLength;
 
-	// The total dimension of all the objects
+	// The total dimension of all the nodes
 	float totalDim;
 
 	// The current ZNode
-	ZNode obj;
+	ZNode node;
 
 	// The bounds for the current ZNode
 	Rectangle2D bounds;
 	
-	if (objects.isEmpty() || coordinates.isEmpty()) {
+	if ((nodes.length == 0) || coordinates.isEmpty()) {
 	    return;
 	}
 
 	pathLength = pathLength(coordinates);
 	totalDim = 0.0f;
-	numObjs = 0;
-	for(int i=0; i<objects.size(); i++) {
-	    obj = (ZNode)objects.elementAt(i);
-	    bounds = obj.getGlobalBounds();
+	numNodes = 0;
+	for(int i=0; i<nodes.length; i++) {
+	    node = (ZNode)nodes[i].editor().getNode();
+	    bounds = node.getGlobalBounds();
 	    totalDim = totalDim + ((float)(bounds.getWidth()+bounds.getHeight())/(float)2.0);
-	    numObjs++;
+	    numNodes++;
 	}
 
 	if (pathLength == 0.0f) {
-	    distribute(objects,coordinates,0.0f,-1.0f,false,closedPath);
+	    distribute(nodes, coordinates, 0.0f, -1.0f, false, closedPath);
 	}
 	else {
 	    if (closedPath) {
-		space = (pathLength - totalDim) / (numObjs);
+		space = (pathLength - totalDim) / (numNodes);
 	    }
 	    else {
-		space = (pathLength - totalDim) / (numObjs-1);
+		space = (pathLength - totalDim) / (numNodes-1);
 	    }
-	    distribute(objects,coordinates,space,tolerance,true,closedPath);
+	    distribute(nodes, coordinates, space, tolerance, true, closedPath);
 	}
     }
 
     /**
-     * Distributes the given <code>objects</code> (those being ZNodes)
+     * Distributes the given <code>nodes</code> (those being ZNodes)
      * along the (optionally closed) path specified by
      * <code>coordinates</code>.  The algorithm initially distributes
-     * the objects with the specified <code>space</code> along the path.
+     * the nodes with the specified <code>space</code> along the path.
      * If <code>exact</code> spacing is not requested, the algorithm
-     * does not iterate.  Hence, the objects will be spaced with the
-     * intial value of <code>space</code> regardless of the objects' positions.
+     * does not iterate.  Hence, the nodes will be spaced with the
+     * intial value of <code>space</code> regardless of the nodes' positions.
      * If <code>exact</code> spacing is requested, the algorithm
-     * iterates until the objects and spacing are within
+     * iterates until the nodes and spacing are within
      * <code>tolerance</code> of the given path, where <code>tolerance</code>
      * is specified as a percentage of the total path length.  The algorithm
      * will terminate with suboptimal results if the path is too short for
-     * the objects or if an optimal result cannot be computed.
-     * @param objects The objects to be distributed.
+     * the nodes or if an optimal result cannot be computed.
+     * @param nodes The nodes to be distributed.
      * @param coordinates The coordinates of the path.
-     * @param space The initial amount of spacing to leave between objects.
+     * @param space The initial amount of spacing to leave between nodes.
      * @param tolerance The percent of the total path length to which
      *                   the algorithm should compute, a value from 0.0-100.0.
      * @param exact Should the algorithm iterate or make a single pass?
      * @param closedPath Does the path represent a closed path?
      */
-    static public void distribute(Vector objects, Vector coordinates,
+    static public void distribute(ZNode[] nodes, ArrayList coordinates,
 				  float space, float tolerance,
 				  boolean exact, boolean closedPath) {
 	
@@ -183,20 +183,20 @@ public class ZLayout {
 	// The number of points on the path
 	int numCoords;
 
-	// The number of objects 
-	int numObjs;
+	// The number of nodes 
+	int numNodes;
 
 	// The length of the path given by coordinates
 	float pathLength;
 
-	// The amount of path passing through the first object - for closed paths
+	// The amount of path passing through the first node - for closed paths
 	float closingLength;
 	
-	// The current copy of objects
-	Vector objs;
+	// Node index
+	int index;
 	
 	// The current copy of coordinates
-	Vector coords;
+	ArrayList coords;
 	
 	// Are we finished?	 
 	boolean done = false;
@@ -207,7 +207,7 @@ public class ZLayout {
 	// Storage for a frequently used variable
 	Point2D halfDim = new Point2D.Float();
 
-	if ((objects.isEmpty() || (coordinates.isEmpty()))) {
+	if ((nodes.length == 0) || coordinates.isEmpty()) {
 	    return;
 	}
 
@@ -218,26 +218,26 @@ public class ZLayout {
 	
 	pathLength = pathLength(coordinates);
 	numCoords = coordinates.size();
-	numObjs = objects.size();
+	numNodes = nodes.length;
 	closingLength = 0.0f;
 	
 	
 	/* This code handles the special case when the path is closed.  Since
-	   the center of the first object will be placed at the first
+	   the center of the first node will be placed at the first
 	   coordinate, we must calculate how much of the path, on closing
-	   will intersect the object in order to add this to our
-	   pathLengthInObjs */	   
+	   will intersect the node in order to add this to our
+	   pathLengthInNodes */	   
 	if (closedPath) {
 	    Point2D dir = new Point2D.Float((float)1.0,(float)1.0);
-	    Point2D entranceP = (Point2D)((Point2D)coordinates.elementAt(coordinates.size()-1)).clone();
-	    ZNode firstObj = (ZNode)objects.elementAt(0);
-	    Rectangle2D bounds = firstObj.getGlobalBounds();
+	    Point2D entranceP = (Point2D)((Point2D)coordinates.get(coordinates.size()-1)).clone();
+	    ZNode firstNode = (ZNode)nodes[0].editor().getNode();
+	    Rectangle2D bounds = firstNode.getGlobalBounds();
 	    float halfWidth = ((float)bounds.getWidth())/(2.0f);
 	    float halfHeight = ((float)bounds.getHeight())/(2.0f);
 	    
 	    float curX = (float)entranceP.getX();
 	    float curY = (float)entranceP.getY();
-	    normalizeVector(dir);
+	    normalizeList(dir);
 
 	    Point2D curP = new Point2D.Float(curX, curY);
 	    halfDim.setLocation(halfWidth, halfHeight);
@@ -251,17 +251,17 @@ public class ZLayout {
 	   If exact spacing is not specified, this loop is executed once.
 	   Otherwise, we loop until we are within "tolerance" of the given
 	   path.  The algorithm also exits this loop if it detects an	   
-	   infinite loop or the path is too small for the objects
+	   infinite loop or the path is too small for the nodes
 	 */
 	while (!done) {
-	    float pathLengthInObjs = 0.0f;
+	    float pathLengthInNodes = 0.0f;
 	    // Start off with the direction that doesn't favor either dimension
 	    Point2D dir = new Point2D.Float((float)1.0,(float)1.0);
 
-	    objs = (Vector)objects.clone();
-	    coords = (Vector)coordinates.clone();
+	    index = 0;
+	    coords = (ArrayList)coordinates.clone();
 
-	    Point2D entranceP = (Point2D)((Point2D)coords.elementAt(0)).clone();
+	    Point2D entranceP = (Point2D)((Point2D)coords.get(0)).clone();
 	    float remainderX = 0.0f;
 	    float remainderY = 0.0f;
 	    float curX = 0.0f;
@@ -271,8 +271,8 @@ public class ZLayout {
 	    float centerX = 0.0f;
 	    float centerY = 0.0f;
 
-	    coords.removeElementAt(0);
-	    normalizeVector(dir);	    	    
+	    coords.remove(0);
+	    normalizeList(dir);	    	    
 	    
 	    if (closedPath) {
 		determined = true;
@@ -280,10 +280,10 @@ public class ZLayout {
 		centerY = (float)entranceP.getY();
 	    }
 
-	    // Perform this loop once for each of the objects
-	    while (!objs.isEmpty()) {		
-		ZNode obj = (ZNode)objs.elementAt(0);
-		Rectangle2D bounds = obj.getGlobalBounds();
+	    // Perform this loop once for each of the nodes
+	    for (index=0; index < nodes.length; index++) {
+		ZNode node = nodes[index].editor().getNode();
+		Rectangle2D bounds = node.getGlobalBounds();
 		Point2D curP;
 		Point2D remainderP;
 		
@@ -292,14 +292,13 @@ public class ZLayout {
 		float entranceX = (float)entranceP.getX();
 		float entranceY = (float)entranceP.getY();
 
-		objs.removeElementAt(0);
 		curX = entranceX;
 		curY = entranceY;
 
 
 		/******************************************/
 		/* Part 1 - find the new center of the    */
-		/*   object                               */
+		/*   node                               */
 		/******************************************/
 
 		if (determined == false) {
@@ -313,7 +312,7 @@ public class ZLayout {
 		    curP = new Point2D.Float(curX, curY);	    
 		    remainderP = new Point2D.Float(remainderX, remainderY);
 		    
-		    pathLengthInObjs += computeDimensionTranslation(halfDim,curP,remainderP,centerP,dir,coords,true);
+		    pathLengthInNodes += computeDimensionTranslation(halfDim,curP,remainderP,centerP,dir,coords,true);
 
 		    curX = (float)curP.getX();
 		    curY = (float)curP.getY();
@@ -335,16 +334,22 @@ public class ZLayout {
 		curX = centerX;
 		curY = centerY;
 
-		/* Actually Move the object to this center point */
+		/* Actually Move the node to this center point */
 
-		obj.getTransform().translate((centerX-(float)bounds.getCenterX())/obj.getTransform().getScale(),(centerY-(float)bounds.getCenterY())/obj.getTransform().getScale());
+		ZTransformGroup transform = node.editor().getTransformGroup();
+		Point2D newLocalCenter = new Point2D.Float(centerX, centerY);
+		node.globalToLocal(newLocalCenter);
+		Point2D curLocalCenter = new Point2D.Float((float)bounds.getCenterX(),(float)bounds.getCenterY());
+		node.globalToLocal(curLocalCenter);
+
+		transform.translate((float)(newLocalCenter.getX()-curLocalCenter.getX()),(float)(newLocalCenter.getY()-curLocalCenter.getY()));
 
 		/******************************************/
 		/* Part 2 - Now that we have the center - */
 		/*  find out how much more of the path is */
-		/*   in the object's bounding box         */
+		/*   in the node's bounding box           */
 		/* Plus we will find the point where the  */
-		/*   path leaves the object's bounding box*/
+		/*   path leaves the node's bounding box  */
 		/******************************************/		
 
 		float boundaryX = 0.0f;
@@ -359,7 +364,7 @@ public class ZLayout {
 		curP = new Point2D.Float(curX, curY);	    
 		remainderP = new Point2D.Float(remainderX, remainderY);
 
-		pathLengthInObjs += computeDimensionTranslation(halfDim,curP,remainderP,boundaryP,dir,coords,true);
+		pathLengthInNodes += computeDimensionTranslation(halfDim,curP,remainderP,boundaryP,dir,coords,true);
 
 		curX = (float)curP.getX();
 		curY = (float)curP.getY();
@@ -381,8 +386,8 @@ public class ZLayout {
 		/* Part 3 - Now we add the appropriate    */
 		/* amount of space based on our latest    */
 		/* calculations for the amount of path    */
-		/* in objects the idea here is to         */
-		/* eventually get all the objects on the  */
+		/* in nodes the idea here is to         */
+		/* eventually get all the nodes on the  */
 		/* path with equal spacing between them   */
 		/******************************************/
 
@@ -412,13 +417,13 @@ public class ZLayout {
 		while (!spaced) {
 
 		    if (!coords.isEmpty()) {
-			Point2D newP = (Point2D)((Point2D)coords.elementAt(0)).clone();
+			Point2D newP = (Point2D)((Point2D)coords.get(0)).clone();
 			float newX = (float)newP.getX();
 			float newY = (float)newP.getY();
 
-			coords.removeElementAt(0);			    
+			coords.remove(0);			    
 			dir.setLocation(newX-(float)curP.getX(),newY-(float)curP.getY());
-			normalizeVector(dir);
+			normalizeList(dir);
 
 			if (newP.distance(curP)+spaceSoFar > space) {
 			    entranceP.setLocation((float)curP.getX() + (space-spaceSoFar)*(float)dir.getX(),(float)curP.getY() + (space-spaceSoFar)*(float)dir.getY());
@@ -457,14 +462,14 @@ public class ZLayout {
 
 		/* Add in the closing path length for the case of a
 		   closed path (it's 0 anyway if path isn't closed) */
-		pathLengthInObjs = pathLengthInObjs + closingLength;
+		pathLengthInNodes = pathLengthInNodes + closingLength;
 		
 		if (closedPath) {
-		    length = pathLengthInObjs + (numObjs)*space;
+		    length = pathLengthInNodes + (numNodes)*space;
 		}
 		else {
-		    if (numObjs != 1) {
-			length = pathLengthInObjs + (numObjs-1)*space;
+		    if (numNodes != 1) {
+			length = pathLengthInNodes + (numNodes-1)*space;
 		    }
 		    else {
 			length = pathLength;
@@ -478,14 +483,14 @@ public class ZLayout {
 		else {
 		    
 		    if (closedPath) {
-			space = (pathLength - pathLengthInObjs)/(numObjs);
+			space = (pathLength - pathLengthInNodes)/(numNodes);
 		    }
 		    else {
-			if (numObjs != 1) {
-			    space = (pathLength - pathLengthInObjs)/(numObjs-1);
+			if (numNodes != 1) {
+			    space = (pathLength - pathLengthInNodes)/(numNodes-1);
 			}
 			else {
-			    space = pathLength - pathLengthInObjs;
+			    space = pathLength - pathLengthInNodes;
 			}
 		    }
 		    
@@ -528,7 +533,7 @@ public class ZLayout {
      * current direction.  The caller can specify whether the
      * coordinates should be viewed in ascending or descending
      * order.  If descending order is used, the coordinates are not
-     * removed from the vector.
+     * removed from the ArrayList.
      * @param dim The dimension of the bounds in which to perfrom the computations
      * @param currentP The current point on the path
      * @param remainderP The remainder of path from previous point
@@ -540,7 +545,7 @@ public class ZLayout {
      */
     static protected float computeDimensionTranslation(Point2D dim, Point2D currentP,
 						       Point2D remainderP, Point2D finishedP,
-						       Point2D dir, Vector coordinates,
+						       Point2D dir, ArrayList coordinates,
 						       boolean ascending) {		
 	boolean finished = false;
 
@@ -559,15 +564,15 @@ public class ZLayout {
 	float pathSoFarX = 0.0f;
 	float pathSoFarY = 0.0f;
 
-	float pathLengthInObjs = 0.0f;
+	float pathLengthInNodes = 0.0f;
 	
-	int vectorPosition;
+	int ArrayListPosition;
 
 	if (ascending) {
-	    vectorPosition = coordinates.size();
+	    ArrayListPosition = coordinates.size();
 	}
 	else {
-	    vectorPosition = coordinates.size()-2;
+	    ArrayListPosition = coordinates.size()-2;
 	}
 
 	if (remainderX != 0.0f || remainderY != 0.0f) {
@@ -625,7 +630,7 @@ public class ZLayout {
 		finished = true;
 		remainderX = remainderX - (finishedX - currentX);
 		remainderY = remainderY - (finishedY - currentY);
-		pathLengthInObjs = pathLengthInObjs + (float)Point2D.distance(0.0f,0.0f,finishedX-currentX,finishedY-currentY);
+		pathLengthInNodes = pathLengthInNodes + (float)Point2D.distance(0.0f,0.0f,finishedX-currentX,finishedY-currentY);
 	    }
 	    else {
 		/* In this case, the segment isn't long enough
@@ -635,7 +640,7 @@ public class ZLayout {
 		pathSoFarY = remainderY;
 		currentX = currentX + remainderX;
 		currentY = currentY + remainderY;
-		pathLengthInObjs = pathLengthInObjs + (float)Point2D.distance(0.0f,0.0f,remainderX,remainderY);
+		pathLengthInNodes = pathLengthInNodes + (float)Point2D.distance(0.0f,0.0f,remainderX,remainderY);
 		remainderX = 0.0f;
 		remainderY = 0.0f;
 	    }
@@ -644,22 +649,22 @@ public class ZLayout {
 	
 	while(!finished) {
 	    
-	    if (!coordinates.isEmpty() && vectorPosition >=0) {
+	    if (!coordinates.isEmpty() && ArrayListPosition >=0) {
 		Point2D newP = null;
 
 		if (ascending) {
-		    newP = (Point2D)((Point2D)coordinates.elementAt(0)).clone();
-		    coordinates.removeElementAt(0);			    
+		    newP = (Point2D)((Point2D)coordinates.get(0)).clone();
+		    coordinates.remove(0);			    
 		}
 		else {
-		    newP = (Point2D)((Point2D)coordinates.elementAt(vectorPosition)).clone();
-		    vectorPosition--;
+		    newP = (Point2D)((Point2D)coordinates.get(ArrayListPosition)).clone();
+		    ArrayListPosition--;
 		}
 		
 		float newX = (float)newP.getX();
 		float newY = (float)newP.getY();
 		dir.setLocation(newX-currentX,newY-currentY);
-		normalizeVector(dir);
+		normalizeList(dir);
 		
 		float curDistX = newX - currentX;
 		float curDistY = newY - currentY;
@@ -683,7 +688,7 @@ public class ZLayout {
 		       have to check beforehand to see if
 		       we got any NaN.  We shouldn't get division by
 		       both components of "dir" yielding NaN
-		       because the vector is normalized
+		       because the ArrayList is normalized
 
 		       This applies to all the remaining operations as
 		       well.
@@ -752,7 +757,7 @@ public class ZLayout {
 		    finished = true;
 		    remainderX = newX - finishedX;
 		    remainderY = newY - finishedY;
-		    pathLengthInObjs = pathLengthInObjs + (float)Point2D.distance(0.0f,0.0f,finishedX-currentX,finishedY-currentY);
+		    pathLengthInNodes = pathLengthInNodes + (float)Point2D.distance(0.0f,0.0f,finishedX-currentX,finishedY-currentY);
 		}		
 		else {
 		    /* This case means that the
@@ -765,7 +770,7 @@ public class ZLayout {
 		    pathSoFarY = pathSoFarY + curDistY;
 		    currentX = currentX + curDistX;
 		    currentY = currentY + curDistY;
-		    pathLengthInObjs = pathLengthInObjs + (float)Point2D.distance(0.0f,0.0f,curDistX,curDistY);				
+		    pathLengthInNodes = pathLengthInNodes + (float)Point2D.distance(0.0f,0.0f,curDistX,curDistY);				
 		}
 	    }
 	    else {
@@ -824,7 +829,7 @@ public class ZLayout {
 		    }
 		}
 		finished = true;
-		pathLengthInObjs = pathLengthInObjs + (float)Point2D.distance(0.0f,0.0f,finishedX-currentX,finishedY-currentY);			
+		pathLengthInNodes = pathLengthInNodes + (float)Point2D.distance(0.0f,0.0f,finishedX-currentX,finishedY-currentY);			
 	    }
 	    
 	}
@@ -833,31 +838,31 @@ public class ZLayout {
 	remainderP.setLocation(remainderX, remainderY);
 	finishedP.setLocation(finishedX, finishedY);
 	
-	return pathLengthInObjs;
+	return pathLengthInNodes;
     }
 
 
     /**
-     * Computes the length of the path for a given vector of coordinates
+     * Computes the length of the path for a given ArrayList of coordinates
      * @param coords The path for which to compute the length
      * @return The length of the given path 
      */
-    static protected float pathLength (Vector coords) {
+    static protected float pathLength(ArrayList coords) {
 	float len = 0.0f;
 	if (coords.size() > 1) {
 	    for(int i=0; i<(coords.size()-1); i++) {
-		len = len + (float)((Point2D)coords.elementAt(i)).distance((Point2D)coords.elementAt(i+1));
+		len = len + (float)((Point2D)coords.get(i)).distance((Point2D)coords.get(i+1));
 	    }
 	}
 	return len;
     }
 
     /**
-     * Normalizes the given vector ie. maintains the vectors direction
+     * Normalizes the given ArrayList ie. maintains the ArrayLists direction
      * but gives it unit length
-     * @param p Vector (vector in the physics sense, actually a point) to be normalized
+     * @param p ArrayList (ArrayList in the physics sense, actually a point) to be normalized
      */
-    static protected void normalizeVector(Point2D p) {
+    static protected void normalizeList(Point2D p) {
 	float len = (float)p.distance(0.0f, 0.0f);
 	if (len != 0.0f) {
 	    p.setLocation((float)p.getX()/len,(float)p.getY()/len);

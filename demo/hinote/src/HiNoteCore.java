@@ -13,8 +13,14 @@ import java.net.URL;
 import javax.swing.*;
 import javax.swing.event.*;
 import java.net.URLConnection;
+import java.net.JarURLConnection;
+import java.util.jar.Manifest;
+import java.util.jar.JarFile;
+import java.util.jar.Attributes;
+import java.util.zip.ZipEntry;
+import java.awt.datatransfer.*;
 
-import edu.umd.cs.jazz.scenegraph.*;
+import edu.umd.cs.jazz.*;
 import edu.umd.cs.jazz.component.*;
 import edu.umd.cs.jazz.event.*;
 import edu.umd.cs.jazz.util.*;
@@ -26,31 +32,42 @@ import edu.umd.cs.jazz.io.*;
  *
  * @author  Benjamin B. Bederson
  */
-public class HiNoteCore {
+public class HiNoteCore implements ClipboardOwner {
+    static protected String windowsClassName = "com.sun.java.swing.plaf.windows.WindowsLookAndFeel";
+    static protected String metalClassName   = "javax.swing.plaf.metal.MetalLookAndFeel";
+    static protected String motifClassName   =  "com.sun.java.swing.plaf.motif.MotifLookAndFeel";
+
+				// Look & Feel types
+    final static public int WINDOWS_LAF = 1;
+    final static public int METAL_LAF   = 2;
+    final static public int MOTIF_LAF   = 3;
+
     static final protected float MAX_ITEM_MAG = 10;
     static final protected int   ANIMATION_TIME = 1000;
 
 				// Event modes
     static final public int PAN_MODE       = 1;
     static final public int LINK_MODE      = 2;
-    static final public int POLYLINE_MODE  = 3;
+    static final public int POLYGON_MODE  = 3;
     static final public int RECTANGLE_MODE = 4;
     static final public int TEXT_MODE      = 5;
     static final public int SELECTION_MODE = 6;
+    static final public int POLYLINE_MODE  = 7;
 
-    protected ZBasicComponent        component; 
-    protected ZRootNode		     root;
+    protected ZCanvas                canvas; 
+    protected ZRoot		     root;
     protected ZCamera                camera;
-    protected ZSurface               surface;
-    protected ZNode                  layer;
+    protected ZDrawingSurface        surface;
+    protected ZLayerGroup            layer;
 
     protected CmdTable               cmdTable;
     protected JToolBar               toolBar;
     protected ZPanEventHandler       panEventHandler;
-    protected ZoomEventHandlerRightButton zoomEventHandler;
+    protected ZoomEventHandler       zoomEventHandler;
     protected ZLinkEventHandler      linkEventHandler;
     protected ZEventHandler          keyboardNavEventHandler;
     protected ZEventHandler          squiggleEventHandler;
+    protected ZEventHandler          polygonEventHandler;
     protected TextEventHandler	     textEventHandler;
     protected ZEventHandler          rectEventHandler;
     protected ZSelectionEventHandler selectionEventHandler;
@@ -59,43 +76,68 @@ public class HiNoteCore {
     protected Cursor		     crosshairCursor = null;
     protected String                 currentFileName = null;
     protected ZParser                parser = null;
-    protected Vector                 copyBuffer = null;     // A Vector of nodes
+    protected ArrayList              copyBuffer = null;     // A Vector of nodes
     protected File                   prevFile = new File(".");
+    protected ColorSelector          colorComponent;
+    protected Color                  penColor = Color.black;
+    protected Color                  fillColor = Color.white;
+    protected float                  penWidth = 4;
+    protected Stroke                 penStroke;
+    protected FontChooser            fontChooser;
+    protected Font                   font = new Font("Arial", Font.PLAIN, 40);
+    protected AffineTransform        pasteDelta = null;
+    protected AffineTransform        pasteViewTransform = null;
+    protected JColorChooser          penColorChooser;
+    protected JDialog                penColorDialog = null;
+    protected JDialog                fontDialog = null;
+    protected JColorChooser          fillColorChooser;
+    protected JDialog                fillColorDialog = null;
+    protected PenSelector            penWidthButton;
+    protected Clipboard              clipboard = null;
+    protected AbstractButton         panButton = null;
+    protected javax.swing.filechooser.FileFilter lastFilter = null;
+    protected String jazzFilterDescription = "Jazz Custom Format files";
+    protected String jazzExtension = "jazz";
+    protected String jazzbFilterDescription = "Jazz Java-Serialized files";
+    protected String jazzbExtension = "jazzb";
 
-    public HiNoteCore(Container container, ZBasicComponent component) {
+    public HiNoteCore(Container container, ZCanvas canvas) {
 	cmdTable = new CmdTable(this);
-	copyBuffer = new Vector();
+	copyBuffer = new ArrayList();
+	pasteDelta = new AffineTransform();
+	pasteViewTransform = new AffineTransform();
 
 				// Create the tool palette
 	toolBar = createToolBar();
 	container.add(toolBar, BorderLayout.NORTH);
 
 				// Extract the basic elements of the scenegraph
-	this.component = component;
-	surface = component.getSurface();
-	camera = surface.getCamera();
-	root = camera.findRoot();
-	layer = (ZNode)camera.getPaintStartPoints().firstElement();
+	this.canvas = canvas;
+	surface = canvas.getDrawingSurface();
+	camera = canvas.getCamera();
+	root = canvas.getRoot();
+	layer = canvas.getLayer();
 
 				// Add a selection layer
-        ZNode selectionLayer = new ZNode();
+        ZLayerGroup selectionLayer = new ZLayerGroup();
 	getRoot().addChild(selectionLayer);
-	getCamera().addPaintStartPoint(selectionLayer);
+	getCamera().addLayer(selectionLayer);
 
 				// Create some basic event handlers
-	textEventHandler =        new TextEventHandler(this, component, surface);
-	squiggleEventHandler =    new SquiggleEventHandler(this, component, surface);
-	rectEventHandler =        new RectEventHandler(this, component, surface);
-	linkEventHandler =        new ZLinkEventHandler(component, surface);
-	selectionEventHandler =   new ZSelectionEventHandler(component, surface, selectionLayer);
-	panEventHandler =         new PanEventHandler(component, surface);
-	zoomEventHandler =        new ZoomEventHandlerRightButton(component, surface);
-	keyboardNavEventHandler = new ZNavEventHandlerKeyBoard(component, surface);
-	panEventHandler.activate();
-	zoomEventHandler.activate();
-	activeEventHandler = panEventHandler;
-	keyboardNavEventHandler.activate();
-	component.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+	initEventHandlers(canvas.getCameraNode(), canvas, selectionLayer);
+	zoomEventHandler.setActive(true);
+	activeEventHandler = null;
+	setEventHandler(PAN_MODE);
+
+				// get ownership of clipboard, so we will be notified
+				// if we lose it. Note Applets can't access system 
+				// clipboard.
+	try {
+	    clipboard = canvas.getToolkit().getSystemClipboard();
+	} catch (java.security.AccessControlException e) {}
+	if (clipboard != null) {
+	    getOwnershipClipboard();
+	}
     }
 
     ///////////////////////////////////////////////////////////////    
@@ -104,136 +146,670 @@ public class HiNoteCore {
     //
     ///////////////////////////////////////////////////////////////    
 
+    /*
+     * Initialize all the event handlers for hinote.
+     */
+    public void initEventHandlers(ZNode cameraNode, ZCanvas canvas, ZGroup selectionLayer) {
+	textEventHandler =        new TextEventHandler(this, cameraNode, canvas);
+	squiggleEventHandler =    new SquiggleEventHandler(this, cameraNode);
+	polygonEventHandler =     new PolygonEventHandler(this, cameraNode);
+	rectEventHandler =        new RectEventHandler(this, cameraNode);
+	linkEventHandler =        new ZLinkEventHandler(cameraNode, canvas);
+	selectionEventHandler =   new ZSelectionEventHandler(cameraNode, canvas, selectionLayer);
+	panEventHandler =         new PanEventHandler(cameraNode, canvas);
+	zoomEventHandler =        new ZoomEventHandler(cameraNode);
+	if (keyboardNavEventHandler != null) {
+	    keyboardNavEventHandler.setActive(false);
+	}
+	keyboardNavEventHandler = new ZNavEventHandlerKeyBoard(cameraNode, canvas);
+    }
+
+    /*
+     * Get the ownership of the system clipboard, so we will be notified if
+     * any other process writes into it.
+     */
+    public void getOwnershipClipboard() {
+	if (clipboard != null) {
+	    String tempString = "";
+	    Transferable clipboardContent = clipboard.getContents (this);
+	    if ((clipboardContent != null) &&
+		(clipboardContent.isDataFlavorSupported (DataFlavor.stringFlavor))) {
+		try {
+		    tempString = (String) clipboardContent.getTransferData(DataFlavor.stringFlavor);
+		}
+		catch (Exception e) {
+		    e.printStackTrace ();
+		}
+	    }
+	    StringSelection fieldContent = new StringSelection (tempString);
+	    clipboard.setContents (fieldContent, HiNoteCore.this);
+	}
+    }
+
+    /**
+     * This method is called when another process writes data to the system clipboard.
+     * Clear the local copyBuffer, so when a 'paste' is done the clipboard contents are
+     * used.
+     */
+    public void lostOwnership (Clipboard parClipboard, Transferable parTransferable) {
+	copyBuffer.clear();
+    }
+
+    /**
+     * Set the Swing look and feel.
+     * @param laf The look and feel, can be WINDOWs_LAF, METAL_LAF, or MOTIF_LAF
+     */
+    static public void setLookAndFeel(int laf, Component component) {
+	try {
+	    switch (laf) {
+	    case WINDOWS_LAF:
+		UIManager.setLookAndFeel(windowsClassName);
+		break;
+	    case METAL_LAF:
+		UIManager.setLookAndFeel(metalClassName);
+		break;
+	    case MOTIF_LAF:
+		UIManager.setLookAndFeel(motifClassName);
+		break;
+	    default:
+		UIManager.setLookAndFeel(metalClassName);
+	    }
+	    SwingUtilities.updateComponentTreeUI(component);
+	}
+	catch (Exception exc) {
+	    System.err.println("Error loading L&F: " + exc);
+	}
+     }
+
+    /**
+     * Set the pen width of all the selected nodes to current penWidth.
+     */
+    public void updatePenWidth() {
+	penWidth = penWidthButton.getPenWidth();
+	ZNode node;
+	ArrayList selection = ZSelectionGroup.getSelectedNodes(getCamera());
+	for (Iterator i=selection.iterator(); i.hasNext();) {
+	    node = (ZNode)i.next();
+	    setPenWidth(node);
+	}
+    }
+
+    /**
+     * Set the pen width of this node if it is a leaf node,
+     * or all leaf nodes under the node.
+     *<code>@param node</code> a node.
+     */
+    public void setPenWidth(ZNode node) {
+	if (node instanceof ZGroup) {
+	    ZNode[] children = ((ZGroup)node).getChildren();
+	    for (int i=0; i<children.length; i++) {
+		setPenWidth(children[i]);
+	    }
+	}
+
+	if (node instanceof ZVisualLeaf) {
+	    ZVisualComponent vc = ((ZVisualLeaf)node).getVisualComponent();
+	    if (vc instanceof ZStroke) {
+		((ZStroke)vc).setPenWidth(penWidth);
+	    }
+	}
+    }
+
+    /**
+     * Update the Pen Color of all selected nodes with pen ColorChooser color.
+     */
+    public void updatePenColor() {
+	updatePenColor(penColorChooser.getColor());
+    }
+
+    /**
+     * Update the Pen Color of all selected nodes.
+     *<code>@param color</code> a color.
+     */
+    public void updatePenColor(Color color) {
+	penColor = color;
+	colorComponent.setPenColor(penColor);
+
+	ZNode node;
+	ArrayList selection = ZSelectionGroup.getSelectedNodes(getCamera());
+	for (Iterator i=selection.iterator(); i.hasNext();) {
+	    node = (ZNode)i.next();
+	    setPenColor(node);
+	}
+    }
+
+    /**
+     * Set the pen color of this node if it is a leaf node,
+     * or all leaf nodes under the node.
+     *<code>@param node</code> a node.
+     */
+    public void setPenColor(ZNode node) {
+	if (node instanceof ZGroup) {
+	    ZNode[] children = ((ZGroup)node).getChildren();
+	    for (int i=0; i<children.length; i++) {
+		setPenColor(children[i]);
+	    }
+	}
+
+	if (node instanceof ZVisualLeaf) {
+	    ZVisualComponent vc = ((ZVisualLeaf)node).getVisualComponent();
+	    if (vc instanceof ZPenColor) {
+		((ZPenColor)vc).setPenColor(penColor);
+	    }
+	}
+    }
+
+
+    /**
+     * Update the Fill Color of all selected nodes with fill ColorChooser color.
+     */
+    public void updateFillColor() {
+	updateFillColor(fillColorChooser.getColor());
+    }
+
+    /**
+     * Update the Fill Color of all selected nodes.
+     *<code>@param color</code> a color.
+     */
+    public void updateFillColor(Color color) {
+	fillColor = color;
+	colorComponent.setFillColor(fillColor);
+
+	ZNode node;
+	ArrayList selection = ZSelectionGroup.getSelectedNodes(getCamera());
+	for (Iterator i=selection.iterator(); i.hasNext();) {
+	    node = (ZNode)i.next();
+	    setFillColor(node);
+	}
+    }
+
+    /**
+     * Set the fill color of this node if it is a leaf node,
+     * or all leaf nodes under the node.
+     *<code>@param node</code> a node.
+     */
+    public void setFillColor(ZNode node) {
+	if (node instanceof ZGroup) {
+	    ZNode[] children = ((ZGroup)node).getChildren();
+	    for (int i=0; i<children.length; i++) {
+		setFillColor(children[i]);
+	    }
+	}
+
+	if (node instanceof ZVisualLeaf) {
+	    ZVisualComponent vc = ((ZVisualLeaf)node).getVisualComponent();
+	    if (vc instanceof ZFillColor) {
+		((ZFillColor)vc).setFillColor(fillColor);
+	    }
+	}
+    }
+
+
+    /**
+     * Update the Font of all selected text nodes with fill FontChooser font.
+     */
+    public void updateFont() {
+	updateFont(fontChooser.getFont());
+    }
+
+    /**
+     * Update the font of all selected text nodes.
+     *<code>@param aFont</code> a font.
+     */
+    public void updateFont(Font aFont) {
+	font = aFont;
+
+	ZNode node;
+	ArrayList selection = ZSelectionGroup.getSelectedNodes(getCamera());
+	for (Iterator i=selection.iterator(); i.hasNext();) {
+	    node = (ZNode)i.next();
+	    setFont(node);
+	}
+    }
+
+    /**
+     * Set the font of this node if it is a leaf text node,
+     * or all leaf nodes under the node.
+     *<code>@param node</code> a node.
+     */
+    public void setFont(ZNode node) {
+	if (node instanceof ZGroup) {
+	    ZNode[] children = ((ZGroup)node).getChildren();
+	    for (int i=0; i<children.length; i++) {
+		setFont(children[i]);
+	    }
+	}
+
+	if (node instanceof ZVisualLeaf) {
+	    ZVisualComponent vc = ((ZVisualLeaf)node).getVisualComponent();
+	    if (vc instanceof ZText) {
+		Font currFont = ((ZText)vc).getFont();
+		String currStr = ((ZText)vc).getText();
+		ZTransformGroup tg = node.editor().getTransformGroup();
+		int newSize = (int)(font.getSize() / (camera.getMagnification() * tg.getScale()));
+		Font newFont = new Font(font.getName(), font.getStyle(), newSize);
+		((ZText)vc).setFont(newFont);
+	    }
+	}
+    }
+
+    /**
+     * Returns a Font if all selected text objects use the same font,
+     * otherwise returns null.
+     */
+    public Font getSelectedFont() {
+	Font baseFont = null;
+	ZNode node;
+	ArrayList selection = ZSelectionGroup.getSelectedNodes(getCamera());
+	for (Iterator i=selection.iterator(); i.hasNext();) {
+	    node = (ZNode)i.next();
+	    baseFont = getFont(node, baseFont, true);
+	}
+	return baseFont;
+    }
+
+    /**
+     * Get the font of this node if it is a leaf text node,
+     * or all leaf nodes under the node. Return null all fonts found are not
+     * identical.
+     *<code>@param node</code> a node.
+     *<code>@param baseFont</code> first font found, compare all others to this.
+     *<code>@param singleFont</code> true if all fonts found so far are identical.
+     */
+    public Font getFont(ZNode node, Font baseFont, boolean singleFont) {
+	if (node instanceof ZGroup) {
+	    ZNode[] children = ((ZGroup)node).getChildren();
+	    for (int i=0; i<children.length; i++) {
+		getFont(children[i], baseFont, singleFont);
+		if (!singleFont) {
+		    return null;
+		}
+	    }
+	}
+
+	if (node instanceof ZVisualLeaf) {
+	    ZVisualComponent vc = ((ZVisualLeaf)node).getVisualComponent();
+	    if (vc instanceof ZText) {
+		Font font = ((ZText)vc).getFont();
+		if (baseFont == null) {
+		    baseFont = font;
+		}
+		if (! font.equals(baseFont)) {
+		    singleFont = false;
+		    return null;
+		}
+	    }
+	}
+
+	if (!singleFont) {
+	    return null;
+	} else {
+	    return baseFont;
+	}
+    }
+
+    /**
+     * Create a font chooser panel if one is not already visible.
+     * If all selected text fields have the same font, initialize chooser
+     * to that font, otherwise start with current hinote font.
+     */
+    public void fontChooser() {
+	if ((fontChooser == null) || (! fontChooser.isShowing())) {
+	    Font selectedFont = getSelectedFont();
+	    JFrame fontChooserFrame = new JFrame();
+	    if (selectedFont != null) {
+		font = selectedFont;
+	    }
+	    fontChooser = new FontChooser(fontChooserFrame, font);
+	    fontChooser.addPropertyChangeListener(cmdTable.lookupPropertyListener("fontComponent"));
+	    fontChooser.setVisible(true);
+	}
+    }
+
+    /**
+     * User has changed font info via Font chooser. Update selected text fields and
+     * current hinote font.
+     */
+    public void chooseFonts() {
+	font = fontChooser.getFont();
+	updateFont(font);
+    }
+
+    /**
+     * Respond to a ColorSelector selection: Create a swing color chooser dialog
+     * to allow the user to set pen or fill colors of selected objects, or swap
+     * those two colors. Only one fill or pen color chooser can be visible at any time.
+     */
+    public void chooseColors() {
+	int index = colorComponent.getSelectedIndex();
+
+       				// User clicked on "Pen Color" segment of ColorSelector
+	if ((index == colorComponent.PENCOLORSELECTED) && 
+	    ((penColorDialog == null) || (! penColorDialog.isShowing()))) {
+	    penColorChooser = new JColorChooser(penColor);
+	    penColorChooser.getSelectionModel().
+		addChangeListener(cmdTable.lookupChangeListener("penColorChange"));
+
+	    penColorDialog = penColorChooser.createDialog(canvas.getParent(), "Select Pen Color", false, penColorChooser, null, null);
+	    penColorDialog.show();
+
+				// User clicked on "Fill Color" segment of ColorSelector
+	} else if ((index == colorComponent.FILLCOLORSELECTED) && 
+	    ((fillColorDialog == null) || (! fillColorDialog.isShowing()))) {
+	    fillColorChooser = new JColorChooser(fillColor);
+	    fillColorChooser.getSelectionModel().
+		addChangeListener(cmdTable.lookupChangeListener("fillColorChange"));
+
+	    fillColorDialog = fillColorChooser.createDialog(canvas.getParent(), "Select Fill Color", false, fillColorChooser, null, null);
+	    fillColorDialog.show();
+
+				// User clicked on "Swap Colors" segment of ColorSelector
+	} else if (index == colorComponent.FLIPSELECTED) {
+	    Color tmp = penColor;
+	    penColor = fillColor;
+	    fillColor = tmp;
+				// Change colors in colorSelector button
+	    colorComponent.setPenColor(penColor);
+	    colorComponent.setFillColor(fillColor);
+
+				// Change current colors and update all selected nodes.
+	    updatePenColor(penColor);
+	    updateFillColor(fillColor);
+	}
+    }
+
+    /**
+     * Create the main HiNote toolBar.
+     */
     JToolBar createToolBar() {
 	JToolBar toolBar = new JToolBar();
-	JButton button;
+	JToggleButton button;
+	URL resource;
 
-	button = toolBar.add(cmdTable.lookupAction("pan"));
-	button.setText(null);
-	button.setToolTipText("Pan and follow links");
+	ButtonGroup group = new ButtonGroup();
 
-	button = toolBar.add(cmdTable.lookupAction("select"));
-	button.setText(null);
-	button.setToolTipText("Select");
+				// Pan Button
+	resource = this.getClass().getClassLoader().getResource("resources/hand.gif");
+	JToggleButton pan = new JToggleButton(new ImageIcon(resource), false);
+	pan.setToolTipText("Pan and follow links");
+	pan.setText(null);
+	pan.setPreferredSize(new Dimension(34, 30));
+	pan.setSelected(true);
+	pan.addActionListener(cmdTable.lookupAction("pan"));
+	group.add(pan);
+	toolBar.add(pan);
+	panButton = pan;
 
-	button = toolBar.add(cmdTable.lookupAction("link"));
-	button.setText(null);
-	button.setToolTipText("Create hyper links");
+				// Select button
+	resource = this.getClass().getClassLoader().getResource("resources/select.gif");
+	JToggleButton select = new JToggleButton(new ImageIcon(resource), false);
+	select.setToolTipText("select");
+	select.setText(null);
+	select.setPreferredSize(new Dimension(34, 30));
+	select.addActionListener(cmdTable.lookupAction("select"));
+	group.add(select);
+	toolBar.add(select);
 
-	button = toolBar.add(cmdTable.lookupAction("polyline"));
-	button.setText(null);
-	button.setToolTipText("Draw polylines");
-	
-	button = toolBar.add(cmdTable.lookupAction("rectangle"));
-	button.setText(null);
-	button.setToolTipText("Draw rectangles");
+				// Link button
+	resource = this.getClass().getClassLoader().getResource("resources/link.gif");
+	JToggleButton link = new JToggleButton(new ImageIcon(resource), false);
+	link.setToolTipText("link");
+	link.setText(null);
+	link.setPreferredSize(new Dimension(34, 30));
+	link.addActionListener(cmdTable.lookupAction("link"));
+	group.add(link);
+	toolBar.add(link);
 
-	button = toolBar.add(cmdTable.lookupAction("text"));
-	button.setText(null);
-	button.setToolTipText("Type text");
+				// Polyline button
+	resource = this.getClass().getClassLoader().getResource("resources/drawing.gif");
+	JToggleButton polyline = new JToggleButton(new ImageIcon(resource), false);
+	polyline.setToolTipText("polyline");
+	polyline.setText(null);
+	polyline.setPreferredSize(new Dimension(34, 30));
+	polyline.addActionListener(cmdTable.lookupAction("polyline"));
+	group.add(polyline);
+	toolBar.add(polyline);
+
+				// Polygon button
+	resource = this.getClass().getClassLoader().getResource("resources/polygon.gif");
+	JToggleButton polygon = new JToggleButton(new ImageIcon(resource), false);
+	polygon.setToolTipText("polygon");
+	polygon.setText(null);
+	polygon.setPreferredSize(new Dimension(34, 30));
+	polygon.addActionListener(cmdTable.lookupAction("polygon"));
+	group.add(polygon);
+	toolBar.add(polygon);
+
+				// Rectangle button
+	resource = this.getClass().getClassLoader().getResource("resources/rect.gif");
+	JToggleButton rectangle = new JToggleButton(new ImageIcon(resource), false);
+	rectangle.setToolTipText("rectangle");
+	rectangle.setText(null);
+	rectangle.setPreferredSize(new Dimension(34, 30));
+	rectangle.addActionListener(cmdTable.lookupAction("rectangle"));
+	group.add(rectangle);
+	toolBar.add(rectangle);
+
+				// Text button
+	resource = this.getClass().getClassLoader().getResource("resources/letter.gif");
+	JToggleButton text = new JToggleButton(new ImageIcon(resource), false);
+	text.setToolTipText("text");
+	text.setText(null);
+	text.setPreferredSize(new Dimension(34, 30));
+	text.addActionListener(cmdTable.lookupAction("text"));
+	group.add(text);
+	toolBar.add(text);
+
+				// Pen Width Menu button
+	resource = this.getClass().getClassLoader().getResource("resources/penwidth.gif");
+	penWidthButton = new PenSelector(createPenWidthMenu(), new ImageIcon(resource));
+	penWidthButton.addPropertyChangeListener(cmdTable.lookupPropertyListener("penComponent"));
+	penWidthButton.setText(null);
+	penWidthButton.setPreferredSize(new Dimension(34, 30));
+	penWidthButton.setToolTipText("Select line width");
+	toolBar.add(penWidthButton);
+
+				// Pen and Fill color chooser button
+	colorComponent = new ColorSelector(penColor, fillColor);
+	colorComponent.addPropertyChangeListener(cmdTable.lookupPropertyListener("colorComponent"));
+	colorComponent.setToolTipText("Color Chooser");
+	colorComponent.setAlignmentX(0);
+	toolBar.add(colorComponent);
 
 	return toolBar;
+    }
+
+    /**
+     * Create a popup menu for selecting line width.
+     */
+    public JPopupMenu createPenWidthMenu() {
+	JPopupMenu popupMenu = new JPopupMenu("PenWidth");
+	JMenuItem menuItem[] = new JMenuItem[6];
+	int ptSize;
+				// generate menu items and their icons:
+				//   Text is i + "pt"
+	                        //   Icon is line of thicknesses i
+	for (int i=0; i<6; i++) {
+	    ptSize = i+1;
+	    Integer pt = new Integer(ptSize);
+	    menuItem[i] = new JMenuItem(pt.toString() + "pt", new LineIcon(ptSize));
+	    popupMenu.add(menuItem[i]);
+	}
+	JMenuItem more = new JMenuItem("More Pen Widths...");
+	popupMenu.add(more);
+	
+	return popupMenu;
     }
 
     /**
      * Load the images to be used by the toolbar
      * Images found via the java resources method
      */
-    public void loadToolbarImages() {
-	Action action;
+    public void loadToolbarImageCursors() {
 	URL resource;
-	action = getCmdTable().lookupAction("pan");
-	resource = this.getClass().getClassLoader().getResource("resources/hand.gif");
-	action.putValue(Action.SMALL_ICON, new ImageIcon(resource));
-	action = getCmdTable().lookupAction("link");
-	resource = this.getClass().getClassLoader().getResource("resources/link.gif");
-	action.putValue(Action.SMALL_ICON, new ImageIcon(resource));
-	action = getCmdTable().lookupAction("select");
-	resource = this.getClass().getClassLoader().getResource("resources/select.gif");
-	action.putValue(Action.SMALL_ICON, new ImageIcon(resource));
-	action = getCmdTable().lookupAction("polyline");
-	resource = this.getClass().getClassLoader().getResource("resources/drawing.gif");
-	action.putValue(Action.SMALL_ICON, new ImageIcon(resource));
-	action = getCmdTable().lookupAction("rectangle");
-	resource = this.getClass().getClassLoader().getResource("resources/rect.gif");
-	action.putValue(Action.SMALL_ICON, new ImageIcon(resource));
-	action = getCmdTable().lookupAction("text");
-	resource = this.getClass().getClassLoader().getResource("resources/letter.gif");
-	action.putValue(Action.SMALL_ICON, new ImageIcon(resource));
-
-				// Create some custom cursors
 	resource = this.getClass().getClassLoader().getResource("resources/crosshair.gif");
-	Image crosshairImage = component.getToolkit().getImage(resource);
+	Image crosshairImage = canvas.getToolkit().getImage(resource);
 	setCrossHairCursorImage(crosshairImage);
     }
 
-    public void helpUsing() {
-	String resourceName = "resources/using.jazz";
-	InputStream inStream = this.getClass().getClassLoader().getResourceAsStream(resourceName);
-	if (inStream == null) {
-	    System.out.println("resource: "+resourceName+" not found");
-	}
-	URL resourceURL = this.getClass().getClassLoader().getResource(resourceName);
-	URLConnection urlCon = null;
-	int contentLength = -1;
-	try {
-	    urlCon = resourceURL.openConnection();
-	    contentLength = urlCon.getContentLength() + 10;
-	} catch (IOException e) {
-	    System.out.println("Error opening URL connection to \""+resourceName+"\": "+e);
-	}
-	if (contentLength == -1) {
-	    contentLength = 1000000;
-	}
-				// InputStreamBuffer size (contentLength) must be larger than resouce file
-				// size, because a net stream can't back up.
-	HiNoteBufferedInputStream bufferedInputStream = new HiNoteBufferedInputStream(inStream, contentLength);
+    /**
+     * Get a JarURLConnection to a jarFile via java resources.
+     *<code>@param jarFileName</code> the jar file.
+     */
+    JarURLConnection getJarConnection(String jarFileName) {
+	//String resourceFileName = "resources/" + jarFileName;
+	String resourceFileName = jarFileName;
 
-	openStream(getComponent(), bufferedInputStream);
-	getComponent().requestFocus();
+	URL resourceURL = this.getClass().getClassLoader().getResource(resourceFileName);
+
+				// turn URL into JarURL
+        String jarResourceName;
+        if (resourceURL != null) {
+            jarResourceName = resourceURL.toString();
+        } else {
+                                // "java -jar" always returns null resourceURL
+                                // why? I must specify path name
+				// ie look for help.jar in current dir:
+            jarResourceName = "jar:file:help.jar!/";
+        }
+
+	if ((jarResourceName.length() > 3) && 
+	    (!jarResourceName.substring(0,4).equals("jar:"))) {
+	    jarResourceName = "jar:" + jarResourceName + "!/";
+	}
+
+	//System.out.println("jarResourceName: "+jarResourceName);
+	URL jarResourceURL = null;
+	try {
+	    jarResourceURL = new URL(jarResourceName);
+	} catch (java.net.MalformedURLException e) {
+	    System.out.println("MalformedURLException: " + jarResourceName);
+	    return null;
+	}
+				// get jar connection
+	JarURLConnection jarConnection = null;
+	try {
+	    jarConnection = (JarURLConnection)jarResourceURL.openConnection();
+	} catch (IOException e) {
+	    return null;
+	}
+	return jarConnection;
     }
 
-    public void helpAbout() {
-	ZBasicFrame frame = new ZBasicFrame();
-	frame.setLocation(200, 100);
 
-				// Use our own pan event handler so we can follow hyperlinks
-	frame.getPanEventHandler().deactivate();
-	new PanEventHandler(frame.getComponent(), frame.getSurface()).activate();
-	new ZNavEventHandlerKeyBoard(frame.getComponent(), frame.getSurface()).activate();
-
-				// Don't want application to exit when help window is closed
-	frame.removeWindowListener(frame.getWindowListener());
-
-	String resourceName = "resources/about.jazz";
-	InputStream inStream = this.getClass().getClassLoader().getResourceAsStream(resourceName);
-	if (inStream == null) {
-	    System.out.println("resource \""+resourceName+"\" not found");
+    /**
+     * Get the help menu data from the manifest of help.jar.
+     * @return a Map whose key is the help menu item, and whose value are
+     * attributes of the item.
+     */
+    public Map getHelpMap() {
+	JarURLConnection helpJarConnection = getJarConnection("help.jar");
+	if (helpJarConnection == null) {
+	    return null;
 	}
-
-	URL resourceURL = this.getClass().getClassLoader().getResource(resourceName);
-	URLConnection urlCon = null;
-	int contentLength = -1;
+	Manifest manifest = null;
 	try {
-	    urlCon = resourceURL.openConnection();
-	    contentLength = urlCon.getContentLength() +10;
+	    manifest = helpJarConnection.getManifest();
 	} catch (IOException e) {
-	    System.out.println("Error opening URL connection to \""+resourceName+"\": "+e);
+	    return null;
 	}
-	if (contentLength == -1) {
-	    contentLength = 1000000;
+	return manifest.getEntries();
+    }
+
+    /**
+     * Load a .jazz help file into HiNote from a jar file. 
+     * <code>@param fileName</code> The name of a .jazz file.
+     * <code>@param jarFile</code> The jar file.
+     */
+    public void loadJazzFile(String fileName, String jarFileName) {
+	JarURLConnection jarConnection = getJarConnection(jarFileName);
+
+				// get inputStream on jar file entry, and it's
+				// uncompressed size (contentLength)
+	int contentLength = -1;
+	InputStream inStream = null;
+	JarFile jarFile = null;
+	try {
+	    jarFile = jarConnection.getJarFile();
+	    ZipEntry zipEntry = jarFile.getEntry(fileName);
+	    if (zipEntry == null) {
+		System.out.println(fileName + " not found in jar file " + jarFileName);
+		return;
+	    }
+	    contentLength = (int)zipEntry.getSize();
+	    inStream = jarFile.getInputStream(zipEntry);
+	} catch (IOException e) {
+	    System.out.println("jarFile error: " + e);
 	}
-	// InputStreamBuffer size (contentLength) must be larger than resouce file
-	// size, because an net stream can't back up.
-	HiNoteBufferedInputStream bufferedInputStream = new HiNoteBufferedInputStream(inStream, contentLength);
-	openStream(frame.getComponent(), bufferedInputStream);
+	if (contentLength < 0) {
+	    System.out.println("Invalid Size: " +  contentLength + " for " + fileName + " in jar file " + jarFileName);
+	    return;
+	}
+
+	// Create a label and progress bar
+	JFrame pbFrame = new JFrame();
+	pbFrame.setTitle("Progress Bar");
+	pbFrame.setSize(310, 130);
+	pbFrame.setLocation(250, 250);
+	pbFrame.setBackground(Color.gray);
+	pbFrame.setVisible(true);
+
+	JPanel pbPanel = new JPanel();
+	pbPanel.setPreferredSize(new Dimension(310, 330));
+	Container pbContainer = pbFrame.getContentPane();
+	pbContainer.add(pbPanel);
+
+	JLabel pbLabel = new JLabel();
+	pbLabel.setPreferredSize(new Dimension(280, 24));
+	pbPanel.add(pbLabel);
+
+	JProgressBar progress = new JProgressBar(0, 20);
+	progress.setPreferredSize(new Dimension(300, 20));
+	progress.setValue(0);
+	progress.setBounds(20, 35, 260, 20);
+	pbPanel.add(progress);
+
+				// update progressbar 20 times
+	int pbValue = 0;
+	int k = contentLength/20;
+
+				// There are problems parsing network InputStreams. 
+				// Copy entire jar entry into ByteArrayInputStream
+	byte buf[] = new byte[contentLength];
+	try {
+	    for (int j=0; j<contentLength; j++) {
+		buf[j] = (byte)inStream.read();
+		if (j % k == 0) {
+		    pbLabel.setText("Loading application " + fileName);
+		    Rectangle pbLabelRect = pbLabel.getBounds();
+		    pbLabelRect.x = 0;
+		    pbLabelRect.y = 0;
+		    pbLabel.paintImmediately(pbLabelRect);
+
+		    progress.setValue(pbValue++);
+		    Rectangle progressRect = progress.getBounds();
+		    progressRect.x = 0;
+		    progressRect.y = 0;
+		    progress.paintImmediately(progressRect);
+		}
+	    }
+	} catch (IOException e) {
+	    System.out.println("IOException reading jarFile: " +  jarFileName + " entry: " + fileName + " " + e);
+	}
+
+	ByteArrayInputStream bais = new ByteArrayInputStream(buf);
+	HiNoteBufferedInputStream bufferedInputStream = new HiNoteBufferedInputStream(bais, contentLength);
+	pbLabel.setText("Parsing scenegraph...");
+	openStream(bufferedInputStream, fileName);
+	pbFrame.setVisible(false);
+	getCanvas().requestFocus();
     }
 
     /**
      * Set the image to be used by the crosshair cursor.
      */
     public void setCrossHairCursorImage(Image image) {
-	crosshairCursor = component.getToolkit().createCustomCursor(image, new Point(8, 8), "Crosshair Cursor");
+	crosshairCursor = canvas.getToolkit().createCustomCursor(image, new Point(8, 8), "Crosshair Cursor");
     }
 
     public void setToolBar(boolean show) {
@@ -243,11 +819,11 @@ public class HiNoteCore {
 
     /**
      * Set the rendering quality.
-     * Values are ZRenderContext.RENDER_QUALITY_LOW, ZRenderContext.RENDER_QUALITY_MEDIUM and ZRenderContext.RENDER_QUALITY_HIGH
+     * Values are ZRenderContext.RENDER_QUALITY_LOW, ZRenderContext.RENDER_QUALITY_MEDIUM and 
+     * ZRenderContext.RENDER_QUALITY_HIGH
      */
     public void setRenderQuality(int qualityRequested) {
 	surface.setRenderQuality(qualityRequested);
-	surface.repaint();
     }
 
     /**
@@ -269,7 +845,7 @@ public class HiNoteCore {
      * Return the surface.
      * @return the surface
      */    
-    public ZSurface getSurface() {
+    public ZDrawingSurface getDrawingSurface() {
 	return surface;
     }
     
@@ -277,7 +853,7 @@ public class HiNoteCore {
      * Return the root of the scenegraph.
      * @return the root
      */
-    public ZRootNode getRoot() {
+    public ZRoot getRoot() {
 	return root;
     }
     
@@ -286,16 +862,16 @@ public class HiNoteCore {
      * the camera looks onto to start.
      * @return the node
      */
-    public ZNode getLayer() {
+    public ZLayerGroup getLayer() {
 	return layer;
     }
     
     /**
-     * Return the component that the surface is attached to.
-     * @return the component
+     * Return the canvas that the surface is attached to.
+     * @return the canvas
      */
-    public ZBasicComponent getComponent() {
-	return component;
+    public ZCanvas getCanvas() {
+	return canvas;
     }
 
     /**
@@ -308,9 +884,9 @@ public class HiNoteCore {
 
     /**
      * Return the zoom event handler.
-     * *@eturn the zoom event handler.
+     * @return the zoom event handler.
      */
-    public ZoomEventHandlerRightButton getZoomEventHandler() {
+    public ZoomEventHandler getZoomEventHandler() {
 	return zoomEventHandler;
     }
 
@@ -318,34 +894,56 @@ public class HiNoteCore {
 	return cmdTable;
     }
     
-    public ZNode getDrawingLayer() {
+    public ZLayerGroup getDrawingLayer() {
 	return getLayer();
     }
 
     ///////////////////////////////////////////////////////////////    
     //
-    // Basic functionality methods that are priniciply called
+    // Basic functionality methods that are prinicipaly called
     // from the menubar.
     //
     ///////////////////////////////////////////////////////////////    
 
     public void newView() {
-	ZBasicFrame frame = new ZBasicFrame(false, getRoot(), getLayer());
-	frame.setLocation(200, 100);
+	JFrame frame = new JFrame();
+	ZCanvas canvas = new ZCanvas(getRoot(), getLayer());
+	frame.setBounds(200, 100, 400, 400);
+	frame.setResizable(true);
+	frame.setBackground(null);
+	frame.setVisible(true);
+	frame.getContentPane().add(canvas);
+	frame.validate();
+	final ZCamera camera = canvas.getCamera();
+				// Copy visible layers from primary camera to new camera
+	ZLayerGroup[] layers = getCamera().getLayers();
+	for (int i=0; i<layers.length; i++) {
+	    camera.addLayer(layers[i]);
+	}
 
 				// Make camera in new window look at same place as current window
-	frame.getCamera().center(getCamera().getViewBounds(), 0, frame.getSurface());
+	camera.center(camera.getViewBounds(), 0, canvas.getDrawingSurface());
 
 				// Use same render quality as current window
-	frame.getSurface().setRenderQuality(getRenderQuality());
+	canvas.getDrawingSurface().setRenderQuality(getRenderQuality());
 
 				// Use our own pan event handler so we can follow hyperlinks
-	frame.getPanEventHandler().deactivate();
-	new PanEventHandler(frame.getComponent(), frame.getSurface()).activate();
-	new ZNavEventHandlerKeyBoard(frame.getComponent(), frame.getSurface()).activate();
+	canvas.getPanEventHandler().setActive(false);
+	new PanEventHandler(canvas.getCameraNode(), canvas).setActive(true);
+	new ZNavEventHandlerKeyBoard(canvas.getCameraNode(), canvas).setActive(true);
 
 				// Don't want application to exit when secondary windows are closed
-	frame.removeWindowListener(frame.getWindowListener());
+				// Instead, just remove surface and camera
+	WindowListener windowListener = new WindowAdapter() {
+	    public void windowClosing(WindowEvent e) {
+		camera.removeLayer(HiNoteCore.this.getLayer());
+		ZNode[] parents = camera.getParents();
+		for (int i=0; i<parents.length; i++) {
+		    parents[i].getParent().removeChild(parents[i]);
+		}
+	    }
+	};
+	frame.addWindowListener(windowListener);
     }
 
     /**
@@ -353,34 +951,117 @@ public class HiNoteCore {
      * Press the 'Esc' key to close it.
      */
     public void fullScreen() {
-	ZBasicWindow window = new ZBasicWindow(getRoot(), getLayer());
+	final JWindow window = new JWindow();
+	ZCanvas canvas = new ZCanvas(getRoot(), getLayer());
+	Dimension screenSize = window.getToolkit().getScreenSize();
+	window.setLocation(0, 0);
+	window.setSize(screenSize);
+	window.setBackground(null);
+	window.setVisible(true);
+	window.getContentPane().add(canvas);
+	window.validate();
+	window.requestFocus();
+	final ZCamera camera = canvas.getCamera();
 
 				// Make camera in new window look at same place as current window
-	window.getCamera().center(getCamera().getViewBounds(), 0, window.getSurface());
+	camera.center(camera.getViewBounds(), 0, camera.getDrawingSurface());
 
 				// Use same render quality as current window
-	window.getSurface().setRenderQuality(getRenderQuality());
+	camera.getDrawingSurface().setRenderQuality(getRenderQuality());
 
 				// Use our own pan event handler so we can follow hyperlinks
-	window.getPanEventHandler().deactivate();
-	new PanEventHandler(window.getComponent(), window.getSurface()).activate();
+	canvas.getPanEventHandler().setActive(false);
+	new PanEventHandler(canvas.getCameraNode(), canvas).setActive(true);
+
+				// Make escape key close window
+	ZEventHandler keyEventHandler = new ZNavEventHandlerKeyBoard(canvas.getCameraNode(), canvas) {
+	    public void keyPressed(KeyEvent e) {
+		super.keyPressed(e);
+		if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+		    window.dispose();
+		}
+	    }
+	};
+	keyEventHandler.setActive(true);
     }
 
     /**
      * Change the camera to the identity view - i.e., home.
      */
     public void goHome() {
-	getCamera().getViewTransform().animate(new AffineTransform(), ANIMATION_TIME, getSurface());
+	getCamera().animate(new AffineTransform(), ANIMATION_TIME, getDrawingSurface());
+    }
+
+    public void openStream(InputStream inStream, String fileName) {
+	String extension = null;
+	int i = fileName.lastIndexOf('.');
+	if(i > 0 && i < fileName.length()-1) {
+	    extension = fileName.substring(i+1).toLowerCase();
+	}
+
+	if (inStream != null) {
+	    if (extension.equals(jazzExtension)) {
+		if (parser == null) {
+		    parser = new ZParser();
+		} 
+		try {
+		    root = (ZRoot)parser.parse(inStream);
+		    buildScene(root, canvas);
+		} catch (ParseException e) {
+		    System.out.println(e.getMessage());
+		    System.out.println("Invalid file format");
+		}
+	    } else if (extension.equals(jazzbExtension)) {
+		try {
+		    ObjectInputStream ois = new ObjectInputStream(inStream);
+		    root = (ZRoot)ois.readObject();
+		    buildScene(root, canvas);
+		    ois.close();
+		} catch (Exception e) {
+		    System.out.println(e.getMessage());
+		}
+	    }
+	}
     }
 
     public void open() {
-	ExtensionFileFilter filter = new ExtensionFileFilter();
-	filter.addExtension("jazz");
-	filter.setDescription("Jazz files");
-	
+	ExtensionFileFilter filter[] = new ExtensionFileFilter[3];
+	filter[0] = new ExtensionFileFilter();
+	filter[0].addExtension(jazzbExtension);
+	filter[0].addExtension(jazzExtension);
+	filter[0].setDescription("All Jazz files");
+
+	filter[1] = new ExtensionFileFilter();
+	filter[1].addExtension(jazzExtension);
+	filter[1].setDescription(jazzFilterDescription);
+
+	filter[2] = new ExtensionFileFilter();
+	filter[2].addExtension(jazzbExtension);
+	filter[2].setDescription(jazzbFilterDescription);
 	File file = QueryUserForFile(filter, "Open");
 	if (file != null) {
 	    currentFileName = file.getAbsolutePath();
+	    String extension = null;
+	    int i = currentFileName.lastIndexOf('.');
+	    if (i > 0 && i < currentFileName.length()-1) {
+		 extension = currentFileName.substring(i+1).toLowerCase();
+	    }
+
+				// if no filename extension given by user,
+				// add one if "Jazz Custom" or "Java-Serialized"
+				// was selected. If "All Jazz Files" was selected,
+				// don't add a selection.
+	    if (extension == null) {
+		if (lastFilter != null) {
+		    if (lastFilter.getDescription().indexOf("Custom") > -1) {
+			currentFileName = currentFileName + "." + jazzExtension;
+		    }
+		    if (lastFilter.getDescription().indexOf("Serialized") > -1) {
+			currentFileName = currentFileName + "." + jazzbExtension;
+		    }
+		}
+	    }
+
 
 	    // Pathnames are to be stored in jazz files relative to
 	    // current jazz save directory. Do a temporary 'set cwd'
@@ -388,93 +1069,104 @@ public class HiNoteCore {
 	    // be relative to this new cwd
 	    String cwd = System.getProperty("user.dir");
 	    System.setProperty("user.dir",file.getParent());
-
-	    openFile(getComponent(), currentFileName);
-
-	    // restore the cwd
-	    System.setProperty("user.dir",cwd);
-
-	    root = getComponent().getRoot();
-	    layer = (ZNode)root.getChildren().elementAt(0);
-	    camera = (ZCamera)root.getChildren().elementAt(1);
-	    ZNode selectionLayer = (ZNode)root.getChildren().elementAt(2);
-	    selectionEventHandler.setSelectionLayer(selectionLayer);
-	}
-    }
-
-    public void openFile(ZBasicComponent component, String fileName) {
-	FileInputStream inStream = null;
-	
-	try {
-	    inStream = new FileInputStream(fileName);
-	    openStream(component, inStream);
-	}
-	catch (java.io.FileNotFoundException e) {
-	    System.out.println("File " + fileName + " not found.");
-	}
-    }
-
-    public void openStream(ZBasicComponent component, InputStream inStream) {
-	if (inStream != null) {
-	    if (parser == null) {
-		parser = new ZParser();
-	    } 
+	    FileInputStream inStream = null;
 	    try {
-		component.setRoot((ZRootNode)parser.parse(inStream));
-		component.setLayer((ZNode)component.getRoot().getChildren().elementAt(0));
-		component.setCamera((ZCamera)component.getRoot().getChildren().elementAt(1));
-		component.getSurface().setCamera(component.getCamera());
-		component.getCamera().setSurface(component.getSurface());
-
-		root = component.getRoot();
-		layer = (ZNode)root.getChildren().elementAt(0);
-		camera = (ZCamera)root.getChildren().elementAt(1);
-		
-		ZNode selectionLayer = (ZNode)root.getChildren().elementAt(2);
-		selectionEventHandler.setSelectionLayer(selectionLayer);
-
-		component.getSurface().repaint();
-	    } catch (ParseException e) {
-		System.out.println(e.getMessage());
-		System.out.println("Invalid file format");
+		inStream = new FileInputStream(currentFileName);
 	    }
+	    catch (java.io.FileNotFoundException e) {
+		System.out.println("File " + currentFileName + " not found.");
+		return;
+	    }
+
+	    openStream(inStream, currentFileName);
+	    // restore the cwd
+	    System.setProperty("user.dir", cwd);
 	}
+    }
+
+    public void buildScene(ZRoot root, ZCanvas canvas) {
+	ZNode[] children = root.getChildren();
+	layer = (ZLayerGroup)children[0];
+	ZVisualLeaf cameraNode = (ZVisualLeaf)children[1];
+	camera = (ZCamera)cameraNode.getVisualComponent();
+
+	canvas.setRoot(root);
+	canvas.setLayer(layer);
+	canvas.setCamera(camera);
+	canvas.getDrawingSurface().setCamera(camera, cameraNode);
+	camera.setDrawingSurface(canvas.getDrawingSurface());
+
+	ZGroup selectionLayer = (ZGroup)children[2];
+	selectionEventHandler.setMarqueeLayer(selectionLayer);
+
+	initEventHandlers(cameraNode, canvas, selectionLayer);
+	zoomEventHandler.setActive(true);
+	activeEventHandler = null;
+	panButton.doClick();
+
+	canvas.getDrawingSurface().repaint();
     }
 
     public void save() {
 	if (currentFileName == null) {
-	    ExtensionFileFilter filter = new ExtensionFileFilter();
-	    filter.addExtension("jazz");
-	    filter.setDescription("Jazz files");
+	    ExtensionFileFilter filter[] = new ExtensionFileFilter[2];
+	    filter[0] = new ExtensionFileFilter();
+	    filter[0].addExtension(jazzExtension);
+	    filter[0].setDescription(jazzFilterDescription);
 
+	    filter[1] = new ExtensionFileFilter();
+	    filter[1].addExtension(jazzbExtension);
+	    filter[1].setDescription(jazzbFilterDescription);
+	
 	    File file = QueryUserForFile(filter, "Save");
 	    if (file != null) {
 		currentFileName = file.getAbsolutePath();
 	    }
 	}
+
 	if (currentFileName != null) {
+	    String extension = null;
+	    int i = currentFileName.lastIndexOf('.');
+	    if (i > 0 && i < currentFileName.length()-1) {
+		 extension = currentFileName.substring(i+1).toLowerCase();
+	    }
+
+	    if (extension == null) {
+		if (lastFilter != null) {
+		    if (lastFilter.getDescription().indexOf("Custom") > -1) {
+			extension = jazzExtension;
+		    } else {
+			extension = jazzbExtension;
+		    }
+		}
+		currentFileName = currentFileName + "." + extension;
+	    }
+
+	    // Pathnames are to be stored in jazz files relative to
+	    // current jazz save directory. Do a temporary 'set cwd'
+	    // so the writeObject methods can change filenames to
+	    // be relative to this new cwd
+	    String cwd = System.getProperty("user.dir");
+	    File cfn = new File(currentFileName);
+	    System.setProperty("user.dir",cfn.getParent());
+
 	    try {
 		FileOutputStream fos =  new FileOutputStream(currentFileName);
-		ZObjectOutputStream out = new ZObjectOutputStream(fos);
-
-		// Pathnames are to be stored in jazz files relative to
-		// current jazz save directory. Do a temporary 'set cwd'
-		// so the writeObject methods can change filenames to
-		// be relative to this new cwd
-		String cwd = System.getProperty("user.dir");
-		File cfn = new File(currentFileName);
-		System.setProperty("user.dir",cfn.getParent());
-
-		out.writeObject(getRoot());
-
-		// restore the cwd
-		System.setProperty("user.dir",cwd);
-
-		out.close();
+		if (extension.equals(jazzExtension)) {
+		    ZObjectOutputStream out = new ZObjectOutputStream(fos);
+		    out.writeObject(getRoot());
+		    out.close();
+		} else if (extension.equals(jazzbExtension)) {
+		    ObjectOutputStream out = new ObjectOutputStream(fos);
+		    out.writeObject(getRoot());
+		    out.close();
+		}
 		fos.close();
 	    } catch (Exception exception) {
 		System.out.println(exception);
 	    }
+	    // restore the cwd
+	    System.setProperty("user.dir",cwd);
 	}
     }
 
@@ -495,21 +1187,58 @@ public class HiNoteCore {
 	    fileChooser.addChoosableFileFilter(filter);
 	    fileChooser.setFileFilter(filter);
 	}
-	int retval = fileChooser.showDialog(getComponent(), approveText);
+	int retval = fileChooser.showDialog(getCanvas(), approveText);
 	if (retval == JFileChooser.APPROVE_OPTION) {
 	    file = fileChooser.getSelectedFile();
+	    prevFile = file;
 	}
 
-	prevFile = file;
+	return file;
+    }
+
+    public File QueryUserForFile(javax.swing.filechooser.FileFilter[] filter, String approveText) {
+	File file = null;
+	JFileChooser fileChooser = new JFileChooser(prevFile);
+
+	if (filter != null) {
+	    javax.swing.filechooser.FileFilter currentFilter = null;
+	    for (int f=0; f < filter.length; f++) {
+		if (filter[f] != null) {
+		    fileChooser.addChoosableFileFilter(filter[f]);
+		    if ((lastFilter != null) &&
+			(lastFilter.getDescription().equals(filter[f].getDescription()))) {
+			currentFilter = filter[f];
+		    }
+		}
+	    }
+
+	    javax.swing.filechooser.FileFilter allFilesFilter = fileChooser.getAcceptAllFileFilter();
+	    if (allFilesFilter != null) {
+		boolean yn = fileChooser.removeChoosableFileFilter(allFilesFilter);
+	    }
+
+				// default filter is last that user selected
+	    if (currentFilter != null) {
+		fileChooser.setFileFilter(currentFilter);
+	    } else {
+		fileChooser.setFileFilter(filter[0]);
+	    }
+	}
+	int retval = fileChooser.showDialog(getCanvas(), approveText);
+	if (retval == JFileChooser.APPROVE_OPTION) {
+	    file = fileChooser.getSelectedFile();
+	    prevFile = file;
+	    lastFilter = fileChooser.getFileFilter();
+	}
 
 	return file;
     }
 
     public void insertImage() {
-	File file = QueryUserForFile(null, "Open");
+	File file = QueryUserForFile((javax.swing.filechooser.FileFilter[])null, "Open");
 	if (file != null) {
-	    java.awt.Image ji = getComponent().getToolkit().getImage(file.getAbsolutePath());
-	    MediaTracker tracker = new MediaTracker(getComponent());
+	    java.awt.Image ji = getCanvas().getToolkit().getImage(file.getAbsolutePath());
+	    MediaTracker tracker = new MediaTracker(getCanvas());
 	    tracker.addImage(ji, 0);
 	    try {
 		tracker.waitForID(0);
@@ -520,339 +1249,414 @@ public class HiNoteCore {
 	    ZImage zi = new ZImage(ji);
 	    zi.setFileName(file.getAbsolutePath());
 	    zi.setWriteEmbeddedImage(false);
-	    ZNode node = new ZNode(zi);
-	    node.setTransform((ZTransform)getCamera().getInverseViewTransform().clone());
-	    getDrawingLayer().addChild(node);
-	    
-	    getSurface().restore();
+	    ZVisualLeaf leaf = new ZVisualLeaf(zi);
+	    ZTransformGroup transform = leaf.editor().getTransformGroup();
+	    transform.setTransform(getCamera().getInverseViewTransform());
+	    getDrawingLayer().addChild(transform);
 	}
     }
 
     public void cut() {
 	ZNode node;
+	ZNode handle;
+	ArrayList selection = ZSelectionGroup.getSelectedNodes(getCamera());
 
-	copy();
-
-	Vector nodes = getDrawingLayer().getSelectedChildren();
-	for (Iterator i=nodes.iterator(); i.hasNext();) {
+	copyBuffer.clear();
+	String text = null;
+	for (Iterator i=selection.iterator(); i.hasNext();) {
             node = (ZNode)i.next();
-	    getDrawingLayer().removeChild(node);
+	    ZSelectionGroup.unselect(node);
+	    handle = node.editor().getTop();
+	    getDrawingLayer().removeChild(handle);
+	    copyBuffer.add(handle);
+
+	    // copy text to system clipboard
+	    if (clipboard != null) {
+		ZVisualComponent vc = ((ZVisualLeaf)node).getVisualComponent();
+		if ((node instanceof ZVisualLeaf) && (vc instanceof ZText)) {
+		    if (text != null) {
+			text += "\n" + ((ZText)vc).getText();
+		    } else {
+			text = ((ZText)vc).getText();
+		    }
+		}
+	    }
 	}
-	surface.restore();
+
+	if ((clipboard != null) && (text != null)) {
+	    StringSelection fieldContent = new StringSelection (text);
+	    clipboard.setContents (fieldContent, HiNoteCore.this);
+	}
+				// Store info so we know where to paste
+	pasteDelta.setToIdentity();
+	pasteViewTransform = getCamera().getViewTransform();
     }
 	
     public void copy() {
-	ZNode node, copy;
-	Vector nodes = getDrawingLayer().getSelectedChildren();
-	float delta = 10.0f / getCamera().getMagnification();
+	ZNode node;
+	ZNode copy;
+	ZNode handle;
+	ZCamera camera = getCamera();
+	ArrayList selection = ZSelectionGroup.getSelectedNodes(camera);
 
 	copyBuffer.clear();
-	for (Iterator i=nodes.iterator(); i.hasNext();) {
+	String text = null;
+	for (Iterator i=selection.iterator(); i.hasNext();) {
             node = (ZNode)i.next();
-	    copy = (ZNode)node.clone();
-	    preTranslate(copy, delta, delta);
+	    ZSelectionGroup.unselect(node);
+	    handle = node.editor().getTop();
+	    copy = (ZNode)handle.clone();
 	    copyBuffer.add(copy);
+	    ZSelectionGroup.select(node);
+
+	    // copy text to system clipboard
+	    if (clipboard != null) {
+		ZVisualComponent vc = ((ZVisualLeaf)node).getVisualComponent();
+		if ((node instanceof ZVisualLeaf) && (vc instanceof ZText)) {
+		    if (text != null) {
+			text += "\n" + ((ZText)vc).getText();
+		    } else {
+			text = ((ZText)vc).getText();
+		    }
+		}
+	    }
 	}
+	if ((clipboard != null) && (text != null)) {
+	    StringSelection fieldContent = new StringSelection (text);
+	    clipboard.setContents (fieldContent, HiNoteCore.this);
+	}
+				// Store info so we know where to paste
+	pasteDelta.setToIdentity();
+	pasteViewTransform = camera.getViewTransform();
     }
 	
     public void paste() {
-	ZNode node, copy;
-	Vector newCopyBuffer = new Vector();
-	float delta = 10.0f / getCamera().getMagnification();
+	ZCamera camera = getCamera();
+	ZGroup layer = getDrawingLayer();
+	ZNode node;
+	ZNode copy;
+	ZTransformGroup transform;
 
-	getDrawingLayer().unselectAll();
-	for (Iterator i=copyBuffer.iterator(); i.hasNext();) {
-            node = (ZNode)i.next();
 
-	    copy = (ZNode)node.clone();
-	    preTranslate(copy, delta, delta);
-	    newCopyBuffer.add(copy);
-
-	    getDrawingLayer().addChild(node);
-	    node.getVisualComponent().select(getCamera());
+	AffineTransform currentTransform = camera.getViewTransform();
+	if (pasteViewTransform.equals(currentTransform)) {
+				// Update paste delta 
+	    pasteDelta.translate(10.0f, 10.0f);
+	} else {
+				// Update paste position relative to current camera if it has changed
+	    try {
+		AffineTransform newDelta = currentTransform.createInverse();
+		newDelta.concatenate(pasteViewTransform);
+		newDelta.concatenate(pasteDelta);
+		pasteDelta = newDelta;
+		pasteViewTransform = currentTransform;
+	    } catch (NoninvertibleTransformException e) {
+	    }
 	}
 
-	copyBuffer = newCopyBuffer;
-	surface.restore();
-    }
-	
-    /**
-     * Translate the node using preConcatenation which will result in the
-     * translate happening in global coordinates.
-     */
-    protected void preTranslate(ZNode node, float dx, float dy) {
-	AffineTransform at = AffineTransform.getTranslateInstance(dx, dy);
-	node.getTransform().preConcatenate(at);
+	ZSelectionGroup.unselectAll(camera);
+	ZSceneGraphEditor editor;
+	// if local clipboad (copyBuffer) is empty, try system clipboard
+	if (clipboard != null) {
+	    if (copyBuffer.isEmpty()) {
+		Transferable clipboardContent = clipboard.getContents (this);
+		
+		if ((clipboardContent != null) &&
+		    (clipboardContent.isDataFlavorSupported (DataFlavor.stringFlavor))) {
+		    try {
+			String tempString = (String) clipboardContent.getTransferData(DataFlavor.stringFlavor);
+			ZText textComp = new ZText(tempString);
+			textComp.setFont(font);
+			textComp.setPenColor(penColor);
+			textComp.setGreekThreshold(15);
+			ZVisualLeaf textNode = new ZVisualLeaf(textComp);
+			ZNode handle = ((ZNode)textNode).editor().getTop();
+			copyBuffer.add(handle);
+		    }
+		    catch (Exception e) {
+			e.printStackTrace ();
+		    }
+		}
+	    }
+	}
+
+	for (Iterator i=copyBuffer.iterator(); i.hasNext();) {
+            node = (ZNode)i.next();
+	    copy = (ZNode)node.clone();
+	    editor = copy.editor();
+	    transform = new ZTransformGroup();
+	    transform.addChild(node);
+	    transform.setHasOneChild(true);
+	    transform.concatenate(pasteDelta);
+	    layer.addChild(transform);
+	    ZSelectionGroup.select(node);
+	}
+
+	if (clipboard != null) {
+	    getOwnershipClipboard();
+	}
+
     }
 
     public void raise() {
 	ZNode node;
-	Vector nodes = getDrawingLayer().getSelectedChildren();
+	ZNode handle;
+	ArrayList selection = ZSelectionGroup.getSelectedNodes(getCamera());
 
-	for (Iterator i=nodes.iterator(); i.hasNext();) {
+	for (Iterator i=selection.iterator(); i.hasNext();) {
             node = (ZNode)i.next();
-	    node.raise();
+	    handle = node.editor().getTop();
+	    handle.raise();
 	}
-	surface.restore();
     }
 	
     public void lower() {
+	boolean first = true;
 	ZNode node;
-	Vector nodes = getDrawingLayer().getSelectedChildren();
+	ZNode prev = null;
+	ZNode handle;
+	ArrayList selection = ZSelectionGroup.getSelectedNodes(getCamera());
 
-	for (Iterator i=nodes.iterator(); i.hasNext();) {
+	for (Iterator i=selection.iterator(); i.hasNext();) {
             node = (ZNode)i.next();
-	    node.lower();
+	    handle = node.editor().getTop();
+				// Need to be careful here to make sure that the relative
+				// order of several lowered objects stays the same
+	    if (first) {
+		first = false;
+		handle.lower();
+	    } else {
+		handle.raiseTo(prev);
+	    }
+	    prev = handle;
 	}
-	surface.restore();
     }
-	
+
     public void setMinMag() {
 	ZNode node;
-	Vector nodes = getDrawingLayer().getSelectedChildren();
+	ZFadeGroup fade;
+	ZCamera camera = getCamera();
+	ArrayList selection = ZSelectionGroup.getSelectedNodes(camera);
 
-	for (Iterator i=nodes.iterator(); i.hasNext();) {
+	for (Iterator i=selection.iterator(); i.hasNext();) {
             node = (ZNode)i.next();
-	    node.setMinMag(getCamera().getMagnification());
+	    fade = node.editor().getFadeGroup();
+	    fade.setMinMag(camera.getMagnification());
 	}
-	surface.restore();
     }
 	
     public void setMaxMag() {
 	ZNode node;
-	Vector nodes = getDrawingLayer().getSelectedChildren();
+	ZFadeGroup fade;
+	ZCamera camera = getCamera();
+	ArrayList selection = ZSelectionGroup.getSelectedNodes(camera);
 
-	for (Iterator i=nodes.iterator(); i.hasNext();) {
+	for (Iterator i=selection.iterator(); i.hasNext();) {
             node = (ZNode)i.next();
-	    node.setMaxMag(getCamera().getMagnification());
+	    fade = node.editor().getFadeGroup();
+	    fade.setMaxMag(camera.getMagnification());
 	}
-	surface.restore();
     }
 	
     public void clearMinMaxMag() {
 	ZNode node;
-	Vector nodes = getDrawingLayer().getSelectedChildren();
+	ZFadeGroup fade;
+	ZCamera camera = getCamera();
+	ArrayList selection = ZSelectionGroup.getSelectedNodes(camera);
 
-	for (Iterator i=nodes.iterator(); i.hasNext();) {
+	for (Iterator i=selection.iterator(); i.hasNext();) {
             node = (ZNode)i.next();
-	    node.setMinMag(0);
-	    node.setMaxMag(-1);
+	    fade = node.editor().getFadeGroup();
+	    fade.setMinMag(0);
+	    fade.setMaxMag(-1);
 	}
-	surface.restore();
     }
-	
-    public void makeSticky() {
-	ZNode node;
-	Vector nodes = getDrawingLayer().getSelectedChildren();
 
-	for (Iterator i=nodes.iterator(); i.hasNext();) {
-            node = (ZNode)i.next();
-	    Class c = ZConstraintDecorator.class;
-	    ZConstraintDecorator constraint = (ZConstraintDecorator)node.findVisualComponent(c);
-				// If already has a constraint, then remove it
-	    if (constraint != null) {
-		constraint.applyTransform();
-		constraint.remove();
-	    }
-				// Then, apply the new constraint
-	    node.getVisualComponent().unselect();
-	    constraint = new ZStickyDecorator(getCamera());
-	    constraint.insertAbove(node.getVisualComponent());
-	    constraint.applyInverseTransform();
-	    node.getVisualComponent().select(getCamera());
-	}
-	surface.restore();
-    }
-	
-    public void makeStickyZ() {
+    public void makeSticky(int constraintType) {
 	ZNode node;
-	Vector nodes = getDrawingLayer().getSelectedChildren();
+	ZCamera camera = getCamera();
+	ArrayList selection = ZSelectionGroup.getSelectedNodes(camera);
 
-	for (Iterator i=nodes.iterator(); i.hasNext();) {
+	for (Iterator i=selection.iterator(); i.hasNext();) {
             node = (ZNode)i.next();
-	    Class c = ZConstraintDecorator.class;
-	    ZConstraintDecorator constraint = (ZConstraintDecorator)node.findVisualComponent(c);
-				// If already has a constraint, then remove it
-	    if (constraint != null) {
-		constraint.applyTransform();
-		constraint.remove();
-	    }
-				// Then, apply the new constraint
-	    node.getVisualComponent().unselect();
-	    constraint = new ZStickyZDecorator(getCamera());
-	    constraint.insertAbove(node.getVisualComponent());
-	    constraint.applyInverseTransform();
-	    node.getVisualComponent().select(getCamera());
+	    ZSelectionGroup.unselect(node);
+	    ZStickyGroup.makeSticky(node, camera, constraintType);
+	    ZSelectionGroup.select(node);
 	}
-	surface.restore();
     }
 	
     public void makeUnSticky() {
 	ZNode node;
-	Vector nodes = getDrawingLayer().getSelectedChildren();
+	ZCamera camera = getCamera();
+	ArrayList selection = ZSelectionGroup.getSelectedNodes(getCamera());
+	ZSceneGraphEditor editor;
 
-	for (Iterator i=nodes.iterator(); i.hasNext();) {
+	for (Iterator i=selection.iterator(); i.hasNext();) {
             node = (ZNode)i.next();
-	    Class c = ZConstraintDecorator.class;
-	    ZConstraintDecorator sticky = (ZConstraintDecorator)node.findVisualComponent(c);
-	    if (sticky != null) {
-		sticky.applyTransform();
-		sticky.remove();
+	    editor = node.editor();
+
+	    if (editor.hasStickyGroup()) {
+		ZSelectionGroup.unselect(node);
+		ZStickyGroup.makeUnSticky(node);
+		ZSelectionGroup.select(node);
 	    }
 	}
-	surface.restore();
     }
-	
-    public void deleteSelected() {
-	ZNode node;
-	Vector nodes = getDrawingLayer().getSelectedChildren();
+    
+    public void selectAll() {
+	ZGroup layer = getLayer();
+	ZNode[] children = layer.getChildren();
+	ZNode child;
 
-	for (Iterator i=nodes.iterator(); i.hasNext();) {
-            node = (ZNode)i.next();
-	    node.getParent().removeChild(node);
+	for (int i=0; i<children.length; i++) {
+	    child = children[i].editor().getNode();
+	    ZSelectionGroup.select(child);
 	}
-	surface.restore();
     }
 
-    /* Group all selected nodes. If other nodes are part of other groups,
-     * the structure is preserved.
-     */
-    public void groupSelected() {
+    public void delete() {
 	ZNode node;
-	Vector nodes = getDrawingLayer().getSelectedChildren();
+	ZNode handle;
+	ArrayList selection = ZSelectionGroup.getSelectedNodes(getCamera());
 
-	// There are no nodes to group
-	if (nodes.isEmpty()) return;
+				// Pressing the delete key while editing a text field
+				// should just delete a character, not the whole node
+	if (selection.size() == 1) {
+	    node = (ZNode)selection.get(0);
+	    ZVisualComponent vc = ((ZVisualLeaf)node).getVisualComponent();
+	    if ((node instanceof ZVisualLeaf) && (vc instanceof ZText)) {
+		if (((ZText)vc).getEditable()) {
+		    return;
+		}
+	    }
+	}
 
-	// can't group a single node
-	if (nodes.size() == 1) return;
-
-	// create a new groupNode, link it to the layer node
-        ZNode groupNode = new ZNode();
-
-	layer.addChild(groupNode);
-
-	// remove nodes to be grouped from the layer, add them
-	// to the new groupNode
-	ZNode topNode;
-	Vector topNodes = new Vector();
-	for (Iterator i=nodes.iterator(); i.hasNext();) {
+	for (Iterator i=selection.iterator(); i.hasNext();) {
             node = (ZNode)i.next();
-
-	    // climb up tree to layer node (handles groups of groups)
-	    topNode = node;
-	    while (!topNode.getParent().equals(layer)) {
-		topNode = topNode.getParent();
-	    }
-
-	    if (!topNodes.contains(topNode)) {
-		topNodes.addElement(topNode);
-	    }
+	    handle = node.editor().getTop();
+	    handle.getParent().removeChild(handle);
 	}
-	for (Iterator v=topNodes.iterator(); v.hasNext();) {
-	    topNode = (ZNode)v.next();
-	    groupNode.addChild(topNode);
-	}
-	    
-	getDrawingLayer().unselectAll();
-
-	// add an invisible box to this groupNode so it can be selected
-	ZRectangle rect = new ZRectangle(groupNode.getGlobalBounds());
-	rect.setPenColor(null);
-	rect.setPenWidth(0.0f);
-	rect.setFillColor(null);
-	groupNode.setVisualComponent(rect);
-	rect.select(getCamera());
-
-	surface.restore();
     }
 
     /**
-     * Ungroup any selected groups.
+     * Group all selected nodes. If other nodes are part of other groups,
+     * the structure is preserved.
      */
-    public void ungroupSelected() {
-	Vector nodes = getDrawingLayer().getSelectedChildren();
+    public void group() {
+	ZNode node;
+	ZNode handle;
+	ArrayList selection = ZSelectionGroup.getSelectedNodes(getCamera());
 
-	if (nodes.isEmpty()) return;
+				// Not enough nodes to group
+	if (selection.size() <= 1) {
+	    return;
+	}
 
-	ZNode groupNode;
-	for (Iterator g=nodes.iterator(); g.hasNext();) {
-	    groupNode = (ZNode)g.next();
 
-	    // A "group" has a colection of children
-	    if (groupNode.getChildren().isEmpty()) {
-		continue;
-	    }
+				// Create a new group node, and put it under the layer node
+        ZGroup group = new ZGroup();
+	group.putClientProperty("group", group);
+	layer.addChild(group);
+	group.setChildrenPickable(false);
+	group.setChildrenFindable(false);
 
-	    // Should not happen: an individual member of a group has been selected
-	    if (!groupNode.getParent().equals(layer)) {
-		continue;
-	    }
+				// Move nodes to be grouped to the new group
+	for (Iterator i=selection.iterator(); i.hasNext();) {
+            node = (ZNode)i.next();
+	    ZSelectionGroup.unselect(node);
+	    handle = node.editor().getTop();
+	    handle.setParent(group);
+	}
+	ZSelectionGroup.select(group);
+    }
 
-	    layer.removeChild(groupNode);
+    /**
+     * Ungroup all selected groups, and transform each group member by the group's transform
+     * so that after they are ungrouped they don't move in global coordinates.
+     */
+    public void ungroup() {
+	ZNode node;
+	ArrayList selection = ZSelectionGroup.getSelectedNodes(getCamera());
 
-	    // Collect children of former group node
-	    Vector childrenV = new Vector();
-	    for (Iterator i=groupNode.getChildren().iterator(); i.hasNext();) {
-		ZNode childNode = (ZNode)i.next();
-		childrenV.addElement(childNode);
-	    }
+	if (selection.isEmpty()) {
+	    return;
+	}
 
-	    // Add those children to layer
-	    for (Iterator i=childrenV.iterator(); i.hasNext();) {
-		ZNode childNode = (ZNode)i.next();
-		childNode.reparent(layer);
-		childNode.getVisualComponent().select(getCamera());
+	ZGroup group;
+	ZTransformGroup childTransform;
+	ZNode handle;
+	ZNode[] children;
+
+	for (Iterator i=selection.iterator(); i.hasNext();) {
+	    node = (ZNode)i.next();
+
+	    if (node.getClientProperty("group") != null) {
+		group = (ZGroup)node;
+		children = group.getChildren();
+		for (int j=0; j<children.length; j++) {
+		    children[j].reparent(layer);
+		    ZSelectionGroup.select(children[j].editor().getNode());
+		}
+
+		handle = group.editor().getTop();
+		layer.removeChild(handle);
 	    }
 	}
-	
-	surface.restore();
     }
 
     public void setEventHandler(int newEventHandlerMode) {
 				// First, exit old event handler mode
 	switch (currentEventHandlerMode) {
 	case TEXT_MODE:
-	    keyboardNavEventHandler.activate();
+	    keyboardNavEventHandler.setActive(true);
 	    break;
 	case SELECTION_MODE:
-	    keyboardNavEventHandler.activate();
+	    keyboardNavEventHandler.setActive(true);
 	    break;
 	default:
 	}
 
 				// Then, deactivate old event handler
 	if (activeEventHandler != null) {
-	    activeEventHandler.deactivate();
+	    activeEventHandler.setActive(false);
 	}
 
 				// Set up new event handler mode
 	switch (newEventHandlerMode) {
 	case PAN_MODE:
 	    activeEventHandler = panEventHandler;
-	    getComponent().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+	    getCanvas().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+	    keyboardNavEventHandler.setActive(true);
 	    break;
 	case LINK_MODE:
 	    activeEventHandler = linkEventHandler;
-	    getComponent().setCursor(crosshairCursor);
+	    getCanvas().setCursor(crosshairCursor);
+	    keyboardNavEventHandler.setActive(true);
 	    break;
 	case POLYLINE_MODE:
 	    activeEventHandler = squiggleEventHandler;
-	    getComponent().setCursor(crosshairCursor);
+	    getCanvas().setCursor(crosshairCursor);
+	    keyboardNavEventHandler.setActive(true);
+	    break;
+	case POLYGON_MODE:
+	    activeEventHandler = polygonEventHandler;
+	    getCanvas().setCursor(crosshairCursor);
+	    keyboardNavEventHandler.setActive(true);
 	    break;
 	case RECTANGLE_MODE:
 	    activeEventHandler = rectEventHandler;
-	    getComponent().setCursor(crosshairCursor);
+	    getCanvas().setCursor(crosshairCursor);
+	    keyboardNavEventHandler.setActive(true);
 	    break;
 	case TEXT_MODE:
-	    keyboardNavEventHandler.deactivate();
+	    keyboardNavEventHandler.setActive(false);
 	    activeEventHandler = textEventHandler;
-	    getComponent().setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
+	    getCanvas().setCursor(Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR));
 	    break;
 	case SELECTION_MODE:
-	    keyboardNavEventHandler.deactivate();
+	    keyboardNavEventHandler.setActive(false);
 	    activeEventHandler = selectionEventHandler;
-	    getComponent().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+	    getCanvas().setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
 	    break;
 	default:
 	    activeEventHandler = null;
@@ -860,7 +1664,7 @@ public class HiNoteCore {
 	}
 				// Finally, activate new event handler
 	if (activeEventHandler != null) {
-	    activeEventHandler.activate();
+	    activeEventHandler.setActive(true);
 	    currentEventHandlerMode = newEventHandlerMode;
 	}
     }

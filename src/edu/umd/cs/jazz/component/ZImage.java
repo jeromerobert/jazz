@@ -6,11 +6,15 @@ package edu.umd.cs.jazz.component;
 
 import java.awt.*;
 import java.awt.image.*;
+import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.awt.geom.*;
 import java.io.*;
 import java.net.*;
+import com.sun.image.codec.jpeg.*;
+import com.sun.image.codec.jpeg.JPEGCodec.*;
 
-import edu.umd.cs.jazz.scenegraph.*;
+import edu.umd.cs.jazz.*;
 import edu.umd.cs.jazz.io.*;
 import edu.umd.cs.jazz.util.*;
 
@@ -19,47 +23,31 @@ import edu.umd.cs.jazz.util.*;
  *
  * @author  Benjamin B. Bederson
  */
-public class ZImage extends ZVisualComponent {
+public class ZImage extends ZVisualComponent implements Serializable {
     public static final boolean writeEmbeddedImage_DEFAULT = true;
     protected static final Component staticComponent = new Canvas();
 
     protected int width, height;		// Dimensions of image.  -1 if not known yet
-    protected Image image = null;
-    protected Rectangle2D rect;
+    protected transient Image image = null;
     protected ZImageObserver observer;
     protected boolean writeEmbeddedImage = writeEmbeddedImage_DEFAULT;
-    protected String fileName = null;
+    protected transient String fileName = null;
     protected URL url = null;
     
+    private static final Component sComponent = new Component() {};
+    private static final MediaTracker sTracker = new MediaTracker(sComponent);
+    private static int sID = 0;
+  
     /**
      * Constructs a new Image.
      */
     public ZImage() {
-	rect = new Rectangle2D.Double();
         observer = new ZImageObserver(this);
     }
     
     public ZImage(Image i) {
 	this();
 	setImage(i);
-    }
-
-    /**
-     * Constructs a new ZImage that is a duplicate of the reference zimage, i.e., a "copy constructor"
-     * @param <code>zi</code> Reference zimage
-     */
-    public ZImage(ZImage zi) {
-	super(zi);
-	rect = new Rectangle2D.Double();
-        observer = new ZImageObserver(this);
-	writeEmbeddedImage = zi.writeEmbeddedImage;
-	fileName = new String(zi.fileName);
-	try {
-	    url = new URL(zi.url, null);
-	} catch (MalformedURLException e) {
-	    url = null;
-	}
-	setImage(zi.getImage());
     }
 
     public ZImage(String aFileName) {
@@ -79,12 +67,49 @@ public class ZImage extends ZVisualComponent {
     }
 
     /**
-     * Duplicates the current ZImage by using the copy constructor.
-     * See the copy constructor comments for complete information about what is duplicated.
-     * @see #ZImage(ZImage)
+     * Copies all object information from the reference object into the current
+     * object. This method is called from the clone method.
+     * All ZSceneGraphObjects objects contained by the object being duplicated
+     * are duplicated, except parents which are set to null.  This results
+     * in the sub-tree rooted at this object being duplicated.
+     *
+     * @param refImage The reference visual component to copy
+     */
+    public void duplicateObject(ZImage refImage) {
+	super.duplicateObject(refImage);
+
+        observer = new ZImageObserver(this);
+	writeEmbeddedImage = refImage.writeEmbeddedImage;
+	fileName = new String(refImage.fileName);
+	try {
+	    url = new URL(refImage.url, null);
+	} catch (MalformedURLException e) {
+	    url = null;
+	}
+	setImage(refImage.getImage());
+    }
+
+    /**
+     * Duplicates the current object by using the copy constructor.
+     * The portion of the reference object that is duplicated is that necessary to reuse the object
+     * in a new place within the scenegraph, but the new object is not inserted into any scenegraph.
+     * The object must be attached to a live scenegraph (a scenegraph that is currently visible)
+     * or be registered with a camera directly in order for it to be visible.
+     *
+     * @return A copy of this visual component.
+     * @see #updateObjectReferences 
      */
     public Object clone() {
-	return new ZImage(this);
+	ZImage copy;
+
+	objRefTable.reset();
+	copy = new ZImage();
+
+	copy.duplicateObject(this);
+	objRefTable.addObject(this, copy);
+	objRefTable.updateObjectReferences();
+
+	return copy;
     }
 
     /**
@@ -167,7 +192,7 @@ public class ZImage extends ZVisualComponent {
 	} else {
 	    setDimension(getWidth(), getHeight());
 	}
-	damage(true);
+
 	return isLoaded();
     }
 
@@ -275,21 +300,26 @@ public class ZImage extends ZVisualComponent {
      * Notifies this object that it has changed and that it should update 
      * its notion of its bounding box.  Note that this should not be called
      * directly.  Instead, it is called by <code>updateBounds</code> when needed.
-     *
-     * @see ZNode#getGlobalBounds()
      */
-    protected void computeLocalBounds() {
+    protected void computeBounds() {
+	Rectangle2D rect = new Rectangle2D.Double();
 	rect.setRect(0, 0, getWidth(), getHeight());
 	
-	localBounds.reset(); 
-	localBounds.add(rect);
+	bounds.setRect(rect);
     }
 
     /**
      * Paints this object.
-     * @param <code>g2</code> The graphics context to paint into.
+     * <p>
+     * The transform, clip, and composite will be set appropriately when this object
+     * is rendered.  It is up to this object to restore the transform, clip, and composite of
+     * the Graphics2D if this node changes any of them. However, the color, font, and stroke are
+     * unspecified by Jazz.  This object should set those things if they are used, but
+     * they do not need to be restored.
+     *
+     * @param <code>renderContext</code> The graphics context to paint into.
      */
-    public void paint(ZRenderContext renderContext) {
+    public void render(ZRenderContext renderContext) {
 	if (image != null) {
 	    Graphics2D g2 = renderContext.getGraphics2D();
 	    g2.drawImage(image, null, observer);
@@ -358,7 +388,7 @@ public class ZImage extends ZVisualComponent {
      * Called when the image has been loaded.
      */
     protected void setLoaded(boolean l) {
-	damage();
+	repaint();
     }
 
     /**
@@ -371,20 +401,21 @@ public class ZImage extends ZVisualComponent {
     void setDimension(int w, int h) {
 	width = w;
 	height = h;
-	updateBounds();
+	reshape();
     }
 
     /**
      * Generate a string that represents this object for debugging.
      * @return the string that represents this object for debugging
+     * @see ZDebug#dump
      */
-    public String toString() {
-	String str = super.toString();
+    public String dump() {
+	String str = super.dump();
 	if (fileName != null) {
-	    str += " '" + fileName + "'";
+	    str += "\n FileName = '" + fileName + "'";
 	}
 	if (url != null) {
-	    str += " '" + url + "'";
+	    str += "\n URL = '" + url + "'";
 	}
 
 	return str;
@@ -440,30 +471,157 @@ public class ZImage extends ZVisualComponent {
 	} else if (fieldName.compareTo("fileName") == 0) {
 	  String fn = (String)fieldValue;
 
-	  // Convert name-separator character to the one appropriate
-	  // for current system.
-	  if (File.separator.equals("/")) {
-	    fn = fn.replace('\\','/');
-	  } else {
-	    fn = fn.replace('/','\\');
-	  }
+				// image to be loaded as a jar resource:
+	  if ((fn.length() > 3) && (fn.substring(0,4).equals("jar:"))) {
+	      String jarFileName = fn.substring(4, fn.indexOf('/'));
+	      String entryName = fn.substring(fn.indexOf('/')+1);
+	      String resourceFileName = "resources/" + jarFileName;
+	      URL resourceURL = this.getClass().getClassLoader().getResource(resourceFileName);
+	      if (resourceURL == null) {
+		  System.out.println("ZImage resource " + resourceFileName + " not found.");
+		  return;
+	      }
+				// turn URL into JarURL
+	      String jarResourceName = resourceURL.toString();
+	      if ((jarResourceName.length() > 3) && 
+		  (!jarResourceName.substring(0,4).equals("jar:"))) {
+		  jarResourceName = "jar:" + jarResourceName + "!/";
+	      }
+	      jarResourceName += entryName;
+	      System.out.println("jarResourceName: "+jarResourceName);
+	      URL jarResourceURL = null;
+	      try {
+		  jarResourceURL = new URL(jarResourceName);
+	      } catch (java.net.MalformedURLException e) {
+		  System.out.println("MalformedURLException: " + jarResourceName);
+		  return;
+	      }
+	      setImage(jarResourceURL);
+	  } else {      
+	  
+	      // Convert name-separator character to the one appropriate
+	      // for current system.
+	      if (File.separator.equals("/")) {
+		  fn = fn.replace('\\','/');
+	      } else {
+		  fn = fn.replace('/','\\');
+	      }
 
 		  // Image filenames are saved as relative to the directory
 		  // the .jazz file is in. That directory should be
 		  // the current value of the user.dir property.
-	  String cwd = System.getProperty("user.dir");
-	  fileName = getAbsolutePath(cwd+File.separator+fn);
-	  setImage(fileName);
+	      String cwd = System.getProperty("user.dir");
+	      fileName = getAbsolutePath(cwd+File.separator+fn);
+	      setImage(fileName);
+	  }
 	} else if (fieldName.compareTo("url") == 0) {
 	    setImage((URL)fieldValue);
 	} else if (fieldName.compareTo("writeEmbeddedImage") == 0) {
 	    writeEmbeddedImage = ((Boolean)fieldValue).booleanValue();
 	}
     }
+
+    /**
+     * Wait while image is loaded.
+     * @param image The image.
+    */
+    public static boolean waitForImage(Image image) {
+	int id;
+	synchronized(sComponent) { id = sID++; }
+	sTracker.addImage(image, id);
+	try { sTracker.waitForID(id); }
+	catch (InterruptedException ie) { return false; }
+	if (sTracker.isErrorID(id)) return false;
+	return true;
+    }    
+
+    /**
+     * Creates a BufferedImage from an Image.
+     * @param image The image.
+    */
+    public static BufferedImage makeBufferedImage(Image image) {
+	if (waitForImage(image) == false) return null;
+	BufferedImage bufferedImage = new BufferedImage(image.getWidth(null), image.getHeight(null), BufferedImage.TYPE_INT_RGB);
+	Graphics2D g2 = bufferedImage.createGraphics();
+	g2.drawImage(image, null, null);
+	return bufferedImage;
+    }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+	out.defaultWriteObject();
+
+	// if fileName exists then write boolean(true), else write boolean(false)
+	if (fileName == null) {
+	    out.writeBoolean(false);
+	} else {
+	    out.writeBoolean(true);
+				// write String(fileName):
+				// Image filenames should be relative to the directory
+				// the .jazz file is being saved in. That should be
+				// the current value of the user.dir property.
+	    String cwd = System.getProperty("user.dir") + File.separator;
+	    String relFileName = getRelativePath(fileName, cwd);
+	    out.writeObject(relFileName);
+
+				// if writeEmbeddedImage is true 
+				// then write boolean(true) and write object(JPEG)
+				// else write boolean(false)
+	    if (writeEmbeddedImage) {
+		out.writeBoolean(true);
+		JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(out);
+		encoder.encode(makeBufferedImage(image));
+	    } else {
+		out.writeBoolean(false);
+	    }
+	}
+    }	
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+	in.defaultReadObject();
+
+	if (in.readBoolean()) {	// read boolean(); image file exists?
+	    fileName = (String)in.readObject();	// read String(fileName)
+	    if (in.readBoolean()) { // read boolean(); image file is embedded?
+				// read image as JPEG object
+		JPEGImageDecoder decoder = JPEGCodec.createJPEGDecoder(in);
+		image = (Image)decoder.decodeAsBufferedImage();
+	    } else {		// image is fileName
+				// read image file from disk
+				// Convert name-separator character to the one appropriate
+				// for current system.
+		if (File.separator.equals("/")) {
+		    fileName = fileName.replace('\\','/');
+		} else {
+		    fileName = fileName.replace('/','\\');
+		}
+	
+				// Image filenames are saved as relative to the directory
+				// the .jazz file is in. That directory should be
+				// the current value of the user.dir property.
+		String cwd = System.getProperty("user.dir");
+		fileName = getAbsolutePath(cwd+File.separator+fileName);
+
+		image = Toolkit.getDefaultToolkit().getImage(fileName);
+		MediaTracker tracker = new MediaTracker(staticComponent);
+		tracker.addImage(image, 0);
+		try {
+		    tracker.waitForID(0);
+		}
+		catch (InterruptedException exception) {
+		    System.out.println("Couldn't load image: " + fileName);
+		}
+	    }
+	    width = getWidth();
+	    height = getHeight();
+	}
+
+				// BBB: Should deal with jar files and resources
+				// BBB: Should read in binary if writeEmbeddedImage is true
+    }
 }
 
 
-class ZImageObserver implements ImageObserver {
+class ZImageObserver implements ImageObserver, Serializable {
     
     protected ZImage image;
     

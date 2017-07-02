@@ -2,13 +2,17 @@
  * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
  * All rights reserved.
  */
-
 package edu.umd.cs.jazz.util;
 
 import java.awt.geom.*;
+import java.io.*;
+import java.util.*;
+
+import edu.umd.cs.jazz.io.*;
+
 
 /**
- * A ZBounds is simply a Rectangle2D.Float with extra methods that more
+ * <b>ZBounds</b> is simply a Rectangle2D.Float with extra methods that more
  * properly deal with the case when the rectangle is "empty".  A ZBounds
  * has an extra bit to store emptiness.  In this state, adding new geometry
  * replaces the current geometry.  
@@ -17,8 +21,8 @@ import java.awt.geom.*;
  * which may be empty.
  */
 
-public class ZBounds extends Rectangle2D.Float {
-    protected boolean empty = true;
+public class ZBounds extends Rectangle2D.Float implements Serializable {
+    private boolean empty = true;
 
     public ZBounds() {
     }
@@ -33,9 +37,18 @@ public class ZBounds extends Rectangle2D.Float {
 	empty = false;
     }
 
+
     public ZBounds(ZBounds bounds) {
-	super(bounds.x, bounds.y, bounds.width, bounds.height);
-	empty = false;
+	super((float)bounds.getX(), (float)bounds.getY(), (float)bounds.getWidth(), (float)bounds.getHeight());
+	empty = bounds.isEmpty();
+    }
+
+
+    public Object clone() {
+	ZBounds bounds = new ZBounds();
+	bounds.add(this);
+
+	return bounds;
     }
 
     public void reset() {
@@ -117,7 +130,9 @@ public class ZBounds extends Rectangle2D.Float {
     }
 
     public void add(Rectangle2D r) {
-	if (empty) {
+	if (r.isEmpty()) {
+	    return;
+	} else if (empty) {
 	    setRect(r);
 	    empty = false;
 	} else {
@@ -151,4 +166,31 @@ public class ZBounds extends Rectangle2D.Float {
 	}
 	return str;
     }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+				// write local class
+	out.defaultWriteObject();
+
+				// write rectangle2d
+	out.writeDouble(getX());
+	out.writeDouble(getY());
+	out.writeDouble(getWidth());
+	out.writeDouble(getHeight());
+    }	
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+				// read local class
+	in.defaultReadObject();
+
+				// read rectangle2d
+	double x, y, w, h;
+	x = in.readDouble();
+	y = in.readDouble();
+	w = in.readDouble();
+	h = in.readDouble();
+	if (! isEmpty()) {
+	    setRect(x, y, w, h);
+	}
+    }
 }
+

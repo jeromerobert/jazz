@@ -16,7 +16,7 @@ import java.util.*;
  *
  * @author  Benjamin B. Bederson
  */
-public class FileClassLoader extends ClassLoader {
+public class FileClassLoader extends ClassLoader implements Serializable {
 
     private String root;
 

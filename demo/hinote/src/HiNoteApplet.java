@@ -9,9 +9,10 @@ import java.awt.print.*;
 import java.util.*;
 import java.io.*;
 import java.net.*;
+import java.util.jar.Attributes;
 import javax.swing.*;
 
-import edu.umd.cs.jazz.scenegraph.*;
+import edu.umd.cs.jazz.*;
 import edu.umd.cs.jazz.component.*;
 import edu.umd.cs.jazz.event.*;
 import edu.umd.cs.jazz.util.*;
@@ -23,64 +24,90 @@ import edu.umd.cs.jazz.io.*;
  *
  * @author  Benjamin B. Bederson
  */
-public class HiNoteApplet extends ZBasicApplet {
+public class HiNoteApplet extends JApplet implements Serializable {
     static final public String packageFileName = "edu" + File.separatorChar + "umd" + File.separatorChar + "cs" +
 	File.separatorChar + "jazz" + File.separatorChar + "demo" + File.separatorChar + "hinote" + File.separatorChar;
 
     protected AppletMenuBar  menubar;
     protected AppletCmdTable cmdTable;
     protected HiNoteCore     hinote;
+    protected ZCanvas        canvas;
 
     public HiNoteApplet() {
     }
 
     public void init() {
-	super.init();
+	setBackground(null);
+	setVisible(true);
 
-	setLookAndFeel(METAL_LAF);
+				// Create a basic Jazz scene, and attach it to this window
+	canvas = new ZCanvas();
+	getContentPane().add(canvas);
+
+	/*
+	  From JApplet docs:
+	  Both Netscape Communicator and Internet Explorer 4.0 unconditionally 
+	  print an error message to the Java console when an applet attempts to
+	  access the AWT system event queue. Swing applets do this once, to check
+	  if access is permitted. To prevent the warning message in a production
+	  applet one can set a client property called "defeatSystemEventQueueCheck" 
+	  on the JApplets RootPane to any non null value.
+	*/
+	
+	JRootPane rp = getRootPane();
+	rp.putClientProperty("defeatSystemEventQueueCheck", Boolean.TRUE);
+
 
 	cmdTable = new AppletCmdTable(this);
-	hinote = new HiNoteCore(getContentPane(), getComponent());
+	hinote = new HiNoteCore(getContentPane(), canvas);
+	HiNoteCore.setLookAndFeel(HiNoteCore.METAL_LAF, this);
 
 				// Create menu bar
 	menubar = new AppletMenuBar(hinote.getCmdTable(), cmdTable);
 	setJMenuBar(menubar);
 
-				// Deactivate ZBasicApplet event handlers since HiNote makes its own
-	deactivateEventHandlers();
+	JPanel logoPanel = createLogoPanel();
+	getContentPane().add(logoPanel, BorderLayout.SOUTH);
+
+				// Deactivate ZCanvas event handlers since HiNote makes its own
+	canvas.setNavEventHandlersActive(false);
 
                                 // Load toolbar images and cursors
-	hinote.loadToolbarImages();
-    }
-    
-    public void help(String fileName) {
-				// Then, load in the help file
-	String resourceName = "resources/" + fileName;
-	InputStream inStream = this.getClass().getClassLoader().getResourceAsStream(resourceName);
-	if (inStream == null) {
-	    System.out.println("resource \"" + resourceName + "\" not found");
-	}
-	URL resourceURL = this.getClass().getClassLoader().getResource(resourceName);
-	URLConnection urlCon = null;
-	int contentLength = -1;
-	try {
-	    urlCon = resourceURL.openConnection();
-	    contentLength = urlCon.getContentLength() + 10;
-	} catch (IOException e) {
-	    System.out.println("Error opening URL connection to \""+resourceName+"\": "+e);
-	}
-	if (contentLength == -1) {
-	    contentLength = 1000000;
-	}
-	// InputStreamBuffer size (contentLength) must be larger than resouce file
-	// size, because a net stream can't back up.
-	HiNoteBufferedInputStream bufferedInputStream = new HiNoteBufferedInputStream(inStream, contentLength);
+	hinote.loadToolbarImageCursors();
 
-	hinote.openStream(getComponent(), bufferedInputStream);
-	getComponent().requestFocus();
+				// Load initial jazz file
+	String startupJazzFile = getParameter("startupfile");
+	if (startupJazzFile != null) {
+	    String startupJarFile = getParameter("startupjarfile");
+	    if (startupJarFile != null) {
+		hinote.loadJazzFile(startupJazzFile, startupJarFile);
+	    } else {
+		hinote.loadJazzFile(startupJazzFile, "help.jar");
+	    }
+	}
+    }
+
+    public Map getHelpMap() {
+	return hinote.getHelpMap();
+    }
+
+    /**
+     * Create a JPanel with the HCIL logo 
+     */
+    protected JPanel createLogoPanel() {
+	URL logoURL = this.getClass().getClassLoader().getResource("resources/HCIL-logo.gif");
+
+	ImageIcon logoImage = new ImageIcon(logoURL);
+	JLabel logoLabel = new JLabel(logoImage);
+
+	JPanel logoPanel = new JPanel();
+	logoPanel.setLayout(new BorderLayout());
+	logoPanel.add(logoLabel, BorderLayout.EAST);
+	logoPanel.setBackground(hinote.fillColor);
+	
+	return logoPanel;
     }
 }
-
 
 /**
  * <b>AppletMenuBar</b> builds the menubar for the HiNote applet.
@@ -88,28 +115,18 @@ public class HiNoteApplet extends ZBasicApplet {
  * @author  Britt McAlister
  */
 class AppletMenuBar extends JMenuBar {
-    public AppletMenuBar(CmdTable cmdTable, AppletCmdTable appletCmdTable) {
-	JMenu file = createFileMenu(cmdTable, appletCmdTable);
-	JMenu edit = createEditMenu(cmdTable, appletCmdTable);
-	JMenu view = createViewMenu(cmdTable, appletCmdTable);
-	JMenu help = createHelpMenu(cmdTable, appletCmdTable);
-	//JLabel logo = createLogoLabel();
+    protected HiNoteApplet hinote;
 
-	this.add(file);
-	this.add(edit);
-	this.add(view);
-	this.add(help); 
-	//this.add(logo);
-    }
-    
-    /**
-     * Create a JLabel with the HCIL logo 
-     */
-    protected JLabel createLogoLabel() {
-	URL logoURL = this.getClass().getClassLoader().getResource("resources/HCIL-logo.gif");
-	ImageIcon logo = new ImageIcon(logoURL);
-	JLabel label = new JLabel(logo);
-	return label;
+    public AppletMenuBar(CmdTable cmdTable, AppletCmdTable appletCmdTable) {
+        JMenu file = createFileMenu(cmdTable, appletCmdTable);
+        JMenu edit = createEditMenu(cmdTable, appletCmdTable);
+        JMenu view = createViewMenu(cmdTable, appletCmdTable);
+        JMenu help = createHelpMenu(cmdTable, appletCmdTable);
+
+        this.add(file);
+        this.add(edit);
+        this.add(view);
+        this.add(help);
     }
 
     protected JMenu createFileMenu(CmdTable cmdTable, AppletCmdTable appletCmdTable) {
@@ -128,15 +145,20 @@ class AppletMenuBar extends JMenuBar {
 	JMenu laf =  createLAFMenu(cmdTable, appletCmdTable);
 	file.add(laf);
 
-	file.addSeparator();
-
 	return file;
     }
+
     protected JMenu createEditMenu(CmdTable cmdTable, AppletCmdTable appletCmdTable) {
 	JMenu edit = new JMenu("Edit");
 	edit.setMnemonic('E');
 	JMenuItem menuItem;
 	
+	menuItem = new JMenuItem("Font Chooser");
+	menuItem.addActionListener(cmdTable.lookupActionListener("font"));
+	edit.add(menuItem);
+
+	edit.addSeparator();
+
 	menuItem = new JMenuItem("Cut");
 	menuItem.setMnemonic('T');
 	menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X, KeyEvent.CTRL_MASK));
@@ -344,15 +366,15 @@ class AppletMenuBar extends JMenuBar {
 
 	debug.addSeparator();
 
-        checkBox = new JCheckBoxMenuItem("Debug Painting");
+        checkBox = new JCheckBoxMenuItem("Debug Rendering");
 	checkBox.setMnemonic('P');
-        checkBox.addItemListener(cmdTable.lookupItemListener("debug paint"));
+        checkBox.addItemListener(cmdTable.lookupItemListener("debug render"));
 	checkBox.setSelected(false);
         debug.add(checkBox);
 
-        checkBox = new JCheckBoxMenuItem("Debug Damage");
+        checkBox = new JCheckBoxMenuItem("Debug Repainting");
 	checkBox.setMnemonic('M');
-        checkBox.addItemListener(cmdTable.lookupItemListener("debug damage"));
+        checkBox.addItemListener(cmdTable.lookupItemListener("debug repaint"));
 	checkBox.setSelected(false);
         debug.add(checkBox);
 
@@ -387,25 +409,40 @@ class AppletMenuBar extends JMenuBar {
 	return debug;
     }
 
+    /**
+     * Help menu files are loaded from help.jar.
+     */
     protected JMenu createHelpMenu(CmdTable cmdTable, AppletCmdTable appletCmdTable) {
 	JMenu help = new JMenu("Help");
 	help.setMnemonic('H');
 	JMenuItem menuItem;
-	
-	menuItem = new JMenuItem("Using HiNote");
-	menuItem.setMnemonic('U');
-	menuItem.addActionListener(appletCmdTable.lookupActionListener("using hinote"));
-	help.add(menuItem);
 
-	menuItem = new JMenuItem("About Jazz");
-	menuItem.setMnemonic('A');
-	menuItem.addActionListener(appletCmdTable.lookupActionListener("about hinote"));
-	help.add(menuItem);
+	Map helpMap = appletCmdTable.getHelpMap();
+	if (helpMap != null) {
+	    Set set = helpMap.entrySet();
+	    Iterator i = set.iterator();
+	    while (i.hasNext()) {
+		Map.Entry me = (Map.Entry)i.next();
+		Attributes attr = (Attributes)me.getValue();
+		
+		String aMenuItem = attr.getValue("MenuItem");
+		menuItem = new JMenuItem(aMenuItem);
+		
+		String mnemonic = attr.getValue("Mnemonic");
+		menuItem.setMnemonic(mnemonic.charAt(0));
+		
+		String actionListener = attr.getValue("ActionListener");
+		menuItem.addActionListener(cmdTable.lookupActionListener(actionListener));
+		
+		help.add(menuItem);
+	    }
+	}
 
-	help.addSeparator();
-
-	JMenu debug = createDebugMenu(cmdTable, appletCmdTable);
-	help.add(debug);
+	if (ZDebug.debug) {
+	    help.addSeparator();
+	    JMenu debug = createDebugMenu(cmdTable, appletCmdTable);
+	    help.add(debug);
+	}
 
 	return help;
     }
@@ -421,31 +458,19 @@ class AppletCmdTable  {
 
 	actionMap.put("cross platform", new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		hinote.setLookAndFeel(ZBasicApplet.METAL_LAF);
+		HiNoteCore.setLookAndFeel(HiNoteCore.METAL_LAF, hinote);
 	    }
 	});
 
 	actionMap.put("motif", new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		hinote.setLookAndFeel(ZBasicApplet.MOTIF_LAF);
+		HiNoteCore.setLookAndFeel(HiNoteCore.MOTIF_LAF, hinote);
 	    }
 	});
 
 	actionMap.put("ms windows", new ActionListener() {
 	    public void actionPerformed(ActionEvent e) {
-		hinote.setLookAndFeel(ZBasicApplet.WINDOWS_LAF);
-	    }
-	});
-
-	actionMap.put("using hinote", new ActionListener() {
-	    public void actionPerformed(ActionEvent e) {
-		hinote.help("using.jazz");
-	    }
-	});
-
-	actionMap.put("about hinote", new ActionListener() {
-	    public void actionPerformed(ActionEvent e) {
-		hinote.help("about.jazz");
+		HiNoteCore.setLookAndFeel(HiNoteCore.WINDOWS_LAF, hinote);
 	    }
 	});
     }
@@ -460,5 +485,9 @@ class AppletCmdTable  {
 
     public ItemListener lookupItemListener(String key) {
 	return (ItemListener)actionMap.get(key);
+    }
+
+    public Map getHelpMap() {
+	return hinote.getHelpMap();
     }
 }

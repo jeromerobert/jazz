@@ -56,6 +56,7 @@ import edu.umd.cs.jazz.util.*;
  * <li>String
  * <li>ZSerializable
  * <li>Rectangle2D
+ * <li>AffineTransform
  * <li>Color
  * <li>Font
  * <li>Image
@@ -64,7 +65,7 @@ import edu.umd.cs.jazz.util.*;
  * @author Ben Bederson
  * @author Britt McAlister
  */
-public class ZObjectOutputStream extends OutputStream {
+public class ZObjectOutputStream extends OutputStream implements Serializable {
     static protected final Class[] NULL_ARGS = {};
 
     protected DataOutputStream dos;   // Stream to write data to
@@ -214,7 +215,7 @@ public class ZObjectOutputStream extends OutputStream {
 	}
     }
 
-    public void writeState(String type, String name, Vector value) throws IOException {
+    public void writeState(String type, String name, java.util.List value) throws IOException {
 	Object obj;
 	boolean first = true;
 	Vector unsavedObjsList = null;
@@ -364,6 +365,12 @@ public class ZObjectOutputStream extends OutputStream {
 	    Rectangle2D rect = (Rectangle2D)obj;
 	    dos.writeBytes("[" + rect.getX() + " " + rect.getY() + " " 
 			   + rect.getWidth() + " " + rect.getHeight() + "]");
+	} else if (obj instanceof AffineTransform) {
+	    AffineTransform at = (AffineTransform)obj;
+	    double[] matrix = new double[6];
+	    at.getMatrix(matrix);
+	    dos.writeBytes("[" + (float)matrix[0] + " " + (float)matrix[1] + " " + (float)matrix[2] + " " + 
+			   (float)matrix[3] + " " + (float)matrix[4] + " " + (float)matrix[5] + "]");
 	} else if (obj instanceof Image) {
 	    Image image = (Image)obj;
 	    BufferedImage bufferedImage;

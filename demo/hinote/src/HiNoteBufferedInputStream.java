@@ -10,7 +10,7 @@ import java.io.*;
  *
  * @author  Benjamin B. Bederson
  */
-public class HiNoteBufferedInputStream extends BufferedInputStream {
+public class HiNoteBufferedInputStream extends BufferedInputStream implements Serializable {
     public HiNoteBufferedInputStream(InputStream in) {
 	super(in);
     }

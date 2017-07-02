@@ -1,266 +1,374 @@
 #JAZZ1.0
 [
-  Z1 edu.umd.cs.jazz.scenegraph.ZRootNode
-  Z2 edu.umd.cs.jazz.scenegraph.ZNode
-  Z3 edu.umd.cs.jazz.scenegraph.ZNode
-  Z4 edu.umd.cs.jazz.component.ZLinkDecorator
-  Z5 edu.umd.cs.jazz.component.ZText
-  Z6 edu.umd.cs.jazz.scenegraph.ZTransform
-  Z7 edu.umd.cs.jazz.scenegraph.ZNode
-  Z8 edu.umd.cs.jazz.component.ZText
-  Z9 edu.umd.cs.jazz.scenegraph.ZTransform
-  Z10 edu.umd.cs.jazz.scenegraph.ZNode
-  Z11 edu.umd.cs.jazz.component.ZText
-  Z12 edu.umd.cs.jazz.scenegraph.ZTransform
-  Z13 edu.umd.cs.jazz.scenegraph.ZNode
+  Z1 edu.umd.cs.jazz.ZRoot
+  Z2 edu.umd.cs.jazz.ZLayerGroup
+  Z3 edu.umd.cs.jazz.ZTransformGroup
+  Z4 edu.umd.cs.jazz.ZAnchorGroup
+  Z5 edu.umd.cs.jazz.ZVisualLeaf
+  Z6 edu.umd.cs.jazz.component.ZText
+  Z7 edu.umd.cs.jazz.ZTransformGroup
+  Z8 edu.umd.cs.jazz.ZAnchorGroup
+  Z9 edu.umd.cs.jazz.ZVisualLeaf
+  Z10 edu.umd.cs.jazz.component.ZText
+  Z11 edu.umd.cs.jazz.ZTransformGroup
+  Z12 edu.umd.cs.jazz.ZAnchorGroup
+  Z13 edu.umd.cs.jazz.ZVisualLeaf
   Z14 edu.umd.cs.jazz.component.ZText
-  Z15 edu.umd.cs.jazz.scenegraph.ZTransform
-  Z16 edu.umd.cs.jazz.scenegraph.ZNode
-  Z17 edu.umd.cs.jazz.component.ZStickyDecorator
-  Z18 edu.umd.cs.jazz.component.ZLinkDecorator
-  Z19 edu.umd.cs.jazz.component.ZText
-  Z20 edu.umd.cs.jazz.scenegraph.ZCamera
-  Z21 edu.umd.cs.jazz.scenegraph.ZTransform
-  Z22 edu.umd.cs.jazz.scenegraph.ZNode
-  Z23 edu.umd.cs.jazz.scenegraph.ZTransform
-  Z24 edu.umd.cs.jazz.scenegraph.ZNode
-  Z25 edu.umd.cs.jazz.component.ZText
-  Z26 edu.umd.cs.jazz.scenegraph.ZTransform
-  Z27 edu.umd.cs.jazz.scenegraph.ZNode
-  Z28 edu.umd.cs.jazz.component.ZText
-  Z29 edu.umd.cs.jazz.scenegraph.ZTransform
-  Z30 edu.umd.cs.jazz.scenegraph.ZNode
-  Z31 edu.umd.cs.jazz.component.ZText
-  Z32 edu.umd.cs.jazz.scenegraph.ZTransform
-  Z33 edu.umd.cs.jazz.scenegraph.ZNode
-  Z34 edu.umd.cs.jazz.component.ZText
-  Z35 edu.umd.cs.jazz.scenegraph.ZTransform
-  Z36 edu.umd.cs.jazz.scenegraph.ZNode
-  Z37 edu.umd.cs.jazz.component.ZText
-  Z38 edu.umd.cs.jazz.scenegraph.ZTransform
+  Z15 edu.umd.cs.jazz.ZTransformGroup
+  Z16 edu.umd.cs.jazz.ZAnchorGroup
+  Z17 edu.umd.cs.jazz.ZVisualLeaf
+  Z18 edu.umd.cs.jazz.component.ZText
+  Z19 edu.umd.cs.jazz.ZTransformGroup
+  Z20 edu.umd.cs.jazz.ZAnchorGroup
+  Z21 edu.umd.cs.jazz.ZVisualLeaf
+  Z22 edu.umd.cs.jazz.component.ZText
+  Z23 edu.umd.cs.jazz.ZTransformGroup
+  Z24 edu.umd.cs.jazz.ZAnchorGroup
+  Z25 edu.umd.cs.jazz.ZGroup
+  Z26 edu.umd.cs.jazz.util.ZProperty
+  Z27 edu.umd.cs.jazz.ZTransformGroup
+  Z28 edu.umd.cs.jazz.ZAnchorGroup
+  Z29 edu.umd.cs.jazz.ZVisualLeaf
+  Z30 edu.umd.cs.jazz.component.ZText
+  Z31 edu.umd.cs.jazz.ZAnchorGroup
+  Z32 edu.umd.cs.jazz.ZTransformGroup
+  Z33 edu.umd.cs.jazz.ZVisualLeaf
+  Z34 edu.umd.cs.jazz.component.ZRectangle
+  Z35 edu.umd.cs.jazz.ZTransformGroup
+  Z36 edu.umd.cs.jazz.ZAnchorGroup
+  Z37 edu.umd.cs.jazz.ZVisualLeaf
+  Z38 edu.umd.cs.jazz.component.ZText
+  Z39 edu.umd.cs.jazz.ZTransformGroup
+  Z40 edu.umd.cs.jazz.ZAnchorGroup
+  Z41 edu.umd.cs.jazz.ZStickyGroup
+  Z42 edu.umd.cs.jazz.ZFadeGroup
+  Z43 edu.umd.cs.jazz.ZVisualLeaf
+  Z44 edu.umd.cs.jazz.component.ZText
+  Z45 edu.umd.cs.jazz.ZCamera
+  Z46 edu.umd.cs.jazz.ZLayerGroup
+  Z47 edu.umd.cs.jazz.ZVisualLeaf
+  Z48 edu.umd.cs.jazz.ZVisualLeaf
+  Z49 edu.umd.cs.jazz.ZCamera
+  Z50 edu.umd.cs.jazz.ZVisualLeaf
+  Z51 edu.umd.cs.jazz.ZCamera
 ]
-[OBJECT @Z1 # edu.umd.cs.jazz.scenegraph.ZRootNode
+[OBJECT @Z1 # edu.umd.cs.jazz.ZRoot
   {
-    Vector children [@Z2 @Z20 @Z22]
+    List children [@Z2 @Z47 @Z46 @Z48 @Z50]
   }
 ]
-[OBJECT @Z2 # edu.umd.cs.jazz.scenegraph.ZNode
+[OBJECT @Z2 # edu.umd.cs.jazz.ZLayerGroup
   {
-    Vector children [@Z3 @Z7 @Z10 @Z13 @Z16 @Z24 @Z27 @Z30 @Z33 @Z36]
+    List children [@Z3 @Z7 @Z11 @Z15 @Z19 @Z23 @Z35 @Z39]
   }
 ]
-[OBJECT @Z3 # edu.umd.cs.jazz.scenegraph.ZNode
+[OBJECT @Z3 # edu.umd.cs.jazz.ZTransformGroup
   {
-    ZVisualComponent visualComponent @Z4
-    ZTransform transform @Z6
-    float maxMag 10.0f
+    List children [@Z4]
+    boolean hasOneChild true
+    java.awt.geom.AffineTransform transform [0.6830133 0.0 0.0 0.6830133 289.88373 85.34449]
   }
 ]
-[OBJECT @Z4 # edu.umd.cs.jazz.component.ZLinkDecorator
+[OBJECT @Z4 # edu.umd.cs.jazz.ZAnchorGroup
   {
-    ZVisualComponent child @Z5
-    java.awt.geom.Rectangle2D destBounds [-783.2222900390625 -433.5440368652344 742.1766967773438 626.0230102539062]
+    List children [@Z5]
+    boolean hasOneChild true
   }
 ]
-[OBJECT @Z5 # edu.umd.cs.jazz.component.ZText
+[OBJECT @Z5 # edu.umd.cs.jazz.ZVisualLeaf
   {
+    ZVisualComponent visualComponent @Z6
+  }
+]
+[OBJECT @Z6 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Color caretColor [0.0 0.0 0.0 1.0]
     java.awt.Font font ["Arial" 0 40]
-    String text "Jazz"
+    String text "Version 0.6"
   }
 ]
-[OBJECT @Z6 # edu.umd.cs.jazz.scenegraph.ZTransform
+[OBJECT @Z7 # edu.umd.cs.jazz.ZTransformGroup
   {
-    java.awt.geom.AffineTransform transform [3.4522719925831846d 0.0d 0.0d 3.4522719925831846d -725.7882861460646d -430.2297100426089d]
+    List children [@Z8]
+    boolean hasOneChild true
+    java.awt.geom.AffineTransform transform [0.6543993 0.0 0.0 0.6543993 32.44112 190.65683]
   }
 ]
-[OBJECT @Z7 # edu.umd.cs.jazz.scenegraph.ZNode
+[OBJECT @Z8 # edu.umd.cs.jazz.ZAnchorGroup
   {
-    ZVisualComponent visualComponent @Z8
-    ZTransform transform @Z9
-    float maxMag 10.0f
+    List children [@Z9]
+    boolean hasOneChild true
   }
 ]
-[OBJECT @Z8 # edu.umd.cs.jazz.component.ZText
+[OBJECT @Z9 # edu.umd.cs.jazz.ZVisualLeaf
   {
+    ZVisualComponent visualComponent @Z10
+  }
+]
+[OBJECT @Z10 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Color caretColor [0.0 0.0 0.0 1.0]
     java.awt.Font font ["Arial" 0 40]
-    String text "A Toolkit for 2D Object-Oriented"
+    String text "Powered by"
   }
 ]
-[OBJECT @Z9 # edu.umd.cs.jazz.scenegraph.ZTransform
+[OBJECT @Z11 # edu.umd.cs.jazz.ZTransformGroup
   {
-    java.awt.geom.AffineTransform transform [1.0999998533725728d 0.0d 0.0d 1.0999998533725728d -712.427071365491d -273.4849136774528d]
+    List children [@Z12]
+    boolean hasOneChild true
+    java.awt.geom.AffineTransform transform [1.3310001 0.0 0.0 1.3310001 114.521515 62.811577]
   }
 ]
-[OBJECT @Z10 # edu.umd.cs.jazz.scenegraph.ZNode
+[OBJECT @Z12 # edu.umd.cs.jazz.ZAnchorGroup
   {
-    ZVisualComponent visualComponent @Z11
-    ZTransform transform @Z12
-    float maxMag 10.0f
+    List children [@Z13]
+    boolean hasOneChild true
   }
 ]
-[OBJECT @Z11 # edu.umd.cs.jazz.component.ZText
-  {
-    java.awt.Font font ["Arial" 0 40]
-    String text "Zoomable Graphics in Java"
-  }
-]
-[OBJECT @Z12 # edu.umd.cs.jazz.scenegraph.ZTransform
-  {
-    java.awt.geom.AffineTransform transform [1.0999998533725728d 0.0d 0.0d 1.0999998533725728d -711.9863935553847d -223.67536477498885d]
-  }
-]
-[OBJECT @Z13 # edu.umd.cs.jazz.scenegraph.ZNode
+[OBJECT @Z13 # edu.umd.cs.jazz.ZVisualLeaf
   {
     ZVisualComponent visualComponent @Z14
-    ZTransform transform @Z15
-    float maxMag 10.0f
   }
 ]
 [OBJECT @Z14 # edu.umd.cs.jazz.component.ZText
   {
+    java.awt.Color penColor [0.8 0.0 0.0 1.0]
+    java.awt.Color caretColor [0.0 0.0 0.0 1.0]
     java.awt.Font font ["Arial" 0 40]
-    String text "Ben Bederson"
+    String text "HiNote"
   }
 ]
-[OBJECT @Z15 # edu.umd.cs.jazz.scenegraph.ZTransform
+[OBJECT @Z15 # edu.umd.cs.jazz.ZTransformGroup
   {
-    java.awt.geom.AffineTransform transform [1.0999998533725728d 0.0d 0.0d 1.0999998533725728d -705.4918905226334d -140.93214028886675d]
+    List children [@Z16]
+    boolean hasOneChild true
+    java.awt.geom.AffineTransform transform [0.6830133 0.0 0.0 0.6830133 34.346046 144.64368]
   }
 ]
-[OBJECT @Z16 # edu.umd.cs.jazz.scenegraph.ZNode
+[OBJECT @Z16 # edu.umd.cs.jazz.ZAnchorGroup
   {
-    ZVisualComponent visualComponent @Z17
-    ZTransform transform @Z23
-    float maxMag 10.0f
+    List children [@Z17]
+    boolean hasOneChild true
   }
 ]
-[OBJECT @Z17 # edu.umd.cs.jazz.component.ZStickyDecorator
+[OBJECT @Z17 # edu.umd.cs.jazz.ZVisualLeaf
   {
-    boolean isvolatile true
-    ZVisualComponent child @Z18
-    ZCamera camera @Z20
+    ZVisualComponent visualComponent @Z18
   }
 ]
-[OBJECT @Z18 # edu.umd.cs.jazz.component.ZLinkDecorator
+[OBJECT @Z18 # edu.umd.cs.jazz.component.ZText
   {
-    boolean isvolatile true
-    ZVisualComponent child @Z19
-    java.awt.geom.Rectangle2D destBounds [-1664.40869140625 -1047.86865234375 2495.479248046875 2084.63818359375]
+    java.awt.Color penColor [0.0 0.0 0.0 1.0]
+    java.awt.Color caretColor [0.0 0.0 1.0 1.0]
+    java.awt.Font font ["Arial" 0 40]
+    String text "A simple zoomable drawing program"
   }
 ]
-[OBJECT @Z19 # edu.umd.cs.jazz.component.ZText
+[OBJECT @Z19 # edu.umd.cs.jazz.ZTransformGroup
   {
+    List children [@Z20]
+    boolean hasOneChild true
+    java.awt.geom.AffineTransform transform [0.26333112 0.0 0.0 0.26333112 191.24576 227.20715]
+  }
+]
+[OBJECT @Z20 # edu.umd.cs.jazz.ZAnchorGroup
+  {
+    List children [@Z21]
+    boolean hasOneChild true
+  }
+]
+[OBJECT @Z21 # edu.umd.cs.jazz.ZVisualLeaf
+  {
+    ZVisualComponent visualComponent @Z22
+  }
+]
+[OBJECT @Z22 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Color penColor [0.0 0.0 0.0 1.0]
+    java.awt.Color caretColor [0.8 0.0 0.0 1.0]
+    java.awt.Font font ["Arial" 0 40]
+    String text "A Toolkit for 2D Object-Oriented\nZoomable Graphics in Java\n\n  Ben Bederson"
+  }
+]
+[OBJECT @Z23 # edu.umd.cs.jazz.ZTransformGroup
+  {
+    List children [@Z24]
+    boolean hasOneChild true
+    java.awt.geom.AffineTransform transform [1.1 0.0 0.0 1.1 -24.062895 -10.403949]
+  }
+]
+[OBJECT @Z24 # edu.umd.cs.jazz.ZAnchorGroup
+  {
+    List children [@Z25]
+    boolean hasOneChild true
+    java.awt.geom.Rectangle2D destBounds [176.36044311523438 178.21324157714844 231.74746704101562 195.94908142089844]
+  }
+]
+[OBJECT @Z25 # edu.umd.cs.jazz.ZGroup
+  {
+    List properties [@Z26]
+    List children [@Z27 @Z31]
+  }
+]
+[OBJECT @Z26 # edu.umd.cs.jazz.util.ZProperty
+  {
+    java.lang.String key "group"
+    edu.umd.cs.jazz.ZGroup value @Z25
+  }
+]
+[OBJECT @Z27 # edu.umd.cs.jazz.ZTransformGroup
+  {
+    List children [@Z28]
+    boolean hasOneChild true
+    java.awt.geom.AffineTransform transform [0.7513147 0.0 0.0 0.7513147 193.96597 175.16586]
+  }
+]
+[OBJECT @Z28 # edu.umd.cs.jazz.ZAnchorGroup
+  {
+    List children [@Z29]
+    boolean hasOneChild true
+    java.awt.geom.Rectangle2D destBounds [172.03245544433594 181.99693298339844 217.3339080810547 183.7620086669922]
+  }
+]
+[OBJECT @Z29 # edu.umd.cs.jazz.ZVisualLeaf
+  {
+    ZVisualComponent visualComponent @Z30
+  }
+]
+[OBJECT @Z30 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Color penColor [0.0 0.0 0.6 1.0]
+    java.awt.Color caretColor [0.8 0.0 0.0 1.0]
+    java.awt.Font font ["Arial" 0 40]
+    String text "Jazz"
+  }
+]
+[OBJECT @Z31 # edu.umd.cs.jazz.ZAnchorGroup
+  {
+    List children [@Z32]
+    boolean hasOneChild true
+  }
+]
+[OBJECT @Z32 # edu.umd.cs.jazz.ZTransformGroup
+  {
+    List children [@Z33]
+    boolean hasOneChild true
+    java.awt.geom.AffineTransform transform [1.0 0.0 0.0 1.0 0.4295349 -3.4363556]
+  }
+]
+[OBJECT @Z33 # edu.umd.cs.jazz.ZVisualLeaf
+  {
+    ZVisualComponent visualComponent @Z34
+  }
+]
+[OBJECT @Z34 # edu.umd.cs.jazz.component.ZRectangle
+  {
+    java.awt.Color penColor [0.0 0.0 0.6 1.0]
+    float penWidth 1.6559439f
+    rectangle rect [194.5455f 208.7053f 60.02797f 0.4139862f]
+  }
+]
+[OBJECT @Z35 # edu.umd.cs.jazz.ZTransformGroup
+  {
+    List children [@Z36]
+    boolean hasOneChild true
+    java.awt.geom.AffineTransform transform [0.21762902 0.0 0.0 0.21762902 208.70512 278.69516]
+  }
+]
+[OBJECT @Z36 # edu.umd.cs.jazz.ZAnchorGroup
+  {
+    List children [@Z37]
+    boolean hasOneChild true
+  }
+]
+[OBJECT @Z37 # edu.umd.cs.jazz.ZVisualLeaf
+  {
+    ZVisualComponent visualComponent @Z38
+  }
+]
+[OBJECT @Z38 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Color penColor [0.0 0.0 0.0 1.0]
+    java.awt.Color caretColor [0.0 0.0 0.0 1.0]
+    java.awt.Font font ["Arial" 0 40]
+    String text "Britt McAlister   Juan Pablo\nMaria Jump      Lance Good\nJim Mokwa       Raj Iyer\nJon Meyer"
+  }
+]
+[OBJECT @Z39 # edu.umd.cs.jazz.ZTransformGroup
+  {
+    List children [@Z40]
+    boolean hasOneChild true
+    java.awt.geom.AffineTransform transform [0.7513147 0.0 0.0 0.7513147 29.126675 332.75272]
+  }
+]
+[OBJECT @Z40 # edu.umd.cs.jazz.ZAnchorGroup
+  {
+    List children [@Z41]
+    boolean hasOneChild true
+    java.awt.geom.Rectangle2D destBounds [-38.509864807128906 15.941933631896973 582.7265014648438 492.71185302734375]
+  }
+]
+[OBJECT @Z41 # edu.umd.cs.jazz.ZStickyGroup
+  {
+    List children [@Z42]
+    boolean hasOneChild true
+    java.awt.geom.AffineTransform transform [1.1844034 0.0 0.0 1.1844034 -44.107758 102.88989]
+    ZCamera camera @Z45
+  }
+]
+[OBJECT @Z42 # edu.umd.cs.jazz.ZFadeGroup
+  {
+    List children [@Z43]
+    boolean hasOneChild true
+    float maxMag -1.0f
+  }
+]
+[OBJECT @Z43 # edu.umd.cs.jazz.ZVisualLeaf
+  {
+    ZVisualComponent visualComponent @Z44
+  }
+]
+[OBJECT @Z44 # edu.umd.cs.jazz.component.ZText
+  {
+    java.awt.Color caretColor [0.0 0.0 0.0 1.0]
     java.awt.Font font ["Arial" 0 40]
     String text "http://www.cs.umd.edu/hcil/jazz"
   }
 ]
-[OBJECT @Z20 # edu.umd.cs.jazz.scenegraph.ZCamera
+[OBJECT @Z45 # edu.umd.cs.jazz.ZCamera
   {
-    ZTransform viewTransform @Z21
-    Vector paintStartPoints [@Z2 @Z22]
+    java.awt.geom.AffineTransform viewTransform [0.8443069 0.0 0.0 0.8443069 32.514145 -13.459885]
+    List layers [@Z2 @Z46]
   }
 ]
-[OBJECT @Z21 # edu.umd.cs.jazz.scenegraph.ZTransform
-  {
-    java.awt.geom.AffineTransform transform [0.19715651869773865d 0.0d 0.0d 0.19715651869773865d 328.1490173339844d 208.59413146972656d]
-  }
-]
-[OBJECT @Z22 # edu.umd.cs.jazz.scenegraph.ZNode
+[OBJECT @Z46 # edu.umd.cs.jazz.ZLayerGroup
   {}
 ]
-[OBJECT @Z23 # edu.umd.cs.jazz.scenegraph.ZTransform
+[OBJECT @Z47 # edu.umd.cs.jazz.ZVisualLeaf
   {
-    java.awt.geom.AffineTransform transform [0.7513147202942476d 0.0d 0.0d 0.7513147202942476d 27.549283191458017d 364.05111795543974d]
+    ZVisualComponent visualComponent @Z45
   }
 ]
-[OBJECT @Z24 # edu.umd.cs.jazz.scenegraph.ZNode
+[OBJECT @Z48 # edu.umd.cs.jazz.ZVisualLeaf
   {
-    ZVisualComponent visualComponent @Z25
-    ZTransform transform @Z26
-    float maxMag 2.3936157f
+    ZVisualComponent visualComponent @Z49
   }
 ]
-[OBJECT @Z25 # edu.umd.cs.jazz.component.ZText
+[OBJECT @Z49 # edu.umd.cs.jazz.ZCamera
   {
-    java.awt.Font font ["Arial" 0 167]
-    String text "HiNote"
+    java.awt.geom.AffineTransform viewTransform [1.9293314 0.0 0.0 1.9293314 63.134167 -71.97193]
+    List layers [@Z2]
   }
 ]
-[OBJECT @Z26 # edu.umd.cs.jazz.scenegraph.ZTransform
+[OBJECT @Z50 # edu.umd.cs.jazz.ZVisualLeaf
   {
-    java.awt.geom.AffineTransform transform [1.4641001269340557d 0.0d 0.0d 1.4641001269340557d -875.8734859069382d -904.2948503233907d]
+    ZVisualComponent visualComponent @Z51
   }
 ]
-[OBJECT @Z27 # edu.umd.cs.jazz.scenegraph.ZNode
+[OBJECT @Z51 # edu.umd.cs.jazz.ZCamera
   {
-    ZVisualComponent visualComponent @Z28
-    ZTransform transform @Z29
-    float maxMag 2.3936157f
-  }
-]
-[OBJECT @Z28 # edu.umd.cs.jazz.component.ZText
-  {
-    java.awt.Font font ["Arial" 0 167]
-    String text "A simple zoomable drawing program"
-  }
-]
-[OBJECT @Z29 # edu.umd.cs.jazz.scenegraph.ZTransform
-  {
-    java.awt.geom.AffineTransform transform [0.7513147202942474d 0.0d 0.0d 0.7513147202942474d -1471.8966078697367d -593.6024965913916d]
-  }
-]
-[OBJECT @Z30 # edu.umd.cs.jazz.scenegraph.ZNode
-  {
-    ZVisualComponent visualComponent @Z31
-    ZTransform transform @Z32
-    float maxMag 2.3936157f
-  }
-]
-[OBJECT @Z31 # edu.umd.cs.jazz.component.ZText
-  {
-    java.awt.Font font ["Arial" 0 167]
-    String text "Powered by "
-  }
-]
-[OBJECT @Z32 # edu.umd.cs.jazz.scenegraph.ZTransform
-  {
-    java.awt.geom.AffineTransform transform [0.7513147202942474d 0.0d 0.0d 0.7513147202942474d -1464.8734560139999d -424.39607719475885d]
-  }
-]
-[OBJECT @Z33 # edu.umd.cs.jazz.scenegraph.ZNode
-  {
-    ZVisualComponent visualComponent @Z34
-    ZTransform transform @Z35
-    float maxMag 1.9715652f
-  }
-]
-[OBJECT @Z34 # edu.umd.cs.jazz.component.ZText
-  {
-    java.awt.Font font ["Arial" 0 203]
-    String text "Version 0.5"
-  }
-]
-[OBJECT @Z35 # edu.umd.cs.jazz.scenegraph.ZTransform
-  {
-    java.awt.geom.AffineTransform transform [0.6209212120297785d 0.0d 0.0d 0.6209212120297785d -107.05932613605319d -816.2950207910427d]
-  }
-]
-[OBJECT @Z36 # edu.umd.cs.jazz.scenegraph.ZNode
-  {
-    ZVisualComponent visualComponent @Z37
-    ZTransform transform @Z38
-    float maxMag 6.6291494f
-  }
-]
-[OBJECT @Z37 # edu.umd.cs.jazz.component.ZText
-  {
-    java.awt.Font font ["Arial" 0 40]
-    String text "Britt McAlister   Juan Pablo\nMaria Jump       Lance Good\nJim Mokwa       Raj Iyer"
-  }
-]
-[OBJECT @Z38 # edu.umd.cs.jazz.scenegraph.ZTransform
-  {
-    java.awt.geom.AffineTransform transform [0.774093250525232d 0.0d 0.0d 0.774093250525232d -650.8931623883209d -85.33117030439682d]
+    java.awt.geom.AffineTransform viewTransform [2.0782938 0.0 0.0 2.0782938 114.49634 -33.13202]
+    List layers [@Z2]
   }
 ]
 [RETURN @Z1]

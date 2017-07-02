@@ -14,20 +14,17 @@ import java.util.*;
 import java.awt.font.TextAttribute;
 import java.text.*;
 
-import edu.umd.cs.jazz.scenegraph.*;
+import edu.umd.cs.jazz.*;
 import edu.umd.cs.jazz.io.*;
 import edu.umd.cs.jazz.util.*;
 
-// bug note:
-//   Some editing commands are intercepted by hinote shortcuts
-//   Example: C-p should move curser forward, not popup a "Print" dialog box.
-
 /**
- * ZText creates a visual component to support text. Multiple lines can
+ * <b>ZText</b> creates a visual component to support text. Multiple lines can
  * be entered, and basic editing is supported. A caret is drawn,
- * and can be repositioned with mouse clicks.
+ * and can be repositioned with mouse clicks.  The text object is positioned
+ * so that its upper-left corner is at the origin.
  */
-public class ZText extends ZVisualComponent {
+public class ZText extends ZVisualComponent implements ZPenColor, Serializable {
 
     /**
      * The low quality graphic2D render context: not antiAliased, and
@@ -146,7 +143,7 @@ public class ZText extends ZVisualComponent {
      * Drawn shape of the caret.
      */
 
-    protected Line2D             caretShape = new Line2D.Float();
+    protected transient Line2D             caretShape = new Line2D.Float();
 
     /**
      * Current text font.
@@ -166,10 +163,10 @@ public class ZText extends ZVisualComponent {
     /**
      * The previously used font render context (i.e., from the last render).
      */
-    protected FontRenderContext prevFRC = null;
+    protected transient FontRenderContext prevFRC = null;
 
     /**
-     * jkd version <= 1.2.1 has a bug: font.getStringBounds() gives the
+     * jdk version <= 1.2.1 has a bug: font.getStringBounds() gives the
      * bounds of a space " " as zero.
      */
     protected boolean boundsBug = false;
@@ -203,39 +200,57 @@ public class ZText extends ZVisualComponent {
 	setText(str);
 	this.font = font;
 	
-	updateBounds();
+	reshape();
     }
     
     /**
-     * Constructs a new ZText that is a copy of the specified component (i.e., a "copy constructor").
-     * @param <code>tf</code> The ZText object to make a deep copy of.
+     * Copies all object information from the reference object into the current
+     * object. This method is called from the clone method.
+     * All ZSceneGraphObjects objects contained by the object being duplicated
+     * are duplicated, except parents which are set to null.  This results
+     * in the sub-tree rooted at this object being duplicated.
+     *
+     * @param refText The reference visual component to copy
      */
-    public ZText(ZText tf) {
-	super();
-				// Do a deep copy of vector of strings
+    public void duplicateObject(ZText refText) {
+	super.duplicateObject(refText);
+
 	if ((System.getProperty("java.version").equals("1.2")) ||
 	    (System.getProperty("java.version").equals("1.2.1"))) {
 	    boundsBug = true;
 	}
 
+				// Do a deep copy of vector of strings
 	String line;
-	lines = new Vector(tf.lines.size());
-	for (Iterator i = tf.lines.iterator() ; i.hasNext() ; ) {
+	lines = new Vector(refText.lines.size());
+	for (Iterator i = refText.lines.iterator() ; i.hasNext() ; ) {
 	    line = (String)i.next();
 	    lines.add(new String(line));
 	}
 
-	this.font = tf.getFont();
+	this.font = refText.getFont();
     }
 
     /**
-     * Duplicates the current ZTextField by using the copy constructor.
-     * See the copy constructor comments for complete information about what is duplicated.
+     * Duplicates the current object by using the copy constructor.
+     * The portion of the reference object that is duplicated is that necessary to reuse the object
+     * in a new place within the scenegraph, but the new object is not inserted into any scenegraph.
+     * The object must be attached to a live scenegraph (a scenegraph that is currently visible)
+     * or be registered with a camera directly in order for it to be visible.
      *
-     * @see #ZText(ZText)
+     * @return A copy of this visual component.
+     * @see #updateObjectReferences 
      */
     public Object clone() {
-	return new ZText(this);
+	ZText copy;
+
+	objRefTable.reset();
+	copy = new ZText();
+	copy.duplicateObject(this);
+	objRefTable.addObject(this, copy);
+	objRefTable.updateObjectReferences();
+
+	return copy;
     }
 
     //****************************************************************************
@@ -255,7 +270,7 @@ public class ZText extends ZVisualComponent {
      */
     public void setPenColor(Color color) {
 	penColor = color;
-	damage();
+	repaint();
     }   
 
     /**
@@ -269,7 +284,7 @@ public class ZText extends ZVisualComponent {
      */
     public void setBackgroundColor(Color color) {
 	backgroundColor = color;
-	damage();
+	repaint();
     }   
 
     /**
@@ -283,7 +298,7 @@ public class ZText extends ZVisualComponent {
      */
     public void setCaretColor(Color color) {
 	caretColor = color;
-	damage();
+	repaint();
     }   
 
     /**
@@ -299,7 +314,7 @@ public class ZText extends ZVisualComponent {
      */
     public void setGreekThreshold(float threshold) {
 	greekThreshold = threshold;
-	damage();
+	repaint();
     }   
 
     /**
@@ -313,7 +328,7 @@ public class ZText extends ZVisualComponent {
      */
     public void setEditable(boolean editable) {
 	this.editable = editable;
-	damage();
+	repaint();
     }   
 
     /**
@@ -371,7 +386,7 @@ public class ZText extends ZVisualComponent {
      */
     public void setFont(Font aFont) {
 	font = aFont;
-	damage(true);
+	reshape();
     }
 
     /**
@@ -395,7 +410,7 @@ public class ZText extends ZVisualComponent {
 	    }
 	} while (!done);
 
-	damage(true);
+	reshape();
     }
 
     /**
@@ -408,7 +423,7 @@ public class ZText extends ZVisualComponent {
 
 	lines.setElementAt(frontHalf + c + backHalf, caretLine);
 	caretPos++;
-	damage(true);
+	reshape();
     }
 
     /**
@@ -423,7 +438,7 @@ public class ZText extends ZVisualComponent {
 	caretLine++;
 	lines.insertElementAt(backHalf, caretLine);
 	caretPos = 0;
-	damage(true);
+	reshape();
     }
 
     /**
@@ -443,7 +458,7 @@ public class ZText extends ZVisualComponent {
 	    
 	    lines.setElementAt(frontHalf + backHalf, caretLine);
 	}
-	damage(true);
+	reshape();
     }
 
     /**
@@ -468,7 +483,7 @@ public class ZText extends ZVisualComponent {
 				// Else, Delete to end of line
 	    String frontHalf = ((String)lines.elementAt(caretLine)).substring(0, caretPos);
 	    lines.setElementAt(frontHalf, caretLine);
-	    damage(true);
+	    reshape();
 	}
     }
 
@@ -488,7 +503,7 @@ public class ZText extends ZVisualComponent {
 
 	// new line may be too short for current caret position
 	setCaretPos(getCaretPos());
-	damage();
+	repaint();
     }
 
 
@@ -514,7 +529,7 @@ public class ZText extends ZVisualComponent {
 	} else {
 	    caretPos = cp;
 	}
-	damage();
+	repaint();
     }
     
     /**
@@ -529,37 +544,40 @@ public class ZText extends ZVisualComponent {
 	if (pt.getY() < desc) caretLine = 0;
 	if (caretLine >= lines.size()) caretLine = lines.size() - 1;
 
-	// set caret to beginning of line
-	if (pt.getX() < 6) {
-	    caretPos = 0;
-	    damage();
-	    return;
-	}
  	Rectangle2D bounds = null;
-	double strWid;
+	double strWid, charWid;
 	String textLine = (String)lines.elementAt(caretLine);
 	String substr;
 	caretPos = textLine.length();
-	for (int ch=0; ch <= textLine.length(); ch++) {
+	for (int ch=0; ch < textLine.length(); ch++) {
 	    substr = textLine.substring(0,ch);
 	    bounds = font.getStringBounds(substr, prevFRC);
 	    strWid = bounds.getWidth();
-
+	    charWid = font.getStringBounds(textLine.substring(ch, ch+1), prevFRC).getWidth();
 	    // jkd version <= 1.2.1 bug:
 	    // bounds of a space " " returned as zero
 	    if (boundsBug) {
 		if ((substr != null) && (substr.length() > 0) &&
 		    (substr.charAt(substr.length()-1) == ' ')) {
 		    strWid += font.getStringBounds("t", prevFRC).getWidth();
+		    charWid = font.getStringBounds("t", prevFRC).getWidth();
 		}
 	    }
 
+				// position cursor before or after character clicked on
 	    if (strWid > pt.getX()) {
-		caretPos = ch;
+		if (pt.getX() > strWid - (charWid / 2)) {
+		    caretPos = ch;
+		} else {
+		    caretPos = ch - 1;
+		    if (caretPos < 0) {
+			caretPos = 0;
+		    }
+		}
 		break;
 	    }
 	}
-	damage();
+	repaint();
     }
 
     //****************************************************************************
@@ -586,40 +604,58 @@ public class ZText extends ZVisualComponent {
 
 	if (e.isControlDown()) {
 				// Control key down
-	    if (keyCode == KeyEvent.VK_A) {
-				// Ctrl-A (beginning of line)
-		setCaretPos(0);
-	    } else if (keyCode == KeyEvent.VK_B) {
-				// Ctrl-B (back one character)
-		setCaretPos(getCaretPos() - 1);
-	    } else if (keyCode == KeyEvent.VK_D) {
-				// Ctrl-D (delete character before caret)
-		deleteChar();
-	    } else if (keyCode == KeyEvent.VK_E) {
-				// Ctrl-E (end of line)
-		setCaretPos(((String)lines.elementAt(caretLine)).length());
-	    } else if (keyCode == KeyEvent.VK_F) {
-				// Ctrl-F (forward one character)
-		setCaretPos(getCaretPos() + 1);
-	    } else if (keyCode == KeyEvent.VK_K) {
-				// Ctrl-K (delete from caret to end of line)
-		deleteToEndOfLine();
-	    } else if (keyCode == KeyEvent.VK_N) {
-				// Ctrl-N (move caret to next line)
-		setCaretLine(getCaretLine() + 1);
-	    } else if (keyCode == KeyEvent.VK_P) {
-				// Ctrl-P (move caret to previous line)
+	    if (keyCode == KeyEvent.VK_LEFT) {
+				// LEFT (back one word)
+				// left skip over any blank spaces before skipping word
+		if (getCaretPos() > 0) {
+		    int startPos = getCaretPos() - 1;
+		    char c = ((String)lines.elementAt(caretLine)).charAt(startPos);
+		    while ((c == ' ') && (startPos > 0)) {
+			c = ((String)lines.elementAt(caretLine)).charAt(startPos);
+			startPos--;
+		    }
+
+		    int nextPos = 0;
+		    boolean foundSpace = false;
+		    for (int i = startPos; i >= 0; i--) {
+			c = ((String)lines.elementAt(caretLine)).charAt(i);
+			if (c == ' ') {
+			    nextPos = i+1;
+			    break;
+			}
+		    }
+		    setCaretPos(nextPos);
+		}
+	    } else if (keyCode == KeyEvent.VK_RIGHT) {
+				// RIGHT (forward one word)
+		int strLen = ((String)lines.elementAt(caretLine)).length();
+		if (getCaretPos() < strLen) {
+		    int nextPos = strLen;
+		    boolean foundSpace = false;
+				// if next character is a space, then
+				//   skip any spaces to beginning of next word
+				// else skip current word then any spaces.
+		    for (int i = getCaretPos(); i < strLen; i++) {
+			char c = ((String)lines.elementAt(caretLine)).charAt(i);
+			if (c == ' ') {
+			    foundSpace = true;
+			}
+			if ((foundSpace == true) && (c != ' ')) {
+			    nextPos = i;
+			    break;
+			}
+		    }
+		    setCaretPos(nextPos);
+		}
+	    } else if (keyCode == KeyEvent.VK_UP) {
+				// UP (up one line)
 		setCaretLine(getCaretLine() - 1);
+	    } else if (keyCode == KeyEvent.VK_DOWN) {
+				// DOWN (down one line)
+		setCaretLine(getCaretLine() + 1);
 	    }
 	} else if (e.isAltDown()) {
 				// Alt key down
-	    if (keyCode == KeyEvent.VK_B) {
-				// Alt-B (back one word)
-		setCaretPos(getCaretPos() - 5);
-	    } else if (keyCode == KeyEvent.VK_F) {
-				// Alt-F (forward one word)
-		setCaretPos(getCaretPos() + 5);
-	    }
 	} else {
 				// no modifiers down
 	    if (keyCode == KeyEvent.VK_LEFT) {
@@ -656,10 +692,17 @@ public class ZText extends ZVisualComponent {
     }
 
     /**
-     * Determines if the text should be rendered as text or greek.
+     * Renders the text object
+     * <p>
+     * The transform, clip, and composite will be set appropriately when this object
+     * is rendered.  It is up to this object to restore the transform, clip, and composite of
+     * the Graphics2D if this node changes any of them. However, the color, font, and stroke are
+     * unspecified by Jazz.  This object should set those things if they are used, but
+     * they do not need to be restored.
+     *
      * @param <code>renderContext</code> Contains information about current render.
      */
-    public void paint(ZRenderContext renderContext) {
+    public void render(ZRenderContext renderContext) {
 	Graphics2D g2 = renderContext.getGraphics2D();
 	if (!lines.isEmpty()) {
 				// If font too small and not antialiased, then greek
@@ -689,8 +732,8 @@ public class ZText extends ZVisualComponent {
 	    	    
 	    if (greekColor != null) {
 		g2.setColor(greekColor);
-		Rectangle2D rect = new Rectangle2D.Float((float)localBounds.getX(), (float)localBounds.getY(),
-							 (float)localBounds.getWidth(), (float)localBounds.getHeight());
+		Rectangle2D rect = new Rectangle2D.Float((float)bounds.getX(), (float)bounds.getY(),
+							 (float)bounds.getWidth(), (float)bounds.getHeight());
 		g2.fill(rect);
 	    }
     }
@@ -705,8 +748,8 @@ public class ZText extends ZVisualComponent {
 	Graphics2D g2 = renderContext.getGraphics2D();
 	if (backgroundColor != null) {
 	    g2.setColor(backgroundColor);
-	    Rectangle2D rect = new Rectangle2D.Float((float)localBounds.getX(), (float)localBounds.getY(),
-						     (float)localBounds.getWidth(), (float)localBounds.getHeight());
+	    Rectangle2D rect = new Rectangle2D.Float((float)bounds.getX(), (float)bounds.getY(),
+						     (float)bounds.getWidth(), (float)bounds.getHeight());
 	    g2.fill(rect);
 	}
 
@@ -754,7 +797,6 @@ public class ZText extends ZVisualComponent {
 	    }
 	    lineNum++;
  	}
-
 				// Draw the caret
 	if (editable) {
 	    caretX = 0;
@@ -782,8 +824,8 @@ public class ZText extends ZVisualComponent {
      * Notifies this object that it has changed and that it
      * should update its notion of its bounding box.
      */
-    protected void computeLocalBounds() {
- 	Rectangle2D bounds = null;
+    protected void computeBounds() {
+ 	Rectangle2D rect = null;
  	Rectangle2D bugBounds = null;
 	float lineWidth;
 	float maxWidth = 0.0f;
@@ -797,7 +839,12 @@ public class ZText extends ZVisualComponent {
 	for (int loop=0; loop<2; loop++) {
 	    height = 0.0f;
 				// First, check width
-	    if (!lines.isEmpty()) {
+				// If the only text is "" then it still needs a width
+	    boolean hasText = true;
+	    if ((lines.size() == 1) && (((String)lines.firstElement()).equals(""))) {
+		hasText = false;
+	    }
+	    if (!lines.isEmpty() && hasText) {
 		String line;
 		LineMetrics lm;
 		int lineNum = 0;
@@ -806,8 +853,8 @@ public class ZText extends ZVisualComponent {
 		    lm = font.getLineMetrics(line, frc);
 		    
 				// Find the longest line in the text
-		    bounds = font.getStringBounds(line, frc);
-		    lineWidth = (float)bounds.getWidth();
+		    rect = font.getStringBounds(line, frc);
+		    lineWidth = (float)rect.getWidth();
 
 		    if ((boundsBug) && (line.endsWith(" ")))
 			lineWidth = (float)font.getStringBounds((line.substring(0, line.length()-1))+'t', frc).getWidth();
@@ -827,12 +874,13 @@ public class ZText extends ZVisualComponent {
 	    } else {
 				// If no text, then we want to have the bounds of a space character, 
 				// so get those bounds here
-		if (boundsBug)
-		    bounds = font.getStringBounds("t", frc);
-		else
-		    bounds = font.getStringBounds(" ", frc);
-		maxWidth = (float)bounds.getWidth();
-		height = (float)bounds.getHeight();
+		if (boundsBug) {
+		    rect = font.getStringBounds("t", frc);
+		} else {
+		    rect = font.getStringBounds(" ", frc);
+		}
+		maxWidth = (float)rect.getWidth();
+		height = (float)rect.getHeight();
 	    }
 
 	    if (maxHeight < height) {
@@ -841,61 +889,8 @@ public class ZText extends ZVisualComponent {
 
 	    frc = HIGH_QUALITY_FONT_CONTEXT;
 	}
-
-				// BBB: The following is a terrible hack to avoid a fairly
-				// serious conceptual problem.  We calculate static bounds in global based
-				// on the coords font size.  However, Java actually renders fonts differently
-				// depending on the current graphics transform.  So, our bounds are wrong
-				// when you zoom.  For now, we just make our static 10% bigger to accomodate
-				// text that is rendered bigger than our calculated bounds.
-
-	//if (accurateSpacing)
-	//maxWidth *= 1.1f;
-
 				// Finally, set the bounds of this text
-	localBounds.setRect(0, 0, maxWidth, maxHeight);
-    }
-
-    static public void main(String[] args) {
-	ZBasicFrame app = new ZBasicFrame(true);
-	ZSurface surface = app.getSurface();
-	ZText text = new ZText();
-	text.setText("Now is the time for all good men to come to the aid of their party\nNow is the time for all good men to come to the aid of their party\nNow is the time for all good men to come to the aid of their party\nNow is the time for all good men to come to the aid of their party\nNow is the time for all good men to come to the aid of their party\n");
-	ZNode node = new ZNode(text);
-	node.getTransform().translate(10, 10);
-	app.getLayer().addChild(node);
-
-	int quality = ZSurface.RENDER_QUALITY_MEDIUM;
-	if (args.length > 0) {
-	    if (args[0].equals("low")) {
-		quality = ZSurface.RENDER_QUALITY_LOW;
-	    } else if (args[0].equals("medium")) {
-		quality = ZSurface.RENDER_QUALITY_MEDIUM;
-	    } else if (args[0].equals("high")) {
-		quality = ZSurface.RENDER_QUALITY_HIGH;
-	    }
-	}
-
-	surface.setRenderQuality(quality);
- 
-	int fSize = 20;
-	Font font = new Font("Helvetica", Font.PLAIN, fSize);
-	node.getTransform().scale(1.0f / fSize);
-	text.setFont(font);
-	text.setGreekThreshold(0.0f);
-	long accTime = 0;
-	long startTime = System.currentTimeMillis();
-	int reps = 300;
- 
-	for (int i=0; i<reps; i++) {
-	    node.getTransform().scale(1.01f);
-	    surface.restore(true);
-	}
- 
-	long endTime = System.currentTimeMillis();
-	accTime = endTime - startTime;
- 
-	System.out.println("time (" + quality + "): "  + (accTime / reps) + " ms/render");
+	bounds.setRect(0, 0, maxWidth, maxHeight);
     }
 
     /////////////////////////////////////////////////////////////////////////
@@ -958,4 +953,11 @@ public class ZText extends ZVisualComponent {
 	    out.writeState("String", "text", getText());
 	}
     }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+	in.defaultReadObject();
+	caretShape = new Line2D.Float();
+	prevFRC = new FontRenderContext(null, true, true);
+    }
+
 }

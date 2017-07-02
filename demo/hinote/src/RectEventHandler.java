@@ -5,49 +5,77 @@
 import java.awt.*;
 import java.awt.geom.*;
 import java.awt.event.*;
+import java.io.*;
 
-import edu.umd.cs.jazz.scenegraph.*;
-import edu.umd.cs.jazz.component.*;
+import edu.umd.cs.jazz.*;
+import edu.umd.cs.jazz.util.*;
 import edu.umd.cs.jazz.event.*;
+import edu.umd.cs.jazz.component.*;
 
 /**
  * <b>RectEventHandler</b> is a simple event handler for interactively drawing a rectangle.
  *
  * @author  Benjamin B. Bederson
  */
-public class RectEventHandler extends ZEventHandler {
-    protected HiNoteCore hinote;
-    protected ZRectangle rect;
-    protected Point2D pt;
-    protected Point2D pressObjPt;	// Event coords of mouse press (in object space)
+public class RectEventHandler implements ZEventHandler, ZMouseListener, ZMouseMotionListener {
+    private boolean active = false;        // True when event handlers are attached to a node
+    private ZNode   node = null;           // The node the event handlers are attached to
 
-    public RectEventHandler(HiNoteCore s, Component c, ZSurface v) {
-	super(c, v);
-	hinote = s;
+    private HiNoteCore hinote;
+    private ZRectangle rect;
+    private Point2D pt;
+    private Point2D pressObjPt;	// Event coords of mouse press (in object space)
+
+    public RectEventHandler(HiNoteCore hinote, ZNode node) {
+	this.hinote = hinote;
+	this.node = node;
 	pt = new Point2D.Float();
     }
     
-    public void mousePressed(MouseEvent e) {
+    /**
+     * Specifies whether this event handler is active or not.
+     * @param active True to make this event handler active
+     */
+    public void setActive(boolean active) {
+	if (this.active && !active) {
+				// Turn off event handlers
+	    this.active = false;
+	    node.removeMouseListener(this);
+	    node.removeMouseMotionListener(this);
+	} else if (!this.active && active) {
+				// Turn on event handlers
+	    this.active = true;
+	    node.addMouseListener(this);
+	    node.addMouseMotionListener(this);
+	}
+    }
+
+    public void mousePressed(ZMouseEvent e) {
 	if ((e.getModifiers() & MouseEvent.BUTTON1_MASK) == MouseEvent.BUTTON1_MASK) {   // Left button only
-	    getComponent().requestFocus();
-	    getSurface().startInteraction();
+	    ZSceneGraphPath path = e.getPath();
+	    ZCamera camera = path.getTopCamera();
+	    ZGroup layer = hinote.getDrawingLayer();
+	    camera.getDrawingSurface().setInteracting(true);
 	    
 	    pt.setLocation(e.getX(), e.getY());
-	    getCamera().cameraToScene(pt);
+	    path.screenToGlobal(pt);
 	    pressObjPt = (Point2D)pt.clone();
 	    
 	    rect = new ZRectangle((float)pt.getX(), (float)pt.getY(), 0.0f, 0.0f);
-	    ZNode node = new ZNode(rect);
-	    rect.setPenWidth(5.0f / getCamera().getMagnification());
-	    rect.setPenColor(Color.blue);
-	    hinote.getDrawingLayer().addChild(node);
+	    ZVisualLeaf leaf = new ZVisualLeaf(rect);
+	    rect.setPenWidth(hinote.penWidth  / camera.getMagnification());
+	    rect.setPenColor(hinote.penColor);
+	    rect.setFillColor(hinote.fillColor);
+	    layer.addChild(leaf);
 	}
     }
     
-    public void mouseDragged(MouseEvent e) {
+    public void mouseDragged(ZMouseEvent e) {
 	if ((e.getModifiers() & MouseEvent.BUTTON1_MASK) == MouseEvent.BUTTON1_MASK) {   // Left button only
+	    ZSceneGraphPath path = e.getPath();
+	    ZGroup layer = hinote.getDrawingLayer();
 	    pt.setLocation(e.getX(), e.getY());
-	    getCamera().cameraToScene(pt);
+	    path.screenToGlobal(pt);
 	    
 	    float x, y, width, height;
 	    x = (float)Math.min(pressObjPt.getX(), pt.getX());
@@ -56,15 +84,39 @@ public class RectEventHandler extends ZEventHandler {
 	    height = (float)Math.abs(pressObjPt.getY() - pt.getY());
 	    
 	    rect.setRect(x, y, width, height);
-
-	    getSurface().restore();
 	}
     }
     
-    public void mouseReleased(MouseEvent e) {
+    public void mouseReleased(ZMouseEvent e) {
 	if ((e.getModifiers() & MouseEvent.BUTTON1_MASK) == MouseEvent.BUTTON1_MASK) {   // Left button only
-	    getSurface().endInteraction();
+	    ZSceneGraphPath path = e.getPath();
+	    path.getTopCamera().getDrawingSurface().setInteracting(false);
 	    rect = null;
 	}
+    }
+
+    /**
+     * Invoked when the mouse enters a component.
+     */
+    public void mouseEntered(ZMouseEvent e) {
+    }
+
+    /**
+     * Invoked when the mouse exits a component.
+     */
+    public void mouseExited(ZMouseEvent e) {
+    }
+
+    /**
+     * Invoked when the mouse has been clicked on a component.
+     */
+    public void mouseClicked(ZMouseEvent e) {
+    }
+
+    /**
+     * Invoked when the mouse button has been moved on a node
+     * (with no buttons no down).
+     */
+    public void mouseMoved(ZMouseEvent e) {
     }
 }

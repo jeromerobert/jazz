@@ -38,7 +38,7 @@ import javax.swing.filechooser.*;
  * @version 1.8 08/26/98
  * @author Jeff Dinkins
  */
-public class ExtensionFileFilter extends FileFilter {
+public class ExtensionFileFilter extends FileFilter implements java.io.Serializable {
 
     private static String TYPE_UNKNOWN = "Type Unknown";
     private static String HIDDEN_FILE = "Hidden File";

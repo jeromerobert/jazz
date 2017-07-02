@@ -1,0 +1,18 @@
+Name: jazz/demo/hinote/
+Specification-Title: "Jazz HiNote help files"
+Specification-Version: "0.5"
+Specification-Vendor: "UMD/HCIL"
+Implementation-Title: "edu.umd.cs.jazz"
+Implementation-Version: "0.5"
+Implementation-Vendor: "UMD/HCIL"
+
+Name: about.jazz
+MenuItem: About Jazz
+Mnemonic: A
+ActionListener: about jazz
+
+Name: using.jazz
+MenuItem: Using HiNote
+Mnemonic: U
+ActionListener: using hinote
+

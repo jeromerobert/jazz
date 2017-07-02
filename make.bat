@@ -21,24 +21,30 @@ GOTO end
 :all
 ECHO Compiling Jazz...
 cd src
-javac -d classes edu\umd\cs\jazz\component\*.java edu\umd\cs\jazz\event\*.java edu\umd\cs\jazz\io\*.java edu\umd\cs\jazz\scenegraph\*.java edu\umd\cs\jazz\util\*.java
+javac -O -d classes edu\umd\cs\jazz\*.java edu\umd\cs\jazz\component\*.java edu\umd\cs\jazz\event\*.java edu\umd\cs\jazz\io\*.java edu\umd\cs\jazz\util\*.java
 cd classes
 jar cf ../../lib/jazz.jar edu
 cd ..\..
 ECHO Compiling Testing code...
 cd test
-javac -d classes -classpath ..\src\classes *.java
+javac -O -d classes -classpath ..\src\classes *.java
 cd ..
 ECHO Compiling HiNote demo...
-cd demo\hinote\src
-javac -d classes -classpath ..\..\..\src\classes *.java
+cd demo\hinote
+xcopy /S /Q resources\*.* src\classes\resources\
+cd src
+javac -O -d classes -classpath ..\..\..\src\classes *.java
 cd ..
 xcopy /S /Q /I resources\*.* src\classes\resources
 cd src\classes
-jar -cfm ..\..\lib\hinote.jar ..\..\lib\manifest *.class resources\*.gif
+jar -cfm ..\..\hinote.jar ..\..\resources\hinote.manifest *.class resources\*.gif
 cd ..\..\..\..\src\classes
-jar -uf ..\..\demo\hinote\lib\hinote.jar edu
-cd ..\..
+jar -uf ..\..\demo\hinote\hinote.jar edu
+cd ..\..\demo\hinote\resources
+jar -cfm help.jar help.manifest about.jazz using.jazz *.gif
+copy help.jar ..\src\classes\resources
+copy help.jar ..
+cd ..\..\..
 ECHO Build Finished
 GOTO end
 :clean
@@ -58,7 +64,7 @@ ECHO Clean Finished
 GOTO end
 
 :docs
-javadoc -sourcepath src -d doc\api edu.umd.cs.jazz.component edu.umd.cs.jazz.event edu.umd.cs.jazz.io edu.umd.cs.jazz.scenegraph edu.umd.cs.jazz.util 
+javadoc -sourcepath src -use -doctitle "Jazz API Documentation" -windowtitle "Jazz API Documentation" -header "Jazz API Documentation" -footer "Jazz API Documentation" -d doc\api edu.umd.cs.jazz edu.umd.cs.jazz.component edu.umd.cs.jazz.event edu.umd.cs.jazz.io edu.umd.cs.jazz.util 
 ECHO Make Docs Completed
 GOTO end
 

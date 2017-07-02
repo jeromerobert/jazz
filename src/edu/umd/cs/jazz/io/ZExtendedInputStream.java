@@ -2,7 +2,7 @@ package edu.umd.cs.jazz.io;
 
 import java.io.*;
 
-public class ZExtendedInputStream {
+public class ZExtendedInputStream implements Serializable {
     protected InputStream stream; 
     protected long filePosition = 0;
     

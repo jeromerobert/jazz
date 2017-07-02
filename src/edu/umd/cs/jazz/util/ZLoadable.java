@@ -5,10 +5,11 @@
 package edu.umd.cs.jazz.util;
 
 import javax.swing.*;
-import edu.umd.cs.jazz.scenegraph.*;
+
+import edu.umd.cs.jazz.*;
 
 /**
- * A ZLoadable object is one that can be dynamically loaded into Jazz, and be
+ * <b>ZLoadable</b> is an interface that defines objects that can be dynamically loaded into Jazz, and be
  * made aware of the basic scenegraph structure so that it can add itself
  * to the application and do something useful.  When a ZLoadable object
  * is loaded into Jazz, all these methods are guaranteed to be called which
@@ -17,64 +18,77 @@ import edu.umd.cs.jazz.scenegraph.*;
  * <P>
  * The following code is a sample stand-alone code segment that implements 
  * ZLoadable and can be imported directly into the demo HiNote program.
+ * It adds a 'Layout' option to the menu bar, and when the 'doLayout' option is selected, it
+ * lays out all the objects in the world in an ellipse.
  * <PRE>
- *   import java.awt.geom.*;
- *   import java.awt.event.*;
- *   import javax.swing.*;
- *   
- *   import edu.umd.cs.jazz.scenegraph.*;
- *   import edu.umd.cs.jazz.util.*;
- *   
- *   public class PathTest implements Runnable, ZLoadable {
- *       JMenuBar menubar = null;
- *       ZCamera camera = null;
- *       ZSurface surface = null;
- *       ZNode layer = null;
- *   
- *       public PathTest() {
- *       }
- *   
- *       public void run() {
- *           ZPathLayoutManager layout = new ZPathLayoutManager();
- *           layout.setShape(new Ellipse2D.Float(0, 0, 200, 200));
- *           layer.setLayoutManager(layout);
- *   
- *           JMenu layoutMenu = new JMenu("Layout");
- *           JMenuItem menuItem = new JMenuItem("doLayout");
- *           menuItem.addActionListener(new ActionListener() {
- *               public void actionPerformed(ActionEvent e) {
- *                   layer.doLayout();
- *                   surface.restore();
- *               }
- *           });
- *           layoutMenu.add(menuItem);
- *   
- *           menubar.add(layoutMenu);
- *           menubar.revalidate();
- *       }
- *   
- *       public void setMenubar(JMenuBar aMenubar) {
- *           menubar = aMenubar;
- *       }
- *   
- *       public void setCamera(ZCamera aCamera) {
- *           camera = aCamera;
- *       }
- *   
- *       public void setSurface(ZSurface aSurface) {
- *           surface = aSurface;
- *       }
- *   
- *       public void setLayer(ZNode aLayer) {
- *           layer = aLayer;
- *       }
- *   }
+ *    import java.awt.geom.*;
+ *    import java.awt.event.*;
+ *    import javax.swing.*;
+ *    
+ *    import edu.umd.cs.jazz.*;
+ *    import edu.umd.cs.jazz.util.*;
+ *    
+ *    public class Foo implements Runnable, ZLoadable {
+ *        JMenuBar menubar = null;
+ *        ZCamera camera = null;
+ *        ZDrawingSurface surface = null;
+ *        ZLayerGroup layer = null;
+ *        ZLayoutGroup layoutGroup = null;
+ *        
+ *        public Foo() {
+ *        }
+ *        
+ *        public void run() {
+ *    	JMenu layoutMenu = new JMenu("Layout");
+ *    	JMenuItem menuItem = new JMenuItem("doLayout");
+ *    	menuItem.addActionListener(new ActionListener() {
+ *    	    public void actionPerformed(ActionEvent e) {
+ *    				// Make a new layout group with a path layout manager
+ *    		layoutGroup = new ZLayoutGroup();
+ *    		ZPathLayoutManager layout = new ZPathLayoutManager();
+ *    		layout.setShape(new Ellipse2D.Float(0, 0, 200, 200));
+ *    		
+ *    				// Move all the scene's nodes under the layout group and lay them out
+ *    		ZNode[] children = layer.getChildren();
+ *    		for (int i=0; i<children.length; i++) {
+ *    		    children[i].reparent(layoutGroup);
+ *    		}
+ *    		layer.addChild(layoutGroup);
+ *    		layoutGroup.setLayoutManager(layout);
+ *    		layoutGroup.doLayout();
+ *    
+ *    				// Remove the layout manager
+ *    		layoutGroup.remove();
+ *    	    }
+ *    	});
+ *    	layoutMenu.add(menuItem);
+ *        
+ *    	menubar.add(layoutMenu);
+ *    	menubar.revalidate();
+ *        }
+ *        
+ *        public void setMenubar(JMenuBar aMenubar) {
+ *    	menubar = aMenubar;
+ *        }
+ *        
+ *        public void setCamera(ZCamera aCamera) {
+ *    	camera = aCamera;
+ *        }
+ *        
+ *        public void setDrawingSurface(ZDrawingSurface aSurface) {
+ *    	surface = aSurface;
+ *        }
+ *        
+ *        public void setLayer(ZLayerGroup aLayer) {
+ *    	layer = aLayer;
+ *        }
+ *    }
  * </PRE>
  * @author Ben Bederson
  */
 public interface ZLoadable {
     public void setMenubar(JMenuBar menubar);
     public void setCamera(ZCamera camera);
-    public void setSurface(ZSurface surface);
-    public void setLayer(ZNode layer);
+    public void setDrawingSurface(ZDrawingSurface surface);
+    public void setLayer(ZLayerGroup layer);
 }

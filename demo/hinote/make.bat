@@ -18,15 +18,18 @@ GOTO end
 :all
 ECHO Compiling HiNote...
 
+xcopy /S /Q resources\*.* src\classes\resources\
 cd src
 javac -d classes -classpath ..\..\..\src\classes *.java
-cd ..
-xcopy /S /Q resources\*.* src\classes\resources
-cd src\classes
-jar -cfm ..\..\lib\hinote.jar ..\..\lib\manifest *.class resources\*.gif
+cd classes
+jar -cfm ..\..\hinote.jar ..\..\resources\hinote.manifest *.class resources\*.gif
 cd ..\..\..\..\src\classes
-jar -uf ..\..\demo\hinote\lib\hinote.jar edu
-cd ..\..\demo\hinote
+jar -uf ..\..\demo\hinote\hinote.jar edu
+cd ..\..\demo\hinote\resources
+jar -cfm help.jar help.manifest about.jazz using.jazz
+copy help.jar ..\src\classes\resources
+copy help.jar ..
+cd ..
 ECHO Build Finished
 GOTO end
 
@@ -39,7 +42,7 @@ ECHO Clean Finished
 GOTO end
 
 :rundemo
-java -classpath ..\..\src\classes;src\classes HiNote
+java -classpath "..\..\src\classes;src\classes" HiNote
 GOTO end
 
 :end

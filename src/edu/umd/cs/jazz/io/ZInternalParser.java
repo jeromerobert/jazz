@@ -9,7 +9,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.InvocationTargetException;
 
-public class ZInternalParser implements ZInternalParserConstants {
+public class ZInternalParser implements ZInternalParserConstants, Serializable {
     static protected final Class[] NULL_ARGS = {};
 
     protected Hashtable objectTable;
@@ -47,8 +47,8 @@ public class ZInternalParser implements ZInternalParserConstants {
         try {
             FileOutputStream fos =  new FileOutputStream(filename);
             ZObjectOutputStream out = new ZObjectOutputStream(fos);
-            edu.umd.cs.jazz.scenegraph.ZTransform transform = new edu.umd.cs.jazz.scenegraph.ZTransform();
-            out.writeObject(transform);
+            edu.umd.cs.jazz.ZNode node = new edu.umd.cs.jazz.ZNode();
+            out.writeObject(node);
             out.flush();
             out.close();
         }
@@ -78,7 +78,7 @@ public class ZInternalParser implements ZInternalParserConstants {
     }
 
     public static void main(String args[]) {
-        //writeTesterFile("ZTransform.jazz");
+        //writeTesterFile("ZNode.jazz");
 
         ZInternalParser parser;
         FileInputStream inStream = getInputStream(args);
@@ -238,6 +238,16 @@ public class ZInternalParser implements ZInternalParserConstants {
                                                                    ((Number)rectAttributes[1]).floatValue(),
                                                                    ((Number)rectAttributes[2]).floatValue(),
                                                                    ((Number)rectAttributes[3]).floatValue());
+
+            } else if (itemType.equals("java.awt.geom.AffineTransform")) {
+                Object[] atAttributes = ((Vector)iv).toArray();
+
+                valueObject = new java.awt.geom.AffineTransform (((Number)atAttributes[0]).floatValue(),
+                                                                 ((Number)atAttributes[1]).floatValue(),
+                                                                 ((Number)atAttributes[2]).floatValue(),
+                                                                 ((Number)atAttributes[3]).floatValue(),
+                                                                 ((Number)atAttributes[4]).floatValue(),
+                                                                 ((Number)atAttributes[5]).floatValue());
 
             } else {
                 valueObject = null;

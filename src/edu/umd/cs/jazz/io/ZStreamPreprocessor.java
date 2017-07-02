@@ -1,8 +1,18 @@
+/**
+ * Copyright 1998-1999 by University of Maryland, College Park, MD 20742, USA
+ * All rights reserved.
+ */
 package edu.umd.cs.jazz.io;
 
 import java.io.*;
 
-public class ZStreamPreprocessor {
+/** 
+ * <b>ZStreamPreprocessor</b> preprocesses the java io stream to manage embedded binary data.
+ *
+ * @author Ben Bederson
+ * @author Britt McAlister
+ */
+public class ZStreamPreprocessor implements Serializable {
     protected ZExtendedInputStream data;
     protected StringBuffer out;
     protected int bufSize = 64;

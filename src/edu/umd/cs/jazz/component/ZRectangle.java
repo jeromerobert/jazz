@@ -9,7 +9,7 @@ import java.awt.geom.*;
 import java.io.*;
 import java.util.Vector;
 
-import edu.umd.cs.jazz.scenegraph.*;
+import edu.umd.cs.jazz.*;
 import edu.umd.cs.jazz.io.*;
 import edu.umd.cs.jazz.util.*;
 
@@ -19,22 +19,48 @@ import edu.umd.cs.jazz.util.*;
  *
  * @author  Benjamin B. Bederson
  */
-public class ZRectangle extends ZVisualComponent implements Cloneable {
+public class ZRectangle extends ZVisualComponent implements ZPenColor, ZFillColor, ZStroke, Serializable {
     static public final Color  penColor_DEFAULT = Color.black;
     static public final Color  fillColor_DEFAULT = Color.white;
     static public final float  penWidth_DEFAULT = 1.0f;
 
-    protected Color     penColor  = penColor_DEFAULT;
-    protected float     penWidth  = penWidth_DEFAULT;
-    protected Color     fillColor = fillColor_DEFAULT;
-    
-    protected Rectangle2D rect;
+    /**
+     * Pen color for perimeter of rectangle
+     */
+    private Color     penColor  = penColor_DEFAULT;
+
+    /**
+     * Pen width of pen color.
+     */
+    private float     penWidth  = penWidth_DEFAULT;
+
+    /**
+     * Fill color for interior of rectangle.
+     */
+    private Color     fillColor = fillColor_DEFAULT;
+
+    /**
+     * Position and Dimensions of rectangle
+     */
+    private transient Rectangle2D rect;
+
+    /**
+     * Stroke for rendering pen color
+     */
+    private transient Stroke stroke = new BasicStroke(penWidth_DEFAULT, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
+
+    //****************************************************************************
+    //
+    //                Constructors
+    //
+    //***************************************************************************
+
     /**
      * Constructs a new Rectangle.
      */
     public ZRectangle() {
         rect = new Rectangle2D.Float();
-	updateBounds();
+	reshape();
     }
 
     /**
@@ -44,7 +70,7 @@ public class ZRectangle extends ZVisualComponent implements Cloneable {
      */
     public ZRectangle(float x, float y) {
         rect = new Rectangle2D.Float(x, y, 0.0f, 0.0f);
-	updateBounds();
+	reshape();
     }
 
     /**
@@ -56,7 +82,7 @@ public class ZRectangle extends ZVisualComponent implements Cloneable {
      */
     public ZRectangle(float x, float y, float width, float height) {
         rect = new Rectangle2D.Float(x, y, width, height);
-	updateBounds();
+	reshape();
     }
 
     /**
@@ -65,29 +91,47 @@ public class ZRectangle extends ZVisualComponent implements Cloneable {
      */
     public ZRectangle(Rectangle2D r) {
         rect = (Rectangle2D)r.clone();
-	updateBounds();
+	reshape();
     }
 
     /**
-     * Constructs a new ZRectangle based on the one passed in (i.e., a "copy constructor").
-     * @param <code>r</code> A rectangle to duplicate
-     */
-    public ZRectangle(ZRectangle r) {
-        rect = (Rectangle2D)r.rect.clone();
-	localBounds = (ZBounds)r.localBounds.clone();
-	penColor = r.penColor;
-	penWidth = r.penWidth;
-	fillColor = r.fillColor;
-    }
-
-    /**
-     * Duplicates the current ZRectangle by using the copy constructor.
-     * See the copy constructor comments for complete information about what is duplicated.
+     * Copies all object information from the reference object into the current
+     * object. This method is called from the clone method.
+     * All ZSceneGraphObjects objects contained by the object being duplicated
+     * are duplicated, except parents which are set to null.  This results
+     * in the sub-tree rooted at this object being duplicated.
      *
-     * @see #ZRectangle(ZRectangle)
+     * @param refRect The reference visual component to copy
+     */
+    public void duplicateObject(ZRectangle refRect) {
+	super.duplicateObject(refRect);
+
+        rect = (Rectangle2D)refRect.rect.clone();
+	penColor = refRect.penColor;
+	setPenWidth(refRect.penWidth);
+	fillColor = refRect.fillColor;
+    }
+
+    /**
+     * Duplicates the current object by using the copy constructor.
+     * The portion of the reference object that is duplicated is that necessary to reuse the object
+     * in a new place within the scenegraph, but the new object is not inserted into any scenegraph.
+     * The object must be attached to a live scenegraph (a scenegraph that is currently visible)
+     * or be registered with a camera directly in order for it to be visible.
+     *
+     * @return A copy of this visual component.
+     * @see #updateObjectReferences
      */
     public Object clone() {
-	return new ZRectangle(this);
+	ZRectangle copy;
+
+	objRefTable.reset();
+	copy = new ZRectangle();
+	copy.duplicateObject(this);
+	objRefTable.addObject(this, copy);
+	objRefTable.updateObjectReferences();
+
+	return copy;
     }
 
     //****************************************************************************
@@ -95,15 +139,57 @@ public class ZRectangle extends ZVisualComponent implements Cloneable {
     //			Get/Set and pairs
     //
     //***************************************************************************
-    
-    public float getPenWidth() {return penWidth;}
-    public void setPenWidth(float width) {
-	penWidth = width;
-	damage(true);
+
+    /**
+     * Get the width of the pen used to draw the perimeter of this rectangle.
+     * The pen is drawn centered around the rectangle vertices, so if the pen width
+     * is thick, the bounds of the rectangle will grow.
+     * @return the pen width.
+     */
+    public float getPenWidth() {
+	return penWidth;
     }
 
-    
-    public Color getPenColor() {return penColor;}
+    /**
+     * Set the width of the pen used to draw the perimeter of this rectangle.
+     * The pen is drawn centered around the rectangle vertices, so if the pen width
+     * is thick, the bounds of the rectangle will grow.
+     * @param width the pen width.
+     */
+    public void setPenWidth(float width) {
+	penWidth = width;
+	stroke = new BasicStroke(penWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
+	reshape();
+    }
+
+    /**
+     * Get the stroke used to draw the visual component.
+     * @return the stroke.
+     */
+    public Stroke getStroke() {
+	return stroke;
+    }
+
+    /**
+     * Set the stroke used to draw the visual component.
+     * @param stroke the stroke.
+     */
+    public void setStroke(Stroke stroke) {
+	this.stroke = stroke;
+    }
+
+    /**
+     * Get the pen color of this rectangle.
+     * @return the pen color.
+     */
+    public Color getPenColor() {
+	return penColor;
+    }
+
+    /**
+     * Set the pen color of this rectangle.
+     * @param color the pen color, or null if none.
+     */
     public void setPenColor(Color color) {
 	boolean boundsChanged = false;
 
@@ -112,47 +198,62 @@ public class ZRectangle extends ZVisualComponent implements Cloneable {
 	    ((penColor != null) && (color == null))) {
 	    boundsChanged = true;
 	}
-
 	penColor = color;
-	damage(boundsChanged);
-    }   
 
-    
-    public Color getFillColor() {return fillColor;}
+	if (boundsChanged) {
+	    reshape();
+	} else {
+	    repaint();
+	}
+    }
+
+    /**
+     * Get the fill color of this rectangle.
+     * @return the fill color.
+     */
+    public Color getFillColor() {
+	return fillColor;
+    }
+
+    /**
+     * Set the fill color of this rectangle.
+     * @param color the fill color, or null if none.
+     */
     public void setFillColor(Color color) {
 	fillColor = color;
 
-	damage();
-    }   
-    
-    
+	repaint();
+    }
+
+
     //****************************************************************************
     //
-    //			
+    //
     //
     //***************************************************************************
-    
+
     /**
      * Determines if the specified rectangle overlaps this rectangle.
      * @param pickRect The rectangle that is picking this rectangle
      * @return true if the rectangle picks this visual component
+     * @see ZDrawingSurface#pick(int, int)
      */
-    public boolean pick(Rectangle2D pickRect) {
+    public boolean pick(Rectangle2D pickRect, ZSceneGraphPath path) {
 	if (fillColor == null) {
 				// If no fill color, then don't pick inside of rectangle, only edge
 	    if (pickBounds(pickRect)) {
 		Rectangle2D innerBounds = new Rectangle2D.Float();
 		float p, p2;
-		
+
 		if (penColor == null) {
 		    p = 0.0f;
 		} else {
 		    p = penWidth;
 		}
 		p2 = 0.5f * p;
-		innerBounds.setRect((float)(rect.getX() + p2), (float)(rect.getY() + p2), 
+		innerBounds.setRect((float)(rect.getX() + p2), (float)(rect.getY() + p2),
 				    (float)(rect.getWidth() - p), (float)(rect.getHeight() - p));
-		
+
 		if (innerBounds.contains(pickRect)) {
 		    return false;
 		} else {
@@ -168,12 +269,19 @@ public class ZRectangle extends ZVisualComponent implements Cloneable {
 
     /**
      * Paints this object.
-     * @param <code>g2</code> The graphics context to paint into.
+     * <p>
+     * The transform, clip, and composite will be set appropriately when this object
+     * is rendered.  It is up to this object to restore the transform, clip, and composite of
+     * the Graphics2D if this node changes any of them. However, the color, font, and stroke are
+     * unspecified by Jazz.  This object should set those things if they are used, but
+     * they do not need to be restored.
+     *
+     * @param <code>renderContext</code> The graphics context to paint into.
      */
-    public void paint(ZRenderContext renderContext) {
+    public void render(ZRenderContext renderContext) {
 	Graphics2D g2 = renderContext.getGraphics2D();
-	
-        g2.setStroke(new BasicStroke(penWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER));
+
+        g2.setStroke(stroke);
 	if (fillColor != null) {
 	    g2.setColor(fillColor);
 	    g2.fill(rect);
@@ -184,7 +292,12 @@ public class ZRectangle extends ZVisualComponent implements Cloneable {
 	}
     }
 
-    protected void computeLocalBounds() {
+    /**
+     * Notifies this object that it has changed and that it should update
+     * its notion of its bounding box.  Note that this should not be called
+     * directly.  Instead, it is called by <code>updateBounds</code> when needed.
+     */
+    protected void computeBounds() {
 				// Expand the bounds to accomodate the pen width
 	float p, p2;
 
@@ -194,9 +307,11 @@ public class ZRectangle extends ZVisualComponent implements Cloneable {
 	    p = penWidth;
 	}
 	p2 = 0.5f * p;
-	localBounds.setRect((float)(rect.getX() - p2), (float)(rect.getY() - p2), 
-			    (float)(rect.getWidth() + p), (float)(rect.getHeight() + p));
+
+	bounds.setRect((float)(rect.getX() - p2), (float)(rect.getY() - p2),
+		       (float)(rect.getWidth() + p), (float)(rect.getHeight() + p));
     }
+
 
     /**
      * Return x-coord of rectangle.
@@ -247,7 +362,7 @@ public class ZRectangle extends ZVisualComponent implements Cloneable {
      */
     public void setRect(float x, float y, float width, float height) {
 	rect.setRect(x, y, width, height);
-	damage(true);
+	reshape();
     }
 
     /**
@@ -256,8 +371,9 @@ public class ZRectangle extends ZVisualComponent implements Cloneable {
      */
     public void setRect(Rectangle2D r) {
 	rect = r;
-	damage(true);
+	reshape();
     }
+
 
     /////////////////////////////////////////////////////////////////////////
     //
@@ -311,11 +427,47 @@ public class ZRectangle extends ZVisualComponent implements Cloneable {
 	    setPenWidth(((Float)fieldValue).floatValue());
 	} else if (fieldName.compareTo("rect") == 0) {
 	    Vector dim = (Vector)fieldValue;
-	    float xpos   = ((Float)dim.elementAt(0)).floatValue();
-	    float ypos   = ((Float)dim.elementAt(1)).floatValue();
-	    float width  = ((Float)dim.elementAt(2)).floatValue();
-	    float height = ((Float)dim.elementAt(3)).floatValue();
+	    float xpos   = ((Float)dim.get(0)).floatValue();
+	    float ypos   = ((Float)dim.get(1)).floatValue();
+	    float width  = ((Float)dim.get(2)).floatValue();
+	    float height = ((Float)dim.get(3)).floatValue();
 	    setRect(xpos, ypos, width, height);
 	}
+    }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+	out.defaultWriteObject();
+
+				// write Rectangle2D rect
+	out.writeDouble(rect.getX());
+	out.writeDouble(rect.getY());
+	out.writeDouble(rect.getWidth());
+	out.writeDouble(rect.getHeight());
+
+				// write Stroke stroke
+	int cap = (int)((BasicStroke)stroke).getEndCap();
+ 	out.writeInt(cap);
+
+	int join = (int)((BasicStroke)stroke).getLineJoin();
+	out.writeInt(join);
+    }	
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+	in.defaultReadObject();
+
+				// read Rectangle2D rect
+	double x, y, w, h;
+	x = in.readDouble();
+	y = in.readDouble();
+	w = in.readDouble();
+	h = in.readDouble();
+
+				// read Stroke stroke
+	int cap, join;
+	cap = in.readInt();
+	join = in.readInt();
+
+	rect = new Rectangle2D.Float((float)x, (float)y, (float)w, (float)h);
+	stroke = new BasicStroke(penWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
     }
 }

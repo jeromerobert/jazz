@@ -12,9 +12,8 @@ import java.awt.*;
 import java.awt.image.*;
 import java.awt.geom.*;
 
-import com.sun.image.codec.jpeg.*;
-
 import edu.umd.cs.jazz.util.*;
+import javax.imageio.ImageIO;
 
 /** 
  * <b>ZObjectOutputStream</b> writes Jazz objects that are ZSerializable.
@@ -422,11 +421,7 @@ public class ZObjectOutputStream extends OutputStream implements Serializable {
 
 				// Write the image to a temporary stream so we can get its length.
 	    ByteArrayOutputStream tmpOut = new ByteArrayOutputStream();
-	    JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(tmpOut);
-	    encoder.encode(bufferedImage);
-	    try {
-		tmpOut.close();
-	    } catch(IOException e) {}
+		ImageIO.write(bufferedImage, "jpeg", tmpOut);
 				// Finally, write out the size of the image, and the image itself
 	    dos.writeBytes(" " + Long.toString(tmpOut.size()) + "\n");
 	    tmpOut.writeTo(dos);

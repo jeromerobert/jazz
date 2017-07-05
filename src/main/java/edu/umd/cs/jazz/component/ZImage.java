@@ -10,11 +10,11 @@ import java.awt.geom.*;
 import java.io.*;
 import java.net.*;
 import javax.swing.*;
-import com.sun.image.codec.jpeg.*;
 
 import edu.umd.cs.jazz.*;
 import edu.umd.cs.jazz.io.*;
 import edu.umd.cs.jazz.util.*;
+import javax.imageio.ImageIO;
 
 /**
  * <b>ZImage</b> is a graphic object that represents a raster image.
@@ -766,8 +766,7 @@ public class ZImage extends ZVisualComponent implements Serializable {
                                 // else write boolean(false)
             if (writeEmbeddedImage) {
                 out.writeBoolean(true);
-                JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(out);
-                encoder.encode(makeBufferedImage(image));
+				ImageIO.write(makeBufferedImage(image), "jpeg", out);
             } else {
                 out.writeBoolean(false);
             }
@@ -781,8 +780,7 @@ public class ZImage extends ZVisualComponent implements Serializable {
             fileName = (String)in.readObject(); // read String(fileName)
             if (in.readBoolean()) { // read boolean(); image file is embedded?
                                 // read image as JPEG object
-                JPEGImageDecoder decoder = JPEGCodec.createJPEGDecoder(in);
-                image = (Image)decoder.decodeAsBufferedImage();
+				image = ImageIO.read(in);
 
                 // The image isn't an instance of the correct type of
                 // buffered image - turn it into one

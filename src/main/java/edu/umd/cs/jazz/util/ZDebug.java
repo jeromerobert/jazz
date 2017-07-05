@@ -223,7 +223,7 @@ public class ZDebug implements Serializable {
 
 	/**
 	 * Return how many frames are processed and painted per second. 
-	 * Note that since piccolo doesn’t paint continuously this rate
+	 * Note that since piccolo doesn't paint continuously this rate
 	 * will be slow unless you are interacting with the system or have
 	 * activities scheduled.
 	 */
